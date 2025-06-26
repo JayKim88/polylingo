@@ -29,9 +29,13 @@ export default function SearchInput({
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor="#9CA3AF"
-          multiline
           onSubmitEditing={onSearch}
           blurOnSubmit={false}
+          keyboardType="default"
+          autoCorrect={false}
+          autoCapitalize="none"
+          textContentType="none"
+          returnKeyType="search"
         />
         {value ? (
           <TouchableOpacity onPress={onClear} style={styles.clearButton}>

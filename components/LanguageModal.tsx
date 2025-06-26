@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+  StyleSheet,
+} from 'react-native';
 import { Language, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { X, Check } from 'lucide-react-native';
 
@@ -10,19 +17,23 @@ interface LanguageModalProps {
   onClose: () => void;
 }
 
-export default function LanguageModal({ 
-  visible, 
-  selectedLanguages, 
-  onLanguageSelection, 
-  onClose 
+export default function LanguageModal({
+  visible,
+  selectedLanguages,
+  onLanguageSelection,
+  onClose,
 }: LanguageModalProps) {
   const [tempSelected, setTempSelected] = useState<string[]>(selectedLanguages);
 
   const toggleLanguage = (languageCode: string) => {
     if (tempSelected.includes(languageCode)) {
-      setTempSelected(tempSelected.filter(code => code !== languageCode));
+      setTempSelected(tempSelected.filter((code) => code !== languageCode));
     } else {
-      setTempSelected([...tempSelected, languageCode]);
+      const newArr = [...tempSelected, languageCode].sort((a, b) =>
+        b.localeCompare(a)
+      );
+
+      setTempSelected(newArr);
     }
   };
 
@@ -37,13 +48,10 @@ export default function LanguageModal({
 
   const renderLanguageItem = ({ item }: { item: Language }) => {
     const isSelected = tempSelected.includes(item.code);
-    
+
     return (
       <TouchableOpacity
-        style={[
-          styles.languageItem,
-          isSelected && styles.selectedLanguageItem
-        ]}
+        style={[styles.languageItem, isSelected && styles.selectedLanguageItem]}
         onPress={() => toggleLanguage(item.code)}
       >
         <View style={styles.languageInfo}>
@@ -53,9 +61,7 @@ export default function LanguageModal({
             <Text style={styles.nativeName}>{item.nativeName}</Text>
           </View>
         </View>
-        {isSelected && (
-          <Check size={20} color="#6366F1" />
-        )}
+        {isSelected && <Check size={20} color="#6366F1" />}
       </TouchableOpacity>
     );
   };
@@ -71,26 +77,23 @@ export default function LanguageModal({
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>번역할 언어 선택</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={handleCancel}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={handleCancel}>
               <X size={24} color="#6B7280" />
             </TouchableOpacity>
           </View>
-          
+
           <Text style={styles.subtitle}>
             {tempSelected.length}개 언어가 선택됨
           </Text>
-          
+
           <FlatList
-            data={SUPPORTED_LANGUAGES.filter(lang => lang.code !== 'ko')}
+            data={SUPPORTED_LANGUAGES}
             renderItem={renderLanguageItem}
             keyExtractor={(item) => item.code}
             style={styles.languageList}
             showsVerticalScrollIndicator={false}
           />
-          
+
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.cancelButton}
@@ -101,10 +104,10 @@ export default function LanguageModal({
             <TouchableOpacity
               style={[
                 styles.confirmButton,
-                tempSelected.length === 0 && styles.disabledButton
+                tempSelected.length < 2 && styles.disabledButton,
               ]}
               onPress={handleConfirm}
-              disabled={tempSelected.length === 0}
+              disabled={tempSelected.length < 2}
             >
               <Text style={styles.confirmButtonText}>확인</Text>
             </TouchableOpacity>

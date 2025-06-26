@@ -1,0 +1,17 @@
+services:
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: libretranslate
+    restart: unless-stopped
+    ports:
+      - '5001:5000'
+    environment:
+      - LT_LOAD_ONLY=en,ko,ja,fr,es,de
+    volumes:
+      - ./data:/app/db
+      - ./models:/app/models
+    command: --host 0.0.0.0
+      --port 5000
+      --threads 4
+      --load-only en,ko,ja,fr,es,de
+      --update-models

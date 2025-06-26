@@ -1,5 +1,12 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Languages, Globe } from 'lucide-react-native';
@@ -10,7 +17,11 @@ import DraggableTranslationList from '../../components/DraggableTranslationList'
 import LanguageModal from '../../components/LanguageModal';
 import { TranslationAPI } from '../../utils/translationAPI';
 import { StorageService } from '../../utils/storage';
-import { TranslationResult, SearchType } from '../../types/dictionary';
+import {
+  TranslationResult,
+  SearchType,
+  SUPPORTED_LANGUAGES,
+} from '../../types/dictionary';
 
 export default function SearchTab() {
   const [sourceLanguage, setSourceLanguage] = useState('ko');
@@ -20,7 +31,9 @@ export default function SearchTab() {
   const [isLoading, setIsLoading] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en', 'ja', 'fr', 'de', 'es']);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
+    SUPPORTED_LANGUAGES.map((v) => v.code)
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -31,7 +44,9 @@ export default function SearchTab() {
 
   const loadFavorites = async () => {
     const favs = await StorageService.getFavorites();
-    const favIds = favs.map(f => `${f.sourceText}-${f.sourceLanguage}-${f.targetLanguage}`);
+    const favIds = favs.map(
+      (f) => `${f.sourceText}-${f.sourceLanguage}-${f.targetLanguage}`
+    );
     setFavorites(favIds);
   };
 
@@ -42,27 +57,50 @@ export default function SearchTab() {
     }
   };
 
+  const isWordOnly = (text: string): boolean => {
+    const trimmed = text.trim();
+    // 공백이 있으면 문장으로 간주
+    if (trimmed.includes(' ')) return false;
+    // 특수문자나 구두점이 있으면 문장으로 간주 (하이픈과 아포스트로피는 제외)
+    if (/[.!?;:,\n\r\t]/.test(trimmed)) return false;
+    return true;
+  };
+
   const handleSearch = async () => {
     if (!searchText.trim()) return;
 
+    // 단어만 허용 (문장 차단)
+    if (searchType === 'word' && !isWordOnly(searchText)) {
+      alert('단어만 검색 가능합니다. 문장은 검색할 수 없습니다.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const translationResults = await TranslationAPI.translateToMultipleLanguages(
-        searchText.trim(),
-        sourceLanguage,
-        selectedLanguages,
-        searchType
+      const translationResults =
+        await TranslationAPI.translateToMultipleLanguages(
+          searchText.trim(),
+          sourceLanguage,
+          selectedLanguages,
+          searchType
+        );
+
+      console.log('sourceLanguage?', sourceLanguage, selectedLanguages);
+      console.log('translationResults?', translationResults);
+
+      const exceptSourceLngResults = translationResults.filter(
+        (v) => v.targetLanguage !== sourceLanguage
       );
-      
-      setResults(translationResults);
-      
+
+      setResults(exceptSourceLngResults);
+
       // Add to history
-      if (translationResults.length > 0) {
+      if (exceptSourceLngResults.length > 0) {
         await StorageService.addToHistory({
           sourceLanguage,
           targetLanguage: 'multiple',
           sourceText: searchText.trim(),
-          translatedText: `${translationResults.length} translations`,
+          translatedText: `${exceptSourceLngResults.length} translations`,
           searchType,
         });
       }
@@ -88,6 +126,7 @@ export default function SearchTab() {
   };
 
   const handleLanguageSelection = async (languages: string[]) => {
+    setSourceLanguage(languages[0]);
     setSelectedLanguages(languages);
     await StorageService.saveSelectedLanguages(languages);
     setShowLanguageModal(false);
@@ -95,7 +134,9 @@ export default function SearchTab() {
 
   const handleResultsReorder = async (newResults: TranslationResult[]) => {
     setResults(newResults);
-    await StorageService.saveLanguageOrder(newResults.map(r => r.targetLanguage));
+    await StorageService.saveLanguageOrder(
+      newResults.map((r) => r.targetLanguage)
+    );
   };
 
   return (
@@ -106,7 +147,7 @@ export default function SearchTab() {
             <Globe size={32} color="#6366F1" />
             <Text style={styles.headerTitle}>다국어 사전</Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.languageButton}
             onPress={() => setShowLanguageModal(true)}
           >
@@ -123,6 +164,7 @@ export default function SearchTab() {
           selectedLanguage={sourceLanguage}
           onLanguageSelect={setSourceLanguage}
           label="번역할 언어"
+          selectedLanguages={selectedLanguages}
         />
 
         <SearchTypeSelector
@@ -135,7 +177,11 @@ export default function SearchTab() {
           onChangeText={setSearchText}
           onSearch={handleSearch}
           onClear={handleClear}
-          placeholder={searchType === 'word' ? '번역할 단어를 입력하세요...' : '번역할 문장을 입력하세요...'}
+          placeholder={
+            searchType === 'word'
+              ? '번역할 단어를 입력하세요...'
+              : '번역할 문장을 입력하세요...'
+          }
           isLoading={isLoading}
         />
 

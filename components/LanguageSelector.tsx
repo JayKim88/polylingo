@@ -1,5 +1,12 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
+import React, { useMemo } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+  StyleSheet,
+} from 'react-native';
 import { Language, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { ChevronDown } from 'lucide-react-native';
 
@@ -7,18 +14,26 @@ interface LanguageSelectorProps {
   selectedLanguage: string;
   onLanguageSelect: (languageCode: string) => void;
   label: string;
+  selectedLanguages: string[];
 }
 
-export default function LanguageSelector({ selectedLanguage, onLanguageSelect, label }: LanguageSelectorProps) {
+export default function LanguageSelector({
+  selectedLanguage,
+  onLanguageSelect,
+  label,
+  selectedLanguages,
+}: LanguageSelectorProps) {
   const [isVisible, setIsVisible] = React.useState(false);
-  
-  const selectedLang = SUPPORTED_LANGUAGES.find(lang => lang.code === selectedLanguage);
+
+  const selectedLang = SUPPORTED_LANGUAGES.find(
+    (lang) => lang.code === selectedLanguage
+  );
 
   const renderLanguageItem = ({ item }: { item: Language }) => (
     <TouchableOpacity
       style={[
         styles.languageItem,
-        item.code === selectedLanguage && styles.selectedLanguageItem
+        item.code === selectedLanguage && styles.selectedLanguageItem,
       ]}
       onPress={() => {
         onLanguageSelect(item.code);
@@ -31,6 +46,10 @@ export default function LanguageSelector({ selectedLanguage, onLanguageSelect, l
         <Text style={styles.nativeName}>{item.nativeName}</Text>
       </View>
     </TouchableOpacity>
+  );
+
+  const filteredLanguages = SUPPORTED_LANGUAGES.filter((lang) =>
+    selectedLanguages.includes(lang.code)
   );
 
   return (
@@ -55,7 +74,7 @@ export default function LanguageSelector({ selectedLanguage, onLanguageSelect, l
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>언어 선택</Text>
             <FlatList
-              data={SUPPORTED_LANGUAGES}
+              data={filteredLanguages}
               renderItem={renderLanguageItem}
               keyExtractor={(item) => item.code}
               style={styles.languageList}
