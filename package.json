@@ -1,6 +1,6 @@
 {
   "name": "multilingual-dictionary",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -48,6 +48,8 @@
     "@babel/core": "^7.26.0",
     "@types/react": "~19.0.10",
     "babel-plugin-inline-dotenv": "^1.7.0",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~9.2.0"
   }
 }

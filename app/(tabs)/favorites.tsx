@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Heart } from 'lucide-react-native';
@@ -11,7 +11,9 @@ import { FavoriteItem } from '../../types/dictionary';
 export default function FavoritesTab() {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [filteredFavorites, setFilteredFavorites] = useState<FavoriteItem[]>([]);
+  const [filteredFavorites, setFilteredFavorites] = useState<FavoriteItem[]>(
+    []
+  );
   const [favoriteDates, setFavoriteDates] = useState<string[]>([]);
 
   useFocusEffect(
@@ -23,23 +25,25 @@ export default function FavoritesTab() {
   const loadFavorites = async () => {
     const favs = await StorageService.getFavorites();
     setFavorites(favs);
-    
+
     // Extract unique dates
-    const dates = [...new Set(favs.map(fav => 
-      new Date(fav.createdAt).toISOString().split('T')[0]
-    ))];
+    const dates = [
+      ...new Set(
+        favs.map((fav) => new Date(fav.createdAt).toISOString().split('T')[0])
+      ),
+    ];
     setFavoriteDates(dates);
-    
+
     // Show all favorites initially
     setFilteredFavorites(favs);
   };
 
   const handleDateSelect = (date: string | null) => {
     setSelectedDate(date);
-    
+
     if (date) {
-      const filtered = favorites.filter(fav => 
-        new Date(fav.createdAt).toISOString().split('T')[0] === date
+      const filtered = favorites.filter(
+        (fav) => new Date(fav.createdAt).toISOString().split('T')[0] === date
       );
       setFilteredFavorites(filtered);
     } else {
@@ -63,20 +67,20 @@ export default function FavoritesTab() {
           저장한 번역 결과를 날짜별로 확인하세요
         </Text>
       </View>
-
       <View style={styles.content}>
-        <CalendarView
-          markedDates={favoriteDates}
-          selectedDate={selectedDate}
-          onDateSelect={handleDateSelect}
-          markColor="#EF4444"
-        />
-
-        <FavoritesList
-          favorites={filteredFavorites}
-          selectedDate={selectedDate}
-          onRemoveFavorite={handleRemoveFavorite}
-        />
+        <ScrollView>
+          <CalendarView
+            markedDates={favoriteDates}
+            selectedDate={selectedDate}
+            onDateSelect={handleDateSelect}
+            markColor="#EF4444"
+          />
+          <FavoritesList
+            favorites={filteredFavorites}
+            selectedDate={selectedDate}
+            onRemoveFavorite={handleRemoveFavorite}
+          />
+        </ScrollView>
       </View>
     </SafeAreaView>
   );

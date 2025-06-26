@@ -7,9 +7,96 @@ import {
 const MYMEMORY_BASE_URL = 'https://mymemory.translated.net/api/get';
 const LIBRETRANSLATE_BASE_URL =
   process.env.EXPO_PUBLIC_LIBRETRANSLATE_URL ?? '';
-const LIBRETRANSLATE_BASE_URL_OUTER = 'https://libretranslate.de/translate';
+
+// Cache interface
+interface CacheEntry {
+  translation: string;
+  meanings?: TranslationMeaning[];
+  timestamp: number;
+}
 
 export class TranslationAPI {
+  // In-memory cache for translations
+  private static translationCache = new Map<string, CacheEntry>();
+  private static readonly CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+  // Generate cache key
+  private static getCacheKey(
+    text: string,
+    sourceLanguage: string,
+    targetLanguage: string,
+    searchType: SearchType
+  ): string {
+    return `${text.toLowerCase()}_${sourceLanguage}_${targetLanguage}_${searchType}`;
+  }
+
+  // Check if cache entry is valid
+  private static isCacheValid(entry: CacheEntry): boolean {
+    return Date.now() - entry.timestamp < this.CACHE_DURATION;
+  }
+
+  // Get from cache
+  private static getFromCache(
+    text: string,
+    sourceLanguage: string,
+    targetLanguage: string,
+    searchType: SearchType
+  ): { translation: string; meanings?: TranslationMeaning[] } | null {
+    const key = this.getCacheKey(
+      text,
+      sourceLanguage,
+      targetLanguage,
+      searchType
+    );
+    const entry = this.translationCache.get(key);
+
+    if (entry && this.isCacheValid(entry)) {
+      console.log('💾 Using cached translation');
+      return {
+        translation: entry.translation,
+        meanings: entry.meanings,
+      };
+    }
+
+    // Remove expired entry
+    if (entry) {
+      this.translationCache.delete(key);
+    }
+
+    return null;
+  }
+
+  // Save to cache
+  private static saveToCache(
+    text: string,
+    sourceLanguage: string,
+    targetLanguage: string,
+    searchType: SearchType,
+    translation: string,
+    meanings?: TranslationMeaning[]
+  ): void {
+    const key = this.getCacheKey(
+      text,
+      sourceLanguage,
+      targetLanguage,
+      searchType
+    );
+    this.translationCache.set(key, {
+      translation,
+      meanings,
+      timestamp: Date.now(),
+    });
+  }
+
+  // Clear expired cache entries
+  private static cleanupCache(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.translationCache.entries()) {
+      if (now - entry.timestamp >= this.CACHE_DURATION) {
+        this.translationCache.delete(key);
+      }
+    }
+  }
   // LibreTranslate API를 사용한 번역 (가장 정확함)
   static async translateWithLibreTranslate(
     text: string,
@@ -66,7 +153,14 @@ export class TranslationAPI {
       const data = await response.json();
 
       if (data.responseStatus === 200 && data.responseData) {
-        const translatedText = data.responseData.translatedText;
+        let translatedText = data.responseData.translatedText;
+
+        // Decode any URL encoding that might have been applied
+        try {
+          translatedText = decodeURIComponent(translatedText);
+        } catch (e) {
+          // If decoding fails, use original text
+        }
 
         return translatedText;
       }
@@ -175,20 +269,73 @@ export class TranslationAPI {
       return { translation: text };
     }
 
+    // 캐시에서 확인
+    const cached = this.getFromCache(
+      text,
+      sourceLanguage,
+      targetLanguage,
+      searchType
+    );
+    if (cached) {
+      console.log('💾 Using cached translation');
+
+      // Check if cached translation is URL-encoded and fix it
+      let translation = cached.translation;
+      if (translation.includes('%')) {
+        try {
+          const decoded = decodeURIComponent(translation);
+          console.log('🔧 Fixed URL-encoded cached translation');
+
+          // Update cache with fixed version
+          this.saveToCache(
+            text,
+            sourceLanguage,
+            targetLanguage,
+            searchType,
+            decoded,
+            cached.meanings
+          );
+
+          return {
+            translation: decoded,
+            meanings: cached.meanings,
+          };
+        } catch (e) {
+          console.log(
+            '❌ Failed to decode cached translation, clearing cache entry'
+          );
+          const key = this.getCacheKey(
+            text,
+            sourceLanguage,
+            targetLanguage,
+            searchType
+          );
+          this.translationCache.delete(key);
+          // Continue to fetch fresh translation
+        }
+      } else {
+        return cached;
+      }
+    }
+
+    // 캐시 정리 (10%의 확률로 실행)
+    if (Math.random() < 0.1) {
+      this.cleanupCache();
+    }
+
     let translation: string | null = null;
 
-    // 한국어는 MyMemory 사용, 다른 언어는 LibreTranslate 사용
-    if (targetLanguage === 'ko') {
-      console.log('🇰🇷 Using MyMemory for Korean translation...');
-      translation = await this.translateWithMyMemory(
-        text,
-        sourceLanguage,
-        targetLanguage
-      );
+    // MyMemory API 우선 사용 (모든 언어 지원)
+    // console.log('🌍 Using MyMemory for translation...');
+    // translation = await this.translateWithMyMemory(
+    //   text,
+    //   sourceLanguage,
+    //   targetLanguage
+    // );
 
-      console.log('translation????', translation);
-    } else {
-      console.log('🌍 Using LibreTranslate for other languages...');
+    // MyMemory 실패시 LibreTranslate 시도 (설정된 경우만)
+    if (LIBRETRANSLATE_BASE_URL) {
+      console.log('🔄 Falling back to LibreTranslate...');
       translation = await this.translateWithLibreTranslate(
         text,
         sourceLanguage,
@@ -206,11 +353,20 @@ export class TranslationAPI {
       targetLanguage
     );
 
-    if (meanings.length > 0) {
-      return { translation, meanings };
-    }
+    const result =
+      meanings.length > 0 ? { translation, meanings } : { translation };
 
-    return { translation };
+    // 성공한 번역을 캐시에 저장
+    this.saveToCache(
+      text,
+      sourceLanguage,
+      targetLanguage,
+      searchType,
+      translation,
+      meanings
+    );
+
+    return result;
   }
 
   static async translateToMultipleLanguages(
@@ -271,5 +427,39 @@ export class TranslationAPI {
     const filteredResults = results.filter((result) => result.confidence > 0);
 
     return filteredResults;
+  }
+
+  // Cache management methods
+  static getCacheSize(): number {
+    return this.translationCache.size;
+  }
+
+  static clearCache(): void {
+    console.log('🗑️ Clearing translation cache');
+    this.translationCache.clear();
+  }
+
+  static clearCacheAndLog(): void {
+    const size = this.translationCache.size;
+    this.translationCache.clear();
+    console.log(`🗑️ Cleared ${size} cached translations`);
+  }
+
+  static getCacheStats(): {
+    size: number;
+    entries: Array<{ key: string; timestamp: number; isExpired: boolean }>;
+  } {
+    const entries = Array.from(this.translationCache.entries()).map(
+      ([key, entry]) => ({
+        key,
+        timestamp: entry.timestamp,
+        isExpired: !this.isCacheValid(entry),
+      })
+    );
+
+    return {
+      size: this.translationCache.size,
+      entries,
+    };
   }
 }

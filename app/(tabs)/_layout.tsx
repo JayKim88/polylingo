@@ -70,8 +70,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     borderRadius: 30,
-    marginRight: 16,
-    marginLeft: 16,
+    margin: 16,
   },
   tabBarLabel: {
     fontSize: 12,

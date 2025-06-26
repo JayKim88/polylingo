@@ -55,7 +55,6 @@ export default function SearchTab() {
     }
   };
 
-
   const handleSearch = async () => {
     if (!searchText.trim()) return;
 
@@ -75,6 +74,11 @@ export default function SearchTab() {
 
       setResults(exceptSourceLngResults);
 
+      const searchedData = exceptSourceLngResults.map((v) => ({
+        lng: v.targetLanguage,
+        text: v.translatedText,
+      }));
+
       // Add to history
       if (exceptSourceLngResults.length > 0) {
         await StorageService.addToHistory({
@@ -82,6 +86,7 @@ export default function SearchTab() {
           targetLanguage: 'multiple',
           sourceText: searchText.trim(),
           translatedText: `${exceptSourceLngResults.length} translations`,
+          searchedData,
           searchType: 'sentence',
         });
       }

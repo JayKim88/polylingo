@@ -7,6 +7,7 @@ import CalendarView from '../../components/CalendarView';
 import HistoryList from '../../components/HistoryList';
 import { StorageService } from '../../utils/storage';
 import { HistoryItem } from '../../types/dictionary';
+import { ScrollView } from 'react-native-gesture-handler';
 
 export default function HistoryTab() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -23,23 +24,27 @@ export default function HistoryTab() {
   const loadHistory = async () => {
     const hist = await StorageService.getHistory();
     setHistory(hist);
-    
+
     // Extract unique dates
-    const dates = [...new Set(hist.map(item => 
-      new Date(item.searchedAt).toISOString().split('T')[0]
-    ))];
+    const dates = [
+      ...new Set(
+        hist.map(
+          (item) => new Date(item.searchedAt).toISOString().split('T')[0]
+        )
+      ),
+    ];
     setHistoryDates(dates);
-    
+
     // Show all history initially
     setFilteredHistory(hist);
   };
 
   const handleDateSelect = (date: string | null) => {
     setSelectedDate(date);
-    
+
     if (date) {
-      const filtered = history.filter(item => 
-        new Date(item.searchedAt).toISOString().split('T')[0] === date
+      const filtered = history.filter(
+        (item) => new Date(item.searchedAt).toISOString().split('T')[0] === date
       );
       setFilteredHistory(filtered);
     } else {
@@ -65,8 +70,7 @@ export default function HistoryTab() {
           검색 기록을 날짜별로 확인하세요
         </Text>
       </View>
-
-      <View style={styles.content}>
+      <ScrollView>
         <CalendarView
           markedDates={historyDates}
           selectedDate={selectedDate}
@@ -79,7 +83,7 @@ export default function HistoryTab() {
           selectedDate={selectedDate}
           onClearHistory={handleClearHistory}
         />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+} from 'react-native';
 import { HistoryItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { Trash2, Clock, RefreshCw } from 'lucide-react-native';
 
@@ -9,24 +16,20 @@ interface HistoryListProps {
   onClearHistory: () => void;
 }
 
-export default function HistoryList({ 
-  history, 
-  selectedDate, 
-  onClearHistory 
+export default function HistoryList({
+  history,
+  selectedDate,
+  onClearHistory,
 }: HistoryListProps) {
   const handleClearHistory = () => {
-    Alert.alert(
-      '기록 삭제',
-      '모든 검색 기록을 삭제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: onClearHistory,
-        },
-      ]
-    );
+    Alert.alert('기록 삭제', '모든 검색 기록을 삭제하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: onClearHistory,
+      },
+    ]);
   };
 
   const formatTimeAgo = (timestamp: number) => {
@@ -43,7 +46,9 @@ export default function HistoryList({
   };
 
   const renderHistoryItem = (item: HistoryItem) => {
-    const sourceLanguage = SUPPORTED_LANGUAGES.find(lang => lang.code === item.sourceLanguage);
+    const sourceLanguage = SUPPORTED_LANGUAGES.find(
+      (lang) => lang.code === item.sourceLanguage
+    );
 
     return (
       <View key={item.id} style={styles.historyCard}>
@@ -51,7 +56,9 @@ export default function HistoryList({
           <View style={styles.languageInfo}>
             <Text style={styles.flag}>{sourceLanguage?.flag}</Text>
             <View style={styles.languageDetails}>
-              <Text style={styles.languageName}>{sourceLanguage?.nativeName}</Text>
+              <Text style={styles.languageName}>
+                {sourceLanguage?.nativeName}
+              </Text>
               <View style={styles.searchTypeBadge}>
                 <Text style={styles.searchTypeText}>
                   {item.searchType === 'word' ? '단어' : '문장'}
@@ -61,10 +68,34 @@ export default function HistoryList({
           </View>
           <Text style={styles.timeAgo}>{formatTimeAgo(item.searchedAt)}</Text>
         </View>
-        
+
         <Text style={styles.sourceText}>{item.sourceText}</Text>
-        {item.translatedText !== 'multiple' && (
-          <Text style={styles.translatedText}>{item.translatedText}</Text>
+        {item.searchedData && (
+          <ScrollView
+            horizontal
+            style={{
+              flexDirection: 'row',
+            }}
+            contentContainerStyle={{
+              alignItems: 'center',
+            }}
+          >
+            {item.searchedData.map((v) => (
+              <Text
+                key={v.text}
+                style={{
+                  borderRadius: 24,
+                  width: 'auto',
+                  paddingVertical: 2,
+                  paddingHorizontal: 4,
+                  marginRight: 8,
+                  backgroundColor: '#e3e3ff',
+                }}
+              >
+                {v.lng} - {v.text}
+              </Text>
+            ))}
+          </ScrollView>
         )}
       </View>
     );
@@ -73,7 +104,9 @@ export default function HistoryList({
   const getTitle = () => {
     if (selectedDate) {
       const date = new Date(selectedDate);
-      return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+      return `${date.getFullYear()}년 ${
+        date.getMonth() + 1
+      }월 ${date.getDate()}일`;
     }
     return '전체 히스토리';
   };
@@ -85,9 +118,9 @@ export default function HistoryList({
           <Text style={styles.title}>{getTitle()}</Text>
           <Text style={styles.count}>{history.length}개</Text>
         </View>
-        
+
         {history.length > 0 && !selectedDate && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.clearButton}
             onPress={handleClearHistory}
           >
@@ -97,16 +130,20 @@ export default function HistoryList({
         )}
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={history.length === 0 ? styles.emptyContainer : styles.contentContainer}
+        contentContainerStyle={
+          history.length === 0 ? styles.emptyContainer : styles.contentContainer
+        }
       >
         {history.length === 0 ? (
           <View style={styles.emptyState}>
             <Clock size={64} color="#E5E7EB" />
             <Text style={styles.emptyTitle}>
-              {selectedDate ? '선택한 날짜에 검색 기록이 없습니다' : '검색 기록이 없습니다'}
+              {selectedDate
+                ? '선택한 날짜에 검색 기록이 없습니다'
+                : '검색 기록이 없습니다'}
             </Text>
             <Text style={styles.emptySubtitle}>
               단어나 문장을 검색하면 기록이 여기에 표시됩니다

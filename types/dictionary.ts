@@ -42,6 +42,10 @@ export interface HistoryItem {
   translatedText: string;
   searchType: SearchType;
   searchedAt: number;
+  searchedData: {
+    lng: string;
+    text: string;
+  }[];
 }
 
 export const SUPPORTED_LANGUAGES: Language[] = [
