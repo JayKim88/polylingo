@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { TranslationResult, SUPPORTED_LANGUAGES, SearchType } from '../types/dictionary';
-import { Heart, Copy, Volume2, VolumeX, GripVertical } from 'lucide-react-native';
+import {
+  TranslationResult,
+  SUPPORTED_LANGUAGES,
+  SearchType,
+} from '../types/dictionary';
+import {
+  Heart,
+  Copy,
+  Volume2,
+  VolumeX,
+  GripVertical,
+} from 'lucide-react-native';
 import { StorageService } from '../utils/storage';
 import { SpeechService } from '../utils/speechService';
 import * as Clipboard from 'expo-clipboard';
@@ -15,17 +25,19 @@ interface TranslationCardProps {
   isDragging?: boolean;
 }
 
-export default function TranslationCard({ 
-  result, 
-  onFavoriteToggle, 
+export default function TranslationCard({
+  result,
+  onFavoriteToggle,
   isFavorite,
   searchType,
   onLongPress,
-  isDragging
+  isDragging,
 }: TranslationCardProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const targetLanguage = SUPPORTED_LANGUAGES.find(lang => lang.code === result.targetLanguage);
-  
+  const targetLanguage = SUPPORTED_LANGUAGES.find(
+    (lang) => lang.code === result.targetLanguage
+  );
+
   const handleFavorite = async () => {
     if (!isFavorite) {
       await StorageService.addFavorite({
@@ -43,13 +55,13 @@ export default function TranslationCard({
   const handleCopy = async () => {
     try {
       let textToCopy = result.translatedText;
-      
+
       if (result.meanings && result.meanings.length > 0) {
-        textToCopy = result.meanings.map(meaning => 
-          `${meaning.translation} - ${meaning.context}`
-        ).join('\n');
+        textToCopy = result.meanings
+          .map((meaning) => `${meaning.translation} - ${meaning.type}`)
+          .join('\n');
       }
-      
+
       await Clipboard.setStringAsync(textToCopy);
     } catch (error) {
       Alert.alert('오류', '복사 중 오류가 발생했습니다.');
@@ -100,12 +112,14 @@ export default function TranslationCard({
         <View style={styles.languageInfo}>
           <Text style={styles.flag}>{targetLanguage?.flag}</Text>
           <View style={styles.languageDetails}>
-            <Text style={styles.languageName}>{targetLanguage?.nativeName}</Text>
+            <Text style={styles.languageName}>
+              {targetLanguage?.nativeName}
+            </Text>
             {result.confidence > 0 && (
-              <Text 
+              <Text
                 style={[
                   styles.confidenceText,
-                  { color: getConfidenceColor(result.confidence) }
+                  { color: getConfidenceColor(result.confidence) },
                 ]}
               >
                 신뢰도: {getConfidenceText(result.confidence)}
@@ -113,27 +127,30 @@ export default function TranslationCard({
             )}
           </View>
         </View>
-        
+
         <View style={styles.actions}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionButton}
             onPress={handleFavorite}
             disabled={result.confidence === 0}
           >
-            <Heart 
-              size={20} 
-              color={isFavorite ? "#EF4444" : "#9CA3AF"} 
-              fill={isFavorite ? "#EF4444" : "none"}
+            <Heart
+              size={20}
+              color={isFavorite ? '#EF4444' : '#9CA3AF'}
+              fill={isFavorite ? '#EF4444' : 'none'}
             />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionButton}
             onPress={handleCopy}
             disabled={result.confidence === 0}
           >
-            <Copy size={20} color={result.confidence === 0 ? "#D1D5DB" : "#9CA3AF"} />
+            <Copy
+              size={20}
+              color={result.confidence === 0 ? '#D1D5DB' : '#9CA3AF'}
+            />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionButton}
             onPress={handleSpeak}
             disabled={result.confidence === 0 || !SpeechService.isAvailable()}
@@ -141,9 +158,13 @@ export default function TranslationCard({
             {isSpeaking ? (
               <VolumeX size={20} color="#6366F1" />
             ) : (
-              <Volume2 
-                size={20} 
-                color={result.confidence === 0 || !SpeechService.isAvailable() ? "#D1D5DB" : "#9CA3AF"} 
+              <Volume2
+                size={20}
+                color={
+                  result.confidence === 0 || !SpeechService.isAvailable()
+                    ? '#D1D5DB'
+                    : '#9CA3AF'
+                }
               />
             )}
           </TouchableOpacity>
@@ -154,46 +175,47 @@ export default function TranslationCard({
           )}
         </View>
       </View>
-      
-      {searchType === 'word' && result.meanings && result.meanings.length > 0 ? (
+
+      {result.meanings && result.meanings.length > 1 ? (
         <View style={styles.meaningsContainer}>
+          <Text
+            style={[
+              styles.translatedTextWithExample,
+              result.confidence === 0 && styles.errorText,
+            ]}
+          >
+            {result.translatedText}
+          </Text>
           {result.meanings.slice(0, 5).map((meaning, index) => (
             <View key={index} style={styles.meaningItem}>
               <Text style={styles.meaningTranslation}>
                 {index + 1}. {meaning.translation}
               </Text>
-              <Text style={styles.meaningContext}>
-                {meaning.context}
-              </Text>
-              {meaning.example && (
-                <Text style={styles.meaningExample}>
-                  예: {meaning.example}
-                </Text>
-              )}
+              <Text style={styles.meaningContext}>{meaning.type}</Text>
             </View>
           ))}
         </View>
       ) : (
-        <Text 
+        <Text
           style={[
             styles.translatedText,
-            result.confidence === 0 && styles.errorText
+            result.confidence === 0 && styles.errorText,
           ]}
         >
           {result.translatedText}
         </Text>
       )}
-      
+
       {result.confidence > 0 && (
         <View style={styles.confidenceBar}>
-          <View 
+          <View
             style={[
               styles.confidenceProgress,
-              { 
+              {
                 width: `${result.confidence * 100}%`,
-                backgroundColor: getConfidenceColor(result.confidence)
-              }
-            ]} 
+                backgroundColor: getConfidenceColor(result.confidence),
+              },
+            ]}
           />
         </View>
       )}
@@ -266,6 +288,14 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 12,
   },
+  translatedTextWithExample: {
+    fontSize: 24,
+    fontFamily: 'Inter-SemiBold',
+    lineHeight: 26,
+    color: '#111827',
+    marginBottom: 12,
+    fontWeight: 500,
+  },
   errorText: {
     color: '#EF4444',
     fontStyle: 'italic',
@@ -281,7 +311,7 @@ const styles = StyleSheet.create({
   },
   meaningTranslation: {
     fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Inter-Regular',
     color: '#111827',
     marginBottom: 4,
   },

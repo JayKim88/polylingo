@@ -11,7 +11,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Languages, Globe } from 'lucide-react-native';
 import LanguageSelector from '../../components/LanguageSelector';
-import SearchTypeSelector from '../../components/SearchTypeSelector';
 import SearchInput from '../../components/SearchInput';
 import DraggableTranslationList from '../../components/DraggableTranslationList';
 import LanguageModal from '../../components/LanguageModal';
@@ -26,7 +25,6 @@ import {
 export default function SearchTab() {
   const [sourceLanguage, setSourceLanguage] = useState('ko');
   const [searchText, setSearchText] = useState('');
-  const [searchType, setSearchType] = useState<SearchType>('word');
   const [results, setResults] = useState<TranslationResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -57,23 +55,9 @@ export default function SearchTab() {
     }
   };
 
-  const isWordOnly = (text: string): boolean => {
-    const trimmed = text.trim();
-    // 공백이 있으면 문장으로 간주
-    if (trimmed.includes(' ')) return false;
-    // 특수문자나 구두점이 있으면 문장으로 간주 (하이픈과 아포스트로피는 제외)
-    if (/[.!?;:,\n\r\t]/.test(trimmed)) return false;
-    return true;
-  };
 
   const handleSearch = async () => {
     if (!searchText.trim()) return;
-
-    // 단어만 허용 (문장 차단)
-    if (searchType === 'word' && !isWordOnly(searchText)) {
-      alert('단어만 검색 가능합니다. 문장은 검색할 수 없습니다.');
-      return;
-    }
 
     setIsLoading(true);
     try {
@@ -82,11 +66,8 @@ export default function SearchTab() {
           searchText.trim(),
           sourceLanguage,
           selectedLanguages,
-          searchType
+          'sentence'
         );
-
-      console.log('sourceLanguage?', sourceLanguage, selectedLanguages);
-      console.log('translationResults?', translationResults);
 
       const exceptSourceLngResults = translationResults.filter(
         (v) => v.targetLanguage !== sourceLanguage
@@ -101,7 +82,7 @@ export default function SearchTab() {
           targetLanguage: 'multiple',
           sourceText: searchText.trim(),
           translatedText: `${exceptSourceLngResults.length} translations`,
-          searchType,
+          searchType: 'sentence',
         });
       }
     } catch (error) {
@@ -167,21 +148,12 @@ export default function SearchTab() {
           selectedLanguages={selectedLanguages}
         />
 
-        <SearchTypeSelector
-          selectedType={searchType}
-          onTypeSelect={setSearchType}
-        />
-
         <SearchInput
           value={searchText}
           onChangeText={setSearchText}
           onSearch={handleSearch}
           onClear={handleClear}
-          placeholder={
-            searchType === 'word'
-              ? '번역할 단어를 입력하세요...'
-              : '번역할 문장을 입력하세요...'
-          }
+          placeholder="번역할 텍스트를 입력하세요..."
           isLoading={isLoading}
         />
 
@@ -190,7 +162,7 @@ export default function SearchTab() {
           favorites={favorites}
           onFavoriteToggle={handleFavoriteToggle}
           onReorder={handleResultsReorder}
-          searchType={searchType}
+          searchType="sentence"
         />
       </View>
 

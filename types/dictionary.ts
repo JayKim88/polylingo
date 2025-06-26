@@ -9,8 +9,7 @@ export type SearchType = 'word' | 'sentence';
 
 export interface TranslationMeaning {
   translation: string;
-  context: string;
-  example: string;
+  type: string;
 }
 
 export interface TranslationResult {
