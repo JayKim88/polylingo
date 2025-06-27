@@ -14,12 +14,14 @@ interface HistoryListProps {
   history: HistoryItem[];
   selectedDate: string | null;
   onClearHistory: () => void;
+  onRemoveHistoryItem: (id: string) => void;
 }
 
 export default function HistoryList({
   history,
   selectedDate,
   onClearHistory,
+  onRemoveHistoryItem,
 }: HistoryListProps) {
   const handleClearHistory = () => {
     Alert.alert('기록 삭제', '모든 검색 기록을 삭제하시겠습니까?', [
@@ -32,17 +34,34 @@ export default function HistoryList({
     ]);
   };
 
-  const formatTimeAgo = (timestamp: number) => {
+  const handleRemoveItem = (item: HistoryItem) => {
+    Alert.alert('기록 삭제', '이 검색 기록을 삭제하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => onRemoveHistoryItem(item.id),
+      },
+    ]);
+  };
+
+  const formattedTime = (timestamp: number) => {
     const now = Date.now();
     const diff = now - timestamp;
     const minutes = Math.floor(diff / (1000 * 60));
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
     if (minutes < 1) return '방금 전';
     if (minutes < 60) return `${minutes}분 전`;
     if (hours < 24) return `${hours}시간 전`;
-    return `${days}일 전`;
+
+    return new Date().toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const renderHistoryItem = (item: HistoryItem) => {
@@ -61,7 +80,15 @@ export default function HistoryList({
               </Text>
             </View>
           </View>
-          <Text style={styles.timeAgo}>{formatTimeAgo(item.searchedAt)}</Text>
+          <View style={styles.headerActions}>
+            <Text style={styles.timeAgo}>{formattedTime(item.searchedAt)}</Text>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleRemoveItem(item)}
+            >
+              <Trash2 size={16} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <Text style={styles.sourceText}>{item.sourceText}</Text>
@@ -87,7 +114,7 @@ export default function HistoryList({
                   backgroundColor: '#e3e3ff',
                 }}
               >
-                {v.lng} - {v.text}
+                {v.lng.toUpperCase()} - {v.text}
               </Text>
             ))}
           </ScrollView>
@@ -114,7 +141,7 @@ export default function HistoryList({
           <Text style={styles.count}>{history.length}개</Text>
         </View>
 
-        {history.length > 0 && !selectedDate && (
+        {history.length > 0 && (
           <TouchableOpacity
             style={styles.clearButton}
             onPress={handleClearHistory}
@@ -271,16 +298,26 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: '#6366F1',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   timeAgo: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
     color: '#9CA3AF',
   },
+  deleteButton: {
+    padding: 8,
+    backgroundColor: '#FEF2F2',
+    borderRadius: 8,
+  },
   sourceText: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
     color: '#111827',
-    marginBottom: 4,
+    marginBottom: 16,
   },
   translatedText: {
     fontSize: 14,

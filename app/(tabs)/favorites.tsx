@@ -1,10 +1,17 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { Heart } from 'lucide-react-native';
+import { Heart, Calendar } from 'lucide-react-native';
 import CalendarView from '../../components/CalendarView';
 import FavoritesList from '../../components/FavoritesList';
+import DatePickerModal from '../../components/DatePickerModal';
 import { StorageService } from '../../utils/storage';
 import { FavoriteItem } from '../../types/dictionary';
 
@@ -15,6 +22,7 @@ export default function FavoritesTab() {
     []
   );
   const [favoriteDates, setFavoriteDates] = useState<string[]>([]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -51,6 +59,10 @@ export default function FavoritesTab() {
     }
   };
 
+  const handleDatePickerSelect = (date: string | null) => {
+    handleDateSelect(date);
+  };
+
   const handleRemoveFavorite = async (id: string) => {
     await StorageService.removeFavorite(id);
     loadFavorites();
@@ -59,29 +71,41 @@ export default function FavoritesTab() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.titleSection}>
-          <Heart size={32} color="#EF4444" fill="#EF4444" />
-          <Text style={styles.headerTitle}>좋아요</Text>
+        <View style={styles.headerContent}>
+          <View style={styles.titleSection}>
+            <Heart size={32} color="#EF4444" fill="#EF4444" />
+            <Text style={styles.headerTitle}>좋아요</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.calendarButton}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Calendar size={24} color="#EF4444" />
+          </TouchableOpacity>
         </View>
         <Text style={styles.headerSubtitle}>
-          저장한 번역 결과를 날짜별로 확인하세요
+          {selectedDate
+            ? `${new Date(selectedDate).getFullYear()}년 ${
+                new Date(selectedDate).getMonth() + 1
+              }월 ${new Date(selectedDate).getDate()}일`
+            : '저장한 번역 결과를 날짜별로 확인하세요'}
         </Text>
       </View>
       <View style={styles.content}>
-        <ScrollView>
-          <CalendarView
-            markedDates={favoriteDates}
-            selectedDate={selectedDate}
-            onDateSelect={handleDateSelect}
-            markColor="#EF4444"
-          />
-          <FavoritesList
-            favorites={filteredFavorites}
-            selectedDate={selectedDate}
-            onRemoveFavorite={handleRemoveFavorite}
-          />
-        </ScrollView>
+        <FavoritesList
+          favorites={filteredFavorites}
+          selectedDate={selectedDate}
+          onRemoveFavorite={handleRemoveFavorite}
+        />
       </View>
+
+      <DatePickerModal
+        visible={showDatePicker}
+        selectedDate={selectedDate}
+        markedDates={favoriteDates}
+        onDateSelect={handleDatePickerSelect}
+        onClose={() => setShowDatePicker(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -103,16 +127,26 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   titleSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
   headerTitle: {
     fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
     marginLeft: 12,
+  },
+  calendarButton: {
+    padding: 12,
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
   },
   headerSubtitle: {
     fontSize: 16,

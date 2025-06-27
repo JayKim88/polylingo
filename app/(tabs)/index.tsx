@@ -2,11 +2,12 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { Languages, Globe } from 'lucide-react-native';
+import { Languages, Globe, Mic } from 'lucide-react-native';
 import LanguageSelector from '../../components/LanguageSelector';
 import SearchInput from '../../components/SearchInput';
 import DraggableTranslationList from '../../components/DraggableTranslationList';
 import LanguageModal from '../../components/LanguageModal';
+import VoiceSettingsModal from '../../components/VoiceSettingsModal';
 import { TranslationAPI } from '../../utils/translationAPI';
 import { StorageService } from '../../utils/storage';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
@@ -18,6 +19,7 @@ export default function SearchTab() {
   const [isLoading, setIsLoading] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showVoiceSettingsModal, setShowVoiceSettingsModal] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
     SUPPORTED_LANGUAGES.map((v) => v.code)
   );
@@ -120,12 +122,20 @@ export default function SearchTab() {
             <Globe size={32} color="#6366F1" />
             <Text style={styles.headerTitle}>다국어 사전</Text>
           </View>
-          <TouchableOpacity
-            style={styles.languageButton}
-            onPress={() => setShowLanguageModal(true)}
-          >
-            <Languages size={24} color="#6366F1" />
-          </TouchableOpacity>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={styles.voiceButton}
+              onPress={() => setShowVoiceSettingsModal(true)}
+            >
+              <Mic size={24} color="#6366F1" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.languageButton}
+              onPress={() => setShowLanguageModal(true)}
+            >
+              <Languages size={24} color="#6366F1" />
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={styles.headerSubtitle}>
           {selectedLanguages.length}개 언어로 동시 번역
@@ -163,6 +173,11 @@ export default function SearchTab() {
         onLanguageSelection={handleLanguageSelection}
         onClose={() => setShowLanguageModal(false)}
       />
+
+      <VoiceSettingsModal
+        visible={showVoiceSettingsModal}
+        onClose={() => setShowVoiceSettingsModal(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -199,6 +214,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
     marginLeft: 12,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  voiceButton: {
+    padding: 12,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
   },
   languageButton: {
     padding: 12,

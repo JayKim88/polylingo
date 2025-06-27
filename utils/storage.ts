@@ -5,7 +5,14 @@ const FAVORITES_KEY = 'dictionary_favorites';
 const HISTORY_KEY = 'dictionary_history';
 const SELECTED_LANGUAGES_KEY = 'selected_languages';
 const LANGUAGE_ORDER_KEY = 'language_order';
+const VOICE_SETTINGS_KEY = 'voice_settings';
 const MAX_HISTORY_ITEMS = 100;
+
+export interface VoiceSettings {
+  volume: number; // 0.0 - 1.0
+  rate: number; // 0.1 - 2.0
+  pitch: number; // 0.0 - 2.0
+}
 
 export class StorageService {
   static async addSelecte(): Promise<FavoriteItem[]> {
@@ -118,6 +125,16 @@ export class StorageService {
     }
   }
 
+  static async removeHistoryItem(id: string): Promise<void> {
+    try {
+      const history = await this.getHistory();
+      const filteredHistory = history.filter((item) => item.id !== id);
+      await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(filteredHistory));
+    } catch (error) {
+      console.error('Error removing history item:', error);
+    }
+  }
+
   static async getSelectedLanguages(): Promise<string[]> {
     try {
       const data = await AsyncStorage.getItem(SELECTED_LANGUAGES_KEY);
@@ -157,6 +174,32 @@ export class StorageService {
     } catch (error) {
       console.error('Error loading language order:', error);
       return [];
+    }
+  }
+
+  static async getVoiceSettings(): Promise<VoiceSettings> {
+    try {
+      const data = await AsyncStorage.getItem(VOICE_SETTINGS_KEY);
+      return data ? JSON.parse(data) : {
+        volume: 1.0,
+        rate: 0.8,
+        pitch: 1.0
+      };
+    } catch (error) {
+      console.error('Error loading voice settings:', error);
+      return {
+        volume: 1.0,
+        rate: 0.8,
+        pitch: 1.0
+      };
+    }
+  }
+
+  static async saveVoiceSettings(settings: VoiceSettings): Promise<void> {
+    try {
+      await AsyncStorage.setItem(VOICE_SETTINGS_KEY, JSON.stringify(settings));
+    } catch (error) {
+      console.error('Error saving voice settings:', error);
     }
   }
 }

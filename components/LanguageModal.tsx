@@ -6,9 +6,13 @@ import {
   Modal,
   FlatList,
   StyleSheet,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform as RNPlatform,
 } from 'react-native';
 import { Language, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { X, Check } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface LanguageModalProps {
   visible: boolean;
@@ -23,6 +27,7 @@ export default function LanguageModal({
   onLanguageSelection,
   onClose,
 }: LanguageModalProps) {
+  const insets = useSafeAreaInsets();
   const [tempSelected, setTempSelected] = useState<string[]>(selectedLanguages);
 
   const toggleLanguage = (languageCode: string) => {
@@ -69,40 +74,52 @@ export default function LanguageModal({
   return (
     <Modal
       visible={visible}
-      transparent
       animationType="slide"
+      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>번역할 언어 선택</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={handleCancel}>
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={RNPlatform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={styles.header}>
+            <Text style={styles.title}>번역할 언어 선택</Text>
+            <TouchableOpacity onPress={handleCancel} style={styles.closeButton}>
               <X size={24} color="#6B7280" />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.subtitle}>
-            {tempSelected.length}개 언어가 선택됨
-          </Text>
+          <View style={styles.content}>
+            <Text style={styles.subtitle}>
+              {tempSelected.length}개 언어가 선택됨
+            </Text>
 
-          <FlatList
-            data={SUPPORTED_LANGUAGES}
-            renderItem={renderLanguageItem}
-            keyExtractor={(item) => item.code}
-            style={styles.languageList}
-            showsVerticalScrollIndicator={false}
-          />
+            <FlatList
+              data={SUPPORTED_LANGUAGES}
+              renderItem={renderLanguageItem}
+              keyExtractor={(item) => item.code}
+              style={styles.languageList}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.listContainer}
+            />
+          </View>
 
-          <View style={styles.buttonContainer}>
+          <View
+            style={[
+              styles.actions,
+              { paddingBottom: Math.max(insets.bottom, 20) + 14 },
+            ]}
+          >
             <TouchableOpacity
-              style={styles.cancelButton}
+              style={[styles.actionButton, styles.cancelButton]}
               onPress={handleCancel}
             >
               <Text style={styles.cancelButtonText}>취소</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
+                styles.actionButton,
                 styles.confirmButton,
                 tempSelected.length < 2 && styles.disabledButton,
               ]}
@@ -112,39 +129,39 @@ export default function LanguageModal({
               <Text style={styles.confirmButtonText}>확인</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    width: '90%',
-    maxHeight: '80%',
   },
-  modalHeader: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
-  modalTitle: {
+  title: {
     fontSize: 20,
     fontFamily: 'Inter-Bold',
     color: '#111827',
   },
   closeButton: {
-    padding: 4,
+    padding: 8,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 24,
   },
   subtitle: {
     fontSize: 14,
@@ -153,8 +170,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   languageList: {
-    maxHeight: 300,
-    marginBottom: 20,
+    flex: 1,
+  },
+  listContainer: {
+    paddingBottom: 20,
   },
   languageItem: {
     flexDirection: 'row',
@@ -164,6 +183,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 8,
     backgroundColor: '#F9FAFB',
+    borderWidth: 2,
+    borderColor: '#F9FAFB',
   },
   selectedLanguageItem: {
     backgroundColor: '#EEF2FF',
@@ -193,34 +214,40 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 2,
   },
-  buttonContainer: {
+  actions: {
     flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
     gap: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
   },
   cancelButton: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   cancelButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-SemiBold',
-    color: '#374151',
+    color: '#6B7280',
   },
   confirmButton: {
-    flex: 1,
-    padding: 16,
     backgroundColor: '#6366F1',
-    borderRadius: 12,
-    alignItems: 'center',
   },
   disabledButton: {
     backgroundColor: '#9CA3AF',
   },
   confirmButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
   },

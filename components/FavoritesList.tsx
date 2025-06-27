@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+} from 'react-native';
 import { FavoriteItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { Trash2, Heart } from 'lucide-react-native';
 
@@ -9,10 +16,10 @@ interface FavoritesListProps {
   onRemoveFavorite: (id: string) => void;
 }
 
-export default function FavoritesList({ 
-  favorites, 
-  selectedDate, 
-  onRemoveFavorite 
+export default function FavoritesList({
+  favorites,
+  selectedDate,
+  onRemoveFavorite,
 }: FavoritesListProps) {
   const handleRemoveFavorite = (id: string, sourceText: string) => {
     Alert.alert(
@@ -30,8 +37,12 @@ export default function FavoritesList({
   };
 
   const renderFavoriteItem = (item: FavoriteItem) => {
-    const sourceLanguage = SUPPORTED_LANGUAGES.find(lang => lang.code === item.sourceLanguage);
-    const targetLanguage = SUPPORTED_LANGUAGES.find(lang => lang.code === item.targetLanguage);
+    const sourceLanguage = SUPPORTED_LANGUAGES.find(
+      (lang) => lang.code === item.sourceLanguage
+    );
+    const targetLanguage = SUPPORTED_LANGUAGES.find(
+      (lang) => lang.code === item.targetLanguage
+    );
 
     return (
       <View key={item.id} style={styles.favoriteCard}>
@@ -42,11 +53,15 @@ export default function FavoritesList({
             <Text style={styles.flag}>{targetLanguage?.flag}</Text>
           </View>
           <View style={styles.headerActions}>
-            <View style={styles.searchTypeBadge}>
-              <Text style={styles.searchTypeText}>
-                {item.searchType === 'word' ? '단어' : '문장'}
-              </Text>
-            </View>
+            <Text style={styles.dateText}>
+              {new Date(item.createdAt).toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={() => handleRemoveFavorite(item.id, item.sourceText)}
@@ -55,19 +70,17 @@ export default function FavoritesList({
             </TouchableOpacity>
           </View>
         </View>
-        
+
         <Text style={styles.sourceText}>{item.sourceText}</Text>
-        
-        {item.searchType === 'word' && item.meanings && item.meanings.length > 0 ? (
+
+        {item.meanings && item.meanings.length > 0 ? (
           <View style={styles.meaningsContainer}>
             {item.meanings.slice(0, 3).map((meaning, index) => (
               <View key={index} style={styles.meaningItem}>
                 <Text style={styles.meaningTranslation}>
                   {index + 1}. {meaning.translation}
                 </Text>
-                <Text style={styles.meaningContext}>
-                  {meaning.context}
-                </Text>
+                <Text style={styles.meaningContext}>{meaning.type}</Text>
               </View>
             ))}
             {item.meanings.length > 3 && (
@@ -79,16 +92,6 @@ export default function FavoritesList({
         ) : (
           <Text style={styles.translatedText}>{item.translatedText}</Text>
         )}
-        
-        <Text style={styles.dateText}>
-          {new Date(item.createdAt).toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
-        </Text>
       </View>
     );
   };
@@ -96,7 +99,9 @@ export default function FavoritesList({
   const getTitle = () => {
     if (selectedDate) {
       const date = new Date(selectedDate);
-      return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+      return `${date.getFullYear()}년 ${
+        date.getMonth() + 1
+      }월 ${date.getDate()}일`;
     }
     return '전체 즐겨찾기';
   };
@@ -108,16 +113,22 @@ export default function FavoritesList({
         <Text style={styles.count}>{favorites.length}개</Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={favorites.length === 0 ? styles.emptyContainer : styles.contentContainer}
+        contentContainerStyle={
+          favorites.length === 0
+            ? styles.emptyContainer
+            : styles.contentContainer
+        }
       >
         {favorites.length === 0 ? (
           <View style={styles.emptyState}>
             <Heart size={64} color="#E5E7EB" />
             <Text style={styles.emptyTitle}>
-              {selectedDate ? '선택한 날짜에 저장된 즐겨찾기가 없습니다' : '저장된 즐겨찾기가 없습니다'}
+              {selectedDate
+                ? '선택한 날짜에 저장된 즐겨찾기가 없습니다'
+                : '저장된 즐겨찾기가 없습니다'}
             </Text>
             <Text style={styles.emptySubtitle}>
               검색 결과에서 하트 버튼을 눌러 즐겨찾기에 추가해보세요
@@ -242,7 +253,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Inter-Regular',
     color: '#111827',
-    marginBottom: 12,
     lineHeight: 24,
   },
   meaningsContainer: {
