@@ -1,16 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
-import { TranslationResult, SearchType } from '../types/dictionary';
+import DraggableFlatList, {
+  RenderItemParams,
+} from 'react-native-draggable-flatlist';
+import { TranslationResult } from '../types/dictionary';
 import TranslationCard from './TranslationCard';
-import { GripVertical } from 'lucide-react-native';
 
 interface DraggableTranslationListProps {
   results: TranslationResult[];
   favorites: string[];
   onFavoriteToggle: () => void;
   onReorder: (newResults: TranslationResult[]) => void;
-  searchType: SearchType;
 }
 
 export default function DraggableTranslationList({
@@ -18,20 +18,22 @@ export default function DraggableTranslationList({
   favorites,
   onFavoriteToggle,
   onReorder,
-  searchType
 }: DraggableTranslationListProps) {
   const isFavorite = (result: TranslationResult) => {
     const id = `${result.sourceText}-${result.sourceLanguage}-${result.targetLanguage}`;
     return favorites.includes(id);
   };
 
-  const renderItem = ({ item, drag, isActive }: RenderItemParams<TranslationResult>) => (
+  const renderItem = ({
+    item,
+    drag,
+    isActive,
+  }: RenderItemParams<TranslationResult>) => (
     <View style={[styles.itemContainer, isActive && styles.activeItem]}>
       <TranslationCard
         result={item}
         isFavorite={isFavorite(item)}
         onFavoriteToggle={onFavoriteToggle}
-        searchType={searchType}
         onLongPress={drag}
         isDragging={isActive}
       />
@@ -41,9 +43,7 @@ export default function DraggableTranslationList({
   if (results.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>
-          검색어를 입력해주세요
-        </Text>
+        <Text style={styles.emptyText}>검색어를 입력해주세요</Text>
       </View>
     );
   }
@@ -51,14 +51,10 @@ export default function DraggableTranslationList({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>
-          {results.length}개 언어로 번역됨
-        </Text>
-        <Text style={styles.dragHint}>
-          길게 눌러서 순서 변경
-        </Text>
+        <Text style={styles.headerText}>{results.length}개 언어로 번역됨</Text>
+        <Text style={styles.dragHint}>길게 눌러서 순서 변경</Text>
       </View>
-      
+
       <DraggableFlatList
         data={results}
         renderItem={renderItem}

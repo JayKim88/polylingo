@@ -59,11 +59,6 @@ export default function HistoryList({
               <Text style={styles.languageName}>
                 {sourceLanguage?.nativeName}
               </Text>
-              <View style={styles.searchTypeBadge}>
-                <Text style={styles.searchTypeText}>
-                  {item.searchType === 'word' ? '단어' : '문장'}
-                </Text>
-              </View>
             </View>
           </View>
           <Text style={styles.timeAgo}>{formatTimeAgo(item.searchedAt)}</Text>
@@ -80,9 +75,9 @@ export default function HistoryList({
               alignItems: 'center',
             }}
           >
-            {item.searchedData.map((v) => (
+            {item.searchedData.map((v, index) => (
               <Text
-                key={v.text}
+                key={`${v.lng}-${v.text}-${index}`}
                 style={{
                   borderRadius: 24,
                   width: 'auto',

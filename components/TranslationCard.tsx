@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import {
-  TranslationResult,
-  SUPPORTED_LANGUAGES,
-  SearchType,
-} from '../types/dictionary';
+import { TranslationResult, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import {
   Heart,
   Copy,
@@ -20,7 +16,6 @@ interface TranslationCardProps {
   result: TranslationResult;
   onFavoriteToggle?: () => void;
   isFavorite?: boolean;
-  searchType: SearchType;
   onLongPress?: () => void;
   isDragging?: boolean;
 }
@@ -29,7 +24,6 @@ export default function TranslationCard({
   result,
   onFavoriteToggle,
   isFavorite,
-  searchType,
   onLongPress,
   isDragging,
 }: TranslationCardProps) {
@@ -46,7 +40,6 @@ export default function TranslationCard({
         sourceText: result.sourceText,
         translatedText: result.translatedText,
         meanings: result.meanings,
-        searchType: result.searchType,
       });
     }
     onFavoriteToggle?.();
@@ -76,14 +69,21 @@ export default function TranslationCard({
     }
 
     if (!SpeechService.isAvailable()) {
-      Alert.alert('알림', '이 브라우저에서는 음성 기능을 지원하지 않습니다.');
+      Alert.alert(
+        '알림',
+        `이 기기에서는 음성 기능을 지원하지 않습니다.\n\n${SpeechService.getPlatformInfo()}`
+      );
       return;
     }
 
     try {
       setIsSpeaking(true);
+      console.log(
+        `🔊 Speaking: "${result.translatedText}" in ${result.targetLanguage}`
+      );
       await SpeechService.speak(result.translatedText, result.targetLanguage);
     } catch (error) {
+      console.log('🔊 TTS Error:', error);
       Alert.alert('오류', '음성 재생 중 오류가 발생했습니다.');
     } finally {
       setIsSpeaking(false);
@@ -178,14 +178,21 @@ export default function TranslationCard({
 
       {result.meanings && result.meanings.length > 1 ? (
         <View style={styles.meaningsContainer}>
-          <Text
-            style={[
-              styles.translatedTextWithExample,
-              result.confidence === 0 && styles.errorText,
-            ]}
-          >
-            {result.translatedText}
-          </Text>
+          <View style={styles.translationHeader}>
+            <Text
+              style={[
+                styles.translatedTextWithExample,
+                result.confidence === 0 && styles.errorText,
+              ]}
+            >
+              {result.translatedText}
+            </Text>
+            {result.pronunciation && (
+              <Text style={styles.pronunciationText}>
+                {result.pronunciation}
+              </Text>
+            )}
+          </View>
           {result.meanings.slice(0, 5).map((meaning, index) => (
             <View key={index} style={styles.meaningItem}>
               <Text style={styles.meaningTranslation}>
@@ -196,14 +203,19 @@ export default function TranslationCard({
           ))}
         </View>
       ) : (
-        <Text
-          style={[
-            styles.translatedText,
-            result.confidence === 0 && styles.errorText,
-          ]}
-        >
-          {result.translatedText}
-        </Text>
+        <View style={styles.translationContent}>
+          <Text
+            style={[
+              styles.translatedText,
+              result.confidence === 0 && styles.errorText,
+            ]}
+          >
+            {result.translatedText}
+          </Text>
+          {result.pronunciation && (
+            <Text style={styles.pronunciationText}>{result.pronunciation}</Text>
+          )}
+        </View>
       )}
 
       {result.confidence > 0 && (
@@ -281,20 +293,34 @@ const styles = StyleSheet.create({
     padding: 8,
     marginLeft: 4,
   },
+  translationContent: {
+    marginBottom: 12,
+  },
+  translationHeader: {
+    marginBottom: 12,
+  },
   translatedText: {
     fontSize: 18,
     fontFamily: 'Inter-Regular',
     lineHeight: 26,
     color: '#111827',
-    marginBottom: 12,
+    marginBottom: 4,
   },
   translatedTextWithExample: {
     fontSize: 24,
     fontFamily: 'Inter-SemiBold',
     lineHeight: 26,
     color: '#111827',
-    marginBottom: 12,
+    marginBottom: 4,
     fontWeight: 500,
+  },
+  pronunciationText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#6366F1',
+    fontStyle: 'italic',
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   errorText: {
     color: '#EF4444',

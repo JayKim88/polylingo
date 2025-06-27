@@ -5,11 +5,10 @@ export interface Language {
   flag: string;
 }
 
-export type SearchType = 'word' | 'sentence';
-
 export interface TranslationMeaning {
   translation: string;
   type: string;
+  pronunciation?: string;
 }
 
 export interface TranslationResult {
@@ -18,9 +17,9 @@ export interface TranslationResult {
   sourceText: string;
   translatedText: string;
   meanings?: TranslationMeaning[];
+  pronunciation?: string;
   confidence: number;
   timestamp: number;
-  searchType: SearchType;
 }
 
 export interface FavoriteItem {
@@ -30,7 +29,6 @@ export interface FavoriteItem {
   sourceText: string;
   translatedText: string;
   meanings?: TranslationMeaning[];
-  searchType: SearchType;
   createdAt: number;
 }
 
@@ -40,7 +38,6 @@ export interface HistoryItem {
   targetLanguage: string;
   sourceText: string;
   translatedText: string;
-  searchType: SearchType;
   searchedAt: number;
   searchedData: {
     lng: string;

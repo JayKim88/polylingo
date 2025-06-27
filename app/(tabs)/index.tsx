@@ -1,12 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Languages, Globe } from 'lucide-react-native';
@@ -16,11 +9,7 @@ import DraggableTranslationList from '../../components/DraggableTranslationList'
 import LanguageModal from '../../components/LanguageModal';
 import { TranslationAPI } from '../../utils/translationAPI';
 import { StorageService } from '../../utils/storage';
-import {
-  TranslationResult,
-  SearchType,
-  SUPPORTED_LANGUAGES,
-} from '../../types/dictionary';
+import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
 
 export default function SearchTab() {
   const [sourceLanguage, setSourceLanguage] = useState('ko');
@@ -64,8 +53,7 @@ export default function SearchTab() {
         await TranslationAPI.translateToMultipleLanguages(
           searchText.trim(),
           sourceLanguage,
-          selectedLanguages,
-          'sentence'
+          selectedLanguages
         );
 
       const exceptSourceLngResults = translationResults.filter(
@@ -87,7 +75,6 @@ export default function SearchTab() {
           sourceText: searchText.trim(),
           translatedText: `${exceptSourceLngResults.length} translations`,
           searchedData,
-          searchType: 'sentence',
         });
       }
     } catch (error) {
@@ -167,7 +154,6 @@ export default function SearchTab() {
           favorites={favorites}
           onFavoriteToggle={handleFavoriteToggle}
           onReorder={handleResultsReorder}
-          searchType="sentence"
         />
       </View>
 

@@ -1,8 +1,5 @@
-import {
-  TranslationResult,
-  TranslationMeaning,
-  SearchType,
-} from '../types/dictionary';
+import { TranslationResult, TranslationMeaning } from '../types/dictionary';
+import { PronunciationService } from './pronunciationService';
 
 const MYMEMORY_BASE_URL = 'https://mymemory.translated.net/api/get';
 const LIBRETRANSLATE_BASE_URL =
@@ -12,6 +9,7 @@ const LIBRETRANSLATE_BASE_URL =
 interface CacheEntry {
   translation: string;
   meanings?: TranslationMeaning[];
+  pronunciation?: string;
   timestamp: number;
 }
 
@@ -24,10 +22,9 @@ export class TranslationAPI {
   private static getCacheKey(
     text: string,
     sourceLanguage: string,
-    targetLanguage: string,
-    searchType: SearchType
+    targetLanguage: string
   ): string {
-    return `${text.toLowerCase()}_${sourceLanguage}_${targetLanguage}_${searchType}`;
+    return `${text.toLowerCase()}_${sourceLanguage}_${targetLanguage}`;
   }
 
   // Check if cache entry is valid
@@ -39,15 +36,13 @@ export class TranslationAPI {
   private static getFromCache(
     text: string,
     sourceLanguage: string,
-    targetLanguage: string,
-    searchType: SearchType
-  ): { translation: string; meanings?: TranslationMeaning[] } | null {
-    const key = this.getCacheKey(
-      text,
-      sourceLanguage,
-      targetLanguage,
-      searchType
-    );
+    targetLanguage: string
+  ): {
+    translation: string;
+    meanings?: TranslationMeaning[];
+    pronunciation?: string;
+  } | null {
+    const key = this.getCacheKey(text, sourceLanguage, targetLanguage);
     const entry = this.translationCache.get(key);
 
     if (entry && this.isCacheValid(entry)) {
@@ -55,6 +50,7 @@ export class TranslationAPI {
       return {
         translation: entry.translation,
         meanings: entry.meanings,
+        pronunciation: entry.pronunciation,
       };
     }
 
@@ -71,19 +67,15 @@ export class TranslationAPI {
     text: string,
     sourceLanguage: string,
     targetLanguage: string,
-    searchType: SearchType,
     translation: string,
-    meanings?: TranslationMeaning[]
+    meanings?: TranslationMeaning[],
+    pronunciation?: string
   ): void {
-    const key = this.getCacheKey(
-      text,
-      sourceLanguage,
-      targetLanguage,
-      searchType
-    );
+    const key = this.getCacheKey(text, sourceLanguage, targetLanguage);
     this.translationCache.set(key, {
       translation,
       meanings,
+      pronunciation,
       timestamp: Date.now(),
     });
   }
@@ -259,9 +251,12 @@ export class TranslationAPI {
   static async translate(
     text: string,
     sourceLanguage: string,
-    targetLanguage: string,
-    searchType: SearchType
-  ): Promise<{ translation: string; meanings?: TranslationMeaning[] }> {
+    targetLanguage: string
+  ): Promise<{
+    translation: string;
+    meanings?: TranslationMeaning[];
+    pronunciation?: string;
+  }> {
     if (!text.trim()) return { translation: '' };
 
     // 같은 언어인 경우 원문 반환
@@ -270,46 +265,34 @@ export class TranslationAPI {
     }
 
     // 캐시에서 확인
-    const cached = this.getFromCache(
-      text,
-      sourceLanguage,
-      targetLanguage,
-      searchType
-    );
+    const cached = this.getFromCache(text, sourceLanguage, targetLanguage);
     if (cached) {
-      console.log('💾 Using cached translation');
-
       // Check if cached translation is URL-encoded and fix it
       let translation = cached.translation;
       if (translation.includes('%')) {
         try {
           const decoded = decodeURIComponent(translation);
-          console.log('🔧 Fixed URL-encoded cached translation');
 
           // Update cache with fixed version
           this.saveToCache(
             text,
             sourceLanguage,
             targetLanguage,
-            searchType,
             decoded,
-            cached.meanings
+            cached.meanings,
+            cached.pronunciation
           );
 
           return {
             translation: decoded,
             meanings: cached.meanings,
+            pronunciation: cached.pronunciation,
           };
         } catch (e) {
           console.log(
             '❌ Failed to decode cached translation, clearing cache entry'
           );
-          const key = this.getCacheKey(
-            text,
-            sourceLanguage,
-            targetLanguage,
-            searchType
-          );
+          const key = this.getCacheKey(text, sourceLanguage, targetLanguage);
           this.translationCache.delete(key);
           // Continue to fetch fresh translation
         }
@@ -333,7 +316,6 @@ export class TranslationAPI {
     //   targetLanguage
     // );
 
-    // MyMemory 실패시 LibreTranslate 시도 (설정된 경우만)
     if (LIBRETRANSLATE_BASE_URL) {
       console.log('🔄 Falling back to LibreTranslate...');
       translation = await this.translateWithLibreTranslate(
@@ -353,17 +335,34 @@ export class TranslationAPI {
       targetLanguage
     );
 
-    const result =
-      meanings.length > 0 ? { translation, meanings } : { translation };
+    let pronunciation: string | null = null;
+    pronunciation = await PronunciationService.getPronunciation(
+      translation,
+      targetLanguage
+    );
+
+    const result: {
+      translation: string;
+      meanings?: TranslationMeaning[];
+      pronunciation?: string;
+    } = { translation };
+
+    if (meanings.length > 0) {
+      result.meanings = meanings;
+    }
+
+    if (pronunciation) {
+      result.pronunciation = pronunciation;
+    }
 
     // 성공한 번역을 캐시에 저장
     this.saveToCache(
       text,
       sourceLanguage,
       targetLanguage,
-      searchType,
       translation,
-      meanings
+      meanings,
+      pronunciation || undefined
     );
 
     return result;
@@ -372,19 +371,13 @@ export class TranslationAPI {
   static async translateToMultipleLanguages(
     text: string,
     sourceLanguage: string,
-    targetLanguages: string[],
-    searchType: SearchType
+    targetLanguages: string[]
   ): Promise<TranslationResult[]> {
     if (!text.trim()) return [];
 
     const translationPromises = targetLanguages.map(async (targetLang) => {
       try {
-        const result = await this.translate(
-          text,
-          sourceLanguage,
-          targetLang,
-          searchType
-        );
+        const result = await this.translate(text, sourceLanguage, targetLang);
 
         // 번역 품질 평가
         let confidence = 0.9;
@@ -406,7 +399,7 @@ export class TranslationAPI {
           meanings: result.meanings,
           confidence,
           timestamp: Date.now(),
-          searchType,
+          pronunciation: result.pronunciation,
         };
       } catch (error) {
         return {
@@ -416,7 +409,6 @@ export class TranslationAPI {
           translatedText: '번역 서비스를 사용할 수 없습니다',
           confidence: 0,
           timestamp: Date.now(),
-          searchType,
         };
       }
     });
