@@ -1,5 +1,4 @@
 import { Tabs } from 'expo-router';
-import { StyleSheet } from 'react-native';
 import { Search, Heart, Clock, Settings } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -11,8 +10,26 @@ export default function TabLayout() {
           headerShown: false,
           tabBarActiveTintColor: '#6366F1',
           tabBarInactiveTintColor: '#9CA3AF',
-          tabBarStyle: styles.tabBar,
-          tabBarLabelStyle: styles.tabBarLabel,
+          tabBarStyle: {
+            backgroundColor: '#FFFFFF',
+            borderTopWidth: 1,
+            borderTopColor: '#E5E7EB',
+            paddingTop: 8,
+            paddingBottom: 8,
+            height: 70,
+            shadowColor: '#5e5757',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 8,
+            borderRadius: 30,
+            margin: 16,
+          },
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontFamily: 'Inter-SemiBold',
+            marginTop: 4,
+          },
         }}
       >
         <Tabs.Screen
@@ -56,25 +73,3 @@ export default function TabLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    paddingTop: 8,
-    paddingBottom: 8,
-    height: 70,
-    shadowColor: '#5e5757',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
-    borderRadius: 30,
-    margin: 16,
-  },
-  tabBarLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
-    marginTop: 4,
-  },
-});

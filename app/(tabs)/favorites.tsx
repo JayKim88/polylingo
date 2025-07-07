@@ -2,11 +2,10 @@ import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Heart, Calendar } from 'lucide-react-native';
 import CalendarView from '../../components/CalendarView';
@@ -16,6 +15,7 @@ import { StorageService } from '../../utils/storage';
 import { FavoriteItem } from '../../types/dictionary';
 
 export default function FavoritesTab() {
+  const insets = useSafeAreaInsets();
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [filteredFavorites, setFilteredFavorites] = useState<FavoriteItem[]>(
@@ -69,21 +69,24 @@ export default function FavoritesTab() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.titleSection}>
+    <SafeAreaView 
+      className="flex-1 bg-slate-50"
+      style={{ paddingBottom: insets.bottom - 50 }}
+    >
+      <View className="px-5 py-5 bg-white border-b border-gray-200 shadow-sm">
+        <View className="flex-row justify-between items-center mb-2">
+          <View className="flex-row items-center">
             <Heart size={32} color="#EF4444" fill="#EF4444" />
-            <Text style={styles.headerTitle}>좋아요</Text>
+            <Text className="text-3xl font-bold text-gray-800 ml-3">좋아요</Text>
           </View>
           <TouchableOpacity
-            style={styles.calendarButton}
+            className="p-3 bg-red-50 rounded-xl"
             onPress={() => setShowDatePicker(true)}
           >
             <Calendar size={24} color="#EF4444" />
           </TouchableOpacity>
         </View>
-        <Text style={styles.headerSubtitle}>
+        <Text className="text-base font-medium text-gray-500 ml-11">
           {selectedDate
             ? `${new Date(selectedDate).getFullYear()}년 ${
                 new Date(selectedDate).getMonth() + 1
@@ -91,7 +94,7 @@ export default function FavoritesTab() {
             : '저장한 번역 결과를 날짜별로 확인하세요'}
         </Text>
       </View>
-      <View style={styles.content}>
+      <View className="flex-1">
         <FavoritesList
           favorites={filteredFavorites}
           selectedDate={selectedDate}
@@ -110,51 +113,3 @@ export default function FavoritesTab() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  titleSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: 'Inter-Bold',
-    color: '#1F2937',
-    marginLeft: 12,
-  },
-  calendarButton: {
-    padding: 12,
-    backgroundColor: '#FEF2F2',
-    borderRadius: 12,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-    marginLeft: 44,
-  },
-  content: {
-    flex: 1,
-  },
-});

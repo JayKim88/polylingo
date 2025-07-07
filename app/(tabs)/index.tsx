@@ -1,11 +1,14 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, Alert, StyleSheet, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, Alert, TouchableOpacity } from 'react-native';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Languages, Globe, Mic } from 'lucide-react-native';
 import LanguageSelector from '../../components/LanguageSelector';
 import SearchInput from '../../components/SearchInput';
-import DraggableTranslationList from '../../components/DraggableTranslationList';
+import TranslationList from '../../components/TranslationList';
 import LanguageModal from '../../components/LanguageModal';
 import VoiceSettingsModal from '../../components/VoiceSettingsModal';
 import { TranslationAPI } from '../../utils/translationAPI';
@@ -13,6 +16,7 @@ import { StorageService } from '../../utils/storage';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
 
 export default function SearchTab() {
+  const insets = useSafeAreaInsets();
   const [sourceLanguage, setSourceLanguage] = useState('ko');
   const [searchText, setSearchText] = useState('');
   const [results, setResults] = useState<TranslationResult[]>([]);
@@ -91,11 +95,6 @@ export default function SearchTab() {
     setResults([]);
   };
 
-  const isFavorite = (result: TranslationResult) => {
-    const id = `${result.sourceText}-${result.sourceLanguage}-${result.targetLanguage}`;
-    return favorites.includes(id);
-  };
-
   const handleFavoriteToggle = () => {
     loadFavorites();
   };
@@ -107,42 +106,40 @@ export default function SearchTab() {
     setShowLanguageModal(false);
   };
 
-  const handleResultsReorder = async (newResults: TranslationResult[]) => {
-    setResults(newResults);
-    await StorageService.saveLanguageOrder(
-      newResults.map((r) => r.targetLanguage)
-    );
-  };
-
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.titleSection}>
+    <SafeAreaView
+      className="flex-1 bg-slate-50"
+      style={{ paddingBottom: insets.bottom - 50 }}
+    >
+      <View className="px-5 py-5 bg-white border-b border-gray-200">
+        <View className="flex-row justify-between items-center mb-2">
+          <View className="flex-row items-center">
             <Globe size={32} color="#6366F1" />
-            <Text style={styles.headerTitle}>다국어 사전</Text>
+            <Text className="text-3xl font-bold text-gray-800 ml-3">
+              다국어 번역기
+            </Text>
           </View>
-          <View style={styles.headerButtons}>
+          <View className="flex-row items-center gap-3">
             <TouchableOpacity
-              style={styles.voiceButton}
+              className="p-3 bg-amber-100 rounded-xl"
               onPress={() => setShowVoiceSettingsModal(true)}
             >
               <Mic size={24} color="#6366F1" />
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.languageButton}
+              className="p-3 bg-indigo-100 rounded-xl"
               onPress={() => setShowLanguageModal(true)}
             >
               <Languages size={24} color="#6366F1" />
             </TouchableOpacity>
           </View>
         </View>
-        <Text style={styles.headerSubtitle}>
+        <Text className="text-base font-medium text-gray-500 ml-11">
           {selectedLanguages.length}개 언어로 동시 번역
         </Text>
       </View>
 
-      <View style={styles.content}>
+      <View className="flex-1 pt-5 px-5">
         <LanguageSelector
           selectedLanguage={sourceLanguage}
           onLanguageSelect={setSourceLanguage}
@@ -159,11 +156,10 @@ export default function SearchTab() {
           isLoading={isLoading}
         />
 
-        <DraggableTranslationList
+        <TranslationList
           results={results}
           favorites={favorites}
           onFavoriteToggle={handleFavoriteToggle}
-          onReorder={handleResultsReorder}
         />
       </View>
 
@@ -181,63 +177,3 @@ export default function SearchTab() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  titleSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: 'Inter-Bold',
-    color: '#1F2937',
-    marginLeft: 12,
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  voiceButton: {
-    padding: 12,
-    backgroundColor: '#FEF3C7',
-    borderRadius: 12,
-  },
-  languageButton: {
-    padding: 12,
-    backgroundColor: '#EEF2FF',
-    borderRadius: 12,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-    marginLeft: 44,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-});

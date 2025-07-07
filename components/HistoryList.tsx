@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  StyleSheet,
 } from 'react-native';
 import { HistoryItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { Trash2, Clock, RefreshCw } from 'lucide-react-native';
@@ -70,20 +69,20 @@ export default function HistoryList({
     );
 
     return (
-      <View key={item.id} style={styles.historyCard}>
-        <View style={styles.historyHeader}>
-          <View style={styles.languageInfo}>
-            <Text style={styles.flag}>{sourceLanguage?.flag}</Text>
-            <View style={styles.languageDetails}>
-              <Text style={styles.languageName}>
+      <View key={item.id} className="bg-white rounded-2xl p-5 mb-3 shadow-sm">
+        <View className="flex-row justify-between items-center mb-3">
+          <View className="flex-row items-center flex-1">
+            <Text className="text-xl mr-3">{sourceLanguage?.flag}</Text>
+            <View className="flex-1">
+              <Text className="text-sm font-semibold text-gray-500 mb-1">
                 {sourceLanguage?.nativeName}
               </Text>
             </View>
           </View>
-          <View style={styles.headerActions}>
-            <Text style={styles.timeAgo}>{formattedTime(item.searchedAt)}</Text>
+          <View className="flex-row items-center gap-3">
+            <Text className="text-xs text-gray-400">{formattedTime(item.searchedAt)}</Text>
             <TouchableOpacity
-              style={styles.deleteButton}
+              className="p-2 bg-red-50 rounded-lg"
               onPress={() => handleRemoveItem(item)}
             >
               <Trash2 size={16} color="#EF4444" />
@@ -91,13 +90,11 @@ export default function HistoryList({
           </View>
         </View>
 
-        <Text style={styles.sourceText}>{item.sourceText}</Text>
+        <Text className="text-base font-semibold text-gray-800 mb-4">{item.sourceText}</Text>
         {item.searchedData && (
           <ScrollView
             horizontal
-            style={{
-              flexDirection: 'row',
-            }}
+            className="flex-row"
             contentContainerStyle={{
               alignItems: 'center',
             }}
@@ -105,14 +102,7 @@ export default function HistoryList({
             {item.searchedData.map((v, index) => (
               <Text
                 key={`${v.lng}-${v.text}-${index}`}
-                style={{
-                  borderRadius: 24,
-                  width: 'auto',
-                  paddingVertical: 2,
-                  paddingHorizontal: 4,
-                  marginRight: 8,
-                  backgroundColor: '#e3e3ff',
-                }}
+                className="rounded-3xl py-0.5 px-1 mr-2 bg-indigo-100 text-xs"
               >
                 {v.lng.toUpperCase()} - {v.text}
               </Text>
@@ -134,40 +124,40 @@ export default function HistoryList({
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.titleSection}>
-          <Text style={styles.title}>{getTitle()}</Text>
-          <Text style={styles.count}>{history.length}개</Text>
+    <View className="flex-1">
+      <View className="flex-row justify-between items-center px-5 py-4 bg-slate-50">
+        <View className="flex-row items-center">
+          <Text className="text-lg font-bold text-gray-800 mr-2">{getTitle()}</Text>
+          <Text className="text-sm font-medium text-gray-500">{history.length}개</Text>
         </View>
 
         {history.length > 0 && (
           <TouchableOpacity
-            style={styles.clearButton}
+            className="flex-row items-center px-3 py-2 bg-red-50 rounded-lg"
             onPress={handleClearHistory}
           >
             <Trash2 size={18} color="#EF4444" />
-            <Text style={styles.clearButtonText}>전체 삭제</Text>
+            <Text className="text-sm font-semibold text-red-500 ml-1">전체 삭제</Text>
           </TouchableOpacity>
         )}
       </View>
 
       <ScrollView
-        style={styles.scrollView}
+        className="flex-1 px-5"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={
-          history.length === 0 ? styles.emptyContainer : styles.contentContainer
+          history.length === 0 ? { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 } : { paddingVertical: 16 }
         }
       >
         {history.length === 0 ? (
-          <View style={styles.emptyState}>
+          <View className="items-center">
             <Clock size={64} color="#E5E7EB" />
-            <Text style={styles.emptyTitle}>
+            <Text className="text-lg font-semibold text-gray-500 mt-4 mb-2 text-center">
               {selectedDate
                 ? '선택한 날짜에 검색 기록이 없습니다'
                 : '검색 기록이 없습니다'}
             </Text>
-            <Text style={styles.emptySubtitle}>
+            <Text className="text-sm text-gray-400 text-center leading-5">
               단어나 문장을 검색하면 기록이 여기에 표시됩니다
             </Text>
           </View>
@@ -179,150 +169,3 @@ export default function HistoryList({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#F8FAFC',
-  },
-  titleSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    color: '#111827',
-    marginRight: 8,
-  },
-  count: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-  },
-  clearButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#EF4444',
-    marginLeft: 4,
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  contentContainer: {
-    paddingVertical: 16,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyState: {
-    alignItems: 'center',
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#6B7280',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  historyCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  historyHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  languageInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  flag: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  languageDetails: {
-    flex: 1,
-  },
-  languageName: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  searchTypeBadge: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  searchTypeText: {
-    fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
-    color: '#6366F1',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  timeAgo: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
-  },
-  deleteButton: {
-    padding: 8,
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
-  },
-  sourceText: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#111827',
-    marginBottom: 16,
-  },
-  translatedText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    lineHeight: 20,
-  },
-});

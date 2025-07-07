@@ -4,7 +4,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   Alert,
   SafeAreaView,
   ScrollView,
@@ -121,34 +120,34 @@ export default function VoiceSettingsModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView className="flex-1 bg-white">
         <KeyboardAvoidingView
-          style={styles.container}
+          className="flex-1 bg-white"
           behavior={RNPlatform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View style={styles.header}>
-            <Text style={styles.title}>음성 설정</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <View className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b border-gray-100">
+            <Text className="text-xl font-bold text-gray-900">음성 설정</Text>
+            <TouchableOpacity onPress={onClose} className="p-2">
               <X size={24} color="#6B7280" />
             </TouchableOpacity>
           </View>
 
           <ScrollView
-            style={styles.content}
-            contentContainerStyle={styles.contentContainer}
+            className="flex-1"
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20 }}
             showsVerticalScrollIndicator={false}
           >
             {RNPlatform.OS !== 'ios' && (
-              <View style={styles.settingSection}>
-                <View style={styles.settingHeader}>
-                  <Text style={styles.settingLabel}>음량</Text>
-                  <Text style={styles.settingValue}>
+              <View className="mb-8">
+                <View className="flex-row justify-between items-center mb-4">
+                  <Text className="text-base font-semibold text-gray-700">음량</Text>
+                  <Text className="text-sm font-medium text-indigo-500">
                     {getVolumeText(settings.volume)} (
                     {Math.round(settings.volume * 100)}%)
                   </Text>
                 </View>
                 <Slider
-                  style={styles.slider}
+                  style={{ width: '100%', height: 40 }}
                   minimumValue={0.1}
                   maximumValue={1.0}
                   value={settings.volume}
@@ -158,22 +157,22 @@ export default function VoiceSettingsModal({
                   minimumTrackTintColor="#6366F1"
                   maximumTrackTintColor="#E5E7EB"
                 />
-                <View style={styles.sliderLabels}>
-                  <Text style={styles.sliderLabelText}>조용함</Text>
-                  <Text style={styles.sliderLabelText}>큼</Text>
+                <View className="flex-row justify-between mt-2">
+                  <Text className="text-xs text-gray-400">조용함</Text>
+                  <Text className="text-xs text-gray-400">큼</Text>
                 </View>
               </View>
             )}
 
-            <View style={styles.settingSection}>
-              <View style={styles.settingHeader}>
-                <Text style={styles.settingLabel}>속도</Text>
-                <Text style={styles.settingValue}>
+            <View className="mb-8">
+              <View className="flex-row justify-between items-center mb-4">
+                <Text className="text-base font-semibold text-gray-700">속도</Text>
+                <Text className="text-sm font-medium text-indigo-500">
                   {getRateText(settings.rate)} ({settings.rate.toFixed(1)}x)
                 </Text>
               </View>
               <Slider
-                style={styles.slider}
+                style={{ width: '100%', height: 40 }}
                 minimumValue={0.1}
                 maximumValue={2.0}
                 value={settings.rate}
@@ -182,24 +181,22 @@ export default function VoiceSettingsModal({
                 }
                 minimumTrackTintColor="#6366F1"
                 maximumTrackTintColor="#E5E7EB"
-                // thumbStyle={styles.sliderThumb}
-                // trackStyle={styles.sliderTrack}
               />
-              <View style={styles.sliderLabels}>
-                <Text style={styles.sliderLabelText}>느림</Text>
-                <Text style={styles.sliderLabelText}>빠름</Text>
+              <View className="flex-row justify-between mt-2">
+                <Text className="text-xs text-gray-400">느림</Text>
+                <Text className="text-xs text-gray-400">빠름</Text>
               </View>
             </View>
 
-            <View style={styles.settingSection}>
-              <View style={styles.settingHeader}>
-                <Text style={styles.settingLabel}>음조</Text>
-                <Text style={styles.settingValue}>
+            <View className="mb-8">
+              <View className="flex-row justify-between items-center mb-4">
+                <Text className="text-base font-semibold text-gray-700">음조</Text>
+                <Text className="text-sm font-medium text-indigo-500">
                   {getPitchText(settings.pitch)} ({settings.pitch.toFixed(1)})
                 </Text>
               </View>
               <Slider
-                style={styles.slider}
+                style={{ width: '100%', height: 40 }}
                 minimumValue={0.5}
                 maximumValue={2.0}
                 value={settings.pitch}
@@ -208,46 +205,42 @@ export default function VoiceSettingsModal({
                 }
                 minimumTrackTintColor="#6366F1"
                 maximumTrackTintColor="#E5E7EB"
-                // thumbStyle={styles.sliderThumb}
-                // trackStyle={styles.sliderTrack}
               />
-              <View style={styles.sliderLabels}>
-                <Text style={styles.sliderLabelText}>낮음</Text>
-                <Text style={styles.sliderLabelText}>높음</Text>
+              <View className="flex-row justify-between mt-2">
+                <Text className="text-xs text-gray-400">낮음</Text>
+                <Text className="text-xs text-gray-400">높음</Text>
               </View>
             </View>
           </ScrollView>
           <View
-            style={[
-              styles.actions,
-              { paddingBottom: Math.max(insets.bottom, 20) + 14 },
-            ]}
+            className="flex-row px-5 py-6 border-t border-gray-100 gap-3 bg-white"
+            style={{ paddingBottom: Math.max(insets.bottom, 20) + 14 }}
           >
             <TouchableOpacity
-              style={[styles.actionButton, styles.resetButton]}
+              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 bg-gray-50 border border-gray-200"
               onPress={handleReset}
             >
               <RotateCcw size={18} color="#6B7280" />
-              <Text style={styles.resetButtonText}>기본값</Text>
+              <Text className="text-sm font-semibold text-gray-500">기본값</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionButton, styles.testButton]}
+              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 bg-yellow-50 border border-yellow-300"
               onPress={handleTest}
               disabled={isTesting}
             >
               <TestTube size={18} color="#F59E0B" />
-              <Text style={styles.testButtonText}>
+              <Text className="text-sm font-semibold text-yellow-600">
                 {isTesting ? '테스트 중...' : '테스트'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionButton, styles.saveButton]}
+              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 bg-indigo-500"
               onPress={handleSave}
             >
               <Save size={18} color="#FFFFFF" />
-              <Text style={styles.saveButtonText}>저장</Text>
+              <Text className="text-sm font-semibold text-white">저장</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -256,131 +249,3 @@ export default function VoiceSettingsModal({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: '#111827',
-  },
-  closeButton: {
-    padding: 8,
-  },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 20,
-  },
-  settingSection: {
-    marginBottom: 32,
-  },
-  settingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  settingLabel: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#374151',
-  },
-  settingValue: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#6366F1',
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  sliderThumb: {
-    backgroundColor: '#6366F1',
-    width: 24,
-    height: 24,
-  },
-  sliderTrack: {
-    height: 4,
-    borderRadius: 2,
-  },
-  sliderLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  sliderLabelText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
-  },
-  helpText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#F59E0B',
-    marginTop: 8,
-    fontStyle: 'italic',
-  },
-  actions: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    gap: 8,
-  },
-  resetButton: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  resetButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#6B7280',
-  },
-  testButton: {
-    backgroundColor: '#FEF3C7',
-    borderWidth: 1,
-    borderColor: '#FCD34D',
-  },
-  testButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#F59E0B',
-  },
-  saveButton: {
-    backgroundColor: '#6366F1',
-  },
-  saveButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#FFFFFF',
-  },
-});

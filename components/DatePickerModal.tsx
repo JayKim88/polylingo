@@ -4,7 +4,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform as RNPlatform,
@@ -80,20 +79,20 @@ export default function DatePickerModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView className="flex-1 bg-white">
         <KeyboardAvoidingView 
-          style={styles.container}
+          className="flex-1 bg-white"
           behavior={RNPlatform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View style={styles.header}>
-            <Text style={styles.title}>날짜 선택</Text>
-            <TouchableOpacity onPress={handleCancel} style={styles.closeButton}>
+          <View className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b border-gray-100">
+            <Text className="text-xl font-bold text-gray-900">날짜 선택</Text>
+            <TouchableOpacity onPress={handleCancel} className="p-2">
               <X size={24} color="#6B7280" />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
-            <Text style={styles.subtitle}>
+          <View className="flex-1 px-5 pt-6">
+            <Text className="text-sm font-medium text-gray-500 mb-6 text-center">
               {tempSelectedDate 
                 ? `선택된 날짜: ${formatDate(tempSelectedDate)}` 
                 : '날짜를 선택하세요 (선택 안함 = 전체 보기)'
@@ -125,25 +124,29 @@ export default function DatePickerModal({
                 textMonthFontSize: 18,
                 textDayHeaderFontSize: 14,
               }}
-              style={styles.calendar}
+              className="rounded-2xl shadow-sm mb-5"
+              style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8 }}
             />
           </View>
 
-          <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 20) + 14 }]}>
+          <View 
+            className="flex-row px-5 py-6 border-t border-gray-100 gap-3 bg-white"
+            style={{ paddingBottom: Math.max(insets.bottom, 20) + 14 }}
+          >
             <TouchableOpacity
-              style={[styles.actionButton, styles.clearButton]}
+              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 bg-gray-50 border border-gray-200"
               onPress={handleClear}
             >
               <RotateCcw size={18} color="#6B7280" />
-              <Text style={styles.clearButtonText}>전체 보기</Text>
+              <Text className="text-sm font-semibold text-gray-500">전체 보기</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionButton, styles.confirmButton]}
+              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 bg-indigo-500"
               onPress={handleConfirm}
             >
               <Check size={18} color="#FFFFFF" />
-              <Text style={styles.confirmButtonText}>확인</Text>
+              <Text className="text-sm font-semibold text-white">확인</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -152,85 +155,3 @@ export default function DatePickerModal({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: '#111827',
-  },
-  closeButton: {
-    padding: 8,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 24,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  calendar: {
-    borderRadius: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    marginBottom: 20,
-  },
-  actions: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    gap: 8,
-  },
-  clearButton: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#6B7280',
-  },
-  confirmButton: {
-    backgroundColor: '#6366F1',
-  },
-  confirmButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#FFFFFF',
-  },
-});

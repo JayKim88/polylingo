@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
 interface CalendarViewProps {
@@ -50,15 +50,15 @@ export default function CalendarView({
 
     // Week day headers
     const weekHeaders = weekDays.map((day, index) => (
-      <View key={`header-${index}`} style={styles.dayHeader}>
-        <Text style={styles.dayHeaderText}>{day}</Text>
+      <View key={`header-${index}`} className="flex-1 items-center py-2">
+        <Text className="text-sm font-semibold text-gray-500">{day}</Text>
       </View>
     ));
 
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <View key={`empty-${i}`} style={styles.dayCell} />
+        <View key={`empty-${i}`} style={{ width: '14.28%', aspectRatio: 1 }} />
       );
     }
 
@@ -72,37 +72,35 @@ export default function CalendarView({
       days.push(
         <TouchableOpacity
           key={day}
-          style={[
-            styles.dayCell,
-            isSelected && styles.selectedDay,
-            isToday && styles.todayCell,
-          ]}
+          className={`relative justify-center items-center ${
+            isSelected ? 'bg-indigo-600 rounded-lg' : isToday ? 'bg-gray-100 rounded-lg' : ''
+          }`}
+          style={{ width: '14.28%', aspectRatio: 1 }}
           onPress={() => onDateSelect(isSelected ? null : dateString)}
         >
-          <Text style={[
-            styles.dayText,
-            isSelected && styles.selectedDayText,
-            isToday && styles.todayText,
-          ]}>
+          <Text className={`text-base font-medium ${
+            isSelected ? 'text-white font-bold' : isToday ? 'text-indigo-600 font-bold' : 'text-gray-700'
+          }`}>
             {day}
           </Text>
           {isMarked && (
-            <View style={[
-              styles.marker,
-              { backgroundColor: markColor },
-              isSelected && styles.selectedMarker
-            ]} />
+            <View 
+              className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${
+                isSelected ? 'bg-white' : ''
+              }`}
+              style={!isSelected ? { backgroundColor: markColor } : {}}
+            />
           )}
         </TouchableOpacity>
       );
     }
 
     return (
-      <View style={styles.calendarGrid}>
-        <View style={styles.weekRow}>
+      <View className="mb-4">
+        <View className="flex-row mb-2">
           {weekHeaders}
         </View>
-        <View style={styles.daysContainer}>
+        <View className="flex-row flex-wrap">
           {days}
         </View>
       </View>
@@ -115,21 +113,21 @@ export default function CalendarView({
   ];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View className="bg-white m-5 rounded-2xl p-5 shadow-sm">
+      <View className="flex-row justify-between items-center mb-5">
         <TouchableOpacity
-          style={styles.navButton}
+          className="p-2 rounded-lg bg-gray-50"
           onPress={() => navigateMonth('prev')}
         >
           <ChevronLeft size={20} color="#6B7280" />
         </TouchableOpacity>
         
-        <Text style={styles.monthYear}>
+        <Text className="text-lg font-bold text-gray-800">
           {currentDate.getFullYear()}년 {monthNames[currentDate.getMonth()]}
         </Text>
         
         <TouchableOpacity
-          style={styles.navButton}
+          className="p-2 rounded-lg bg-gray-50"
           onPress={() => navigateMonth('next')}
         >
           <ChevronRight size={20} color="#6B7280" />
@@ -138,17 +136,17 @@ export default function CalendarView({
 
       {renderCalendar()}
 
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendMarker, { backgroundColor: markColor }]} />
-          <Text style={styles.legendText}>기록이 있는 날</Text>
+      <View className="flex-row justify-between items-center pt-4 border-t border-gray-100">
+        <View className="flex-row items-center">
+          <View className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: markColor }} />
+          <Text className="text-sm text-gray-500">기록이 있는 날</Text>
         </View>
         {selectedDate && (
           <TouchableOpacity
-            style={styles.clearButton}
+            className="px-3 py-1.5 bg-gray-100 rounded-lg"
             onPress={() => onDateSelect(null)}
           >
-            <Text style={styles.clearButtonText}>전체 보기</Text>
+            <Text className="text-sm font-semibold text-gray-700">전체 보기</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -156,125 +154,3 @@ export default function CalendarView({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#FFFFFF',
-    margin: 20,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  navButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#F9FAFB',
-  },
-  monthYear: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    color: '#111827',
-  },
-  calendarGrid: {
-    marginBottom: 16,
-  },
-  weekRow: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  dayHeader: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  dayHeaderText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#6B7280',
-  },
-  daysContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  dayCell: {
-    width: '14.28%',
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  selectedDay: {
-    backgroundColor: '#6366F1',
-    borderRadius: 8,
-  },
-  todayCell: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-  },
-  dayText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#374151',
-  },
-  selectedDayText: {
-    color: '#FFFFFF',
-    fontFamily: 'Inter-Bold',
-  },
-  todayText: {
-    color: '#6366F1',
-    fontFamily: 'Inter-Bold',
-  },
-  marker: {
-    position: 'absolute',
-    bottom: 4,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  selectedMarker: {
-    backgroundColor: '#FFFFFF',
-  },
-  legend: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendMarker: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  legendText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-  },
-  clearButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#374151',
-  },
-});

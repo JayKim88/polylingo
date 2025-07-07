@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../types/dictionary';
-import {
-  Heart,
-  Copy,
-  Volume2,
-  VolumeX,
-  GripVertical,
-} from 'lucide-react-native';
+import { Heart, Copy, Volume2, VolumeX } from 'lucide-react-native';
 import { StorageService } from '../utils/storage';
 import { SpeechService } from '../utils/speechService';
 import * as Clipboard from 'expo-clipboard';
@@ -16,16 +10,12 @@ interface TranslationCardProps {
   result: TranslationResult;
   onFavoriteToggle?: () => void;
   isFavorite?: boolean;
-  onLongPress?: () => void;
-  isDragging?: boolean;
 }
 
 export default function TranslationCard({
   result,
   onFavoriteToggle,
   isFavorite,
-  onLongPress,
-  isDragging,
 }: TranslationCardProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const targetLanguage = SUPPORTED_LANGUAGES.find(
@@ -103,24 +93,18 @@ export default function TranslationCard({
   };
 
   return (
-    <TouchableOpacity
-      style={[styles.card, isDragging && styles.draggingCard]}
-      onLongPress={onLongPress}
-      activeOpacity={0.7}
-    >
-      <View style={styles.header}>
-        <View style={styles.languageInfo}>
-          <Text style={styles.flag}>{targetLanguage?.flag}</Text>
-          <View style={styles.languageDetails}>
-            <Text style={styles.languageName}>
+    <View className="bg-white rounded-2xl p-5 border border-gray-100">
+      <View className="flex-row justify-between items-start mb-4">
+        <View className="flex-row items-center flex-1">
+          <Text className="text-2xl mr-3">{targetLanguage?.flag}</Text>
+          <View className="flex-1">
+            <Text className="text-base font-semibold text-gray-700">
               {targetLanguage?.nativeName}
             </Text>
             {result.confidence > 0 && (
               <Text
-                style={[
-                  styles.confidenceText,
-                  { color: getConfidenceColor(result.confidence) },
-                ]}
+                className="text-xs font-medium mt-0.5"
+                style={{ color: getConfidenceColor(result.confidence) }}
               >
                 신뢰도: {getConfidenceText(result.confidence)}
               </Text>
@@ -128,9 +112,9 @@ export default function TranslationCard({
           </View>
         </View>
 
-        <View style={styles.actions}>
+        <View className="flex-row items-center">
           <TouchableOpacity
-            style={styles.actionButton}
+            className="p-2 ml-1"
             onPress={handleFavorite}
             disabled={result.confidence === 0}
           >
@@ -141,7 +125,7 @@ export default function TranslationCard({
             />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.actionButton}
+            className="p-2 ml-1"
             onPress={handleCopy}
             disabled={result.confidence === 0}
           >
@@ -151,7 +135,7 @@ export default function TranslationCard({
             />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.actionButton}
+            className="p-2 ml-1"
             onPress={handleSpeak}
             disabled={result.confidence === 0 || !SpeechService.isAvailable()}
           >
@@ -168,198 +152,62 @@ export default function TranslationCard({
               />
             )}
           </TouchableOpacity>
-          {onLongPress && (
-            <View style={styles.dragHandle}>
-              <GripVertical size={20} color="#D1D5DB" />
-            </View>
-          )}
         </View>
       </View>
 
       {result.meanings && result.meanings.length > 1 ? (
-        <View style={styles.meaningsContainer}>
-          <View style={styles.translationHeader}>
+        <View className="mb-3">
+          <View className="mb-3">
             <Text
-              style={[
-                styles.translatedTextWithExample,
-                result.confidence === 0 && styles.errorText,
-              ]}
+              className={`text-2xl font-medium leading-7 text-gray-900 mb-1 ${
+                result.confidence === 0 ? 'text-red-500 italic' : ''
+              }`}
             >
               {result.translatedText}
             </Text>
             {result.pronunciation && (
-              <Text style={styles.pronunciationText}>
+              <Text className="text-sm text-indigo-600 italic mb-2 tracking-wide">
                 {result.pronunciation}
               </Text>
             )}
           </View>
           {result.meanings.slice(0, 5).map((meaning, index) => (
-            <View key={index} style={styles.meaningItem}>
-              <Text style={styles.meaningTranslation}>
+            <View key={index} className="mb-3 pb-3 border-b border-gray-100">
+              <Text className="text-lg text-gray-900 mb-1">
                 {index + 1}. {meaning.translation}
               </Text>
-              <Text style={styles.meaningContext}>{meaning.type}</Text>
+              <Text className="text-sm text-gray-500 mb-1">{meaning.type}</Text>
             </View>
           ))}
         </View>
       ) : (
-        <View style={styles.translationContent}>
+        <View className="mb-3">
           <Text
-            style={[
-              styles.translatedText,
-              result.confidence === 0 && styles.errorText,
-            ]}
+            className={`text-lg leading-7 text-gray-900 mb-1 ${
+              result.confidence === 0 ? 'text-red-500 italic' : ''
+            }`}
           >
             {result.translatedText}
           </Text>
           {result.pronunciation && (
-            <Text style={styles.pronunciationText}>{result.pronunciation}</Text>
+            <Text className="text-sm text-indigo-600 italic tracking-wide">
+              {result.pronunciation}
+            </Text>
           )}
         </View>
       )}
 
       {result.confidence > 0 && (
-        <View style={styles.confidenceBar}>
+        <View className="bg-gray-200 rounded-sm overflow-hidden h-1">
           <View
-            style={[
-              styles.confidenceProgress,
-              {
-                width: `${result.confidence * 100}%`,
-                backgroundColor: getConfidenceColor(result.confidence),
-              },
-            ]}
+            className="h-full"
+            style={{
+              width: `${result.confidence * 100}%`,
+              backgroundColor: getConfidenceColor(result.confidence),
+            }}
           />
         </View>
       )}
-    </TouchableOpacity>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-  },
-  draggingCard: {
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  languageInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  flag: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  languageDetails: {
-    flex: 1,
-  },
-  languageName: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#374151',
-  },
-  confidenceText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    marginTop: 2,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionButton: {
-    padding: 8,
-    marginLeft: 4,
-  },
-  dragHandle: {
-    padding: 8,
-    marginLeft: 4,
-  },
-  translationContent: {
-    marginBottom: 12,
-  },
-  translationHeader: {
-    marginBottom: 12,
-  },
-  translatedText: {
-    fontSize: 18,
-    fontFamily: 'Inter-Regular',
-    lineHeight: 26,
-    color: '#111827',
-    marginBottom: 4,
-  },
-  translatedTextWithExample: {
-    fontSize: 24,
-    fontFamily: 'Inter-SemiBold',
-    lineHeight: 26,
-    color: '#111827',
-    marginBottom: 4,
-    fontWeight: 500,
-  },
-  pronunciationText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6366F1',
-    fontStyle: 'italic',
-    marginBottom: 8,
-    letterSpacing: 0.5,
-  },
-  errorText: {
-    color: '#EF4444',
-    fontStyle: 'italic',
-  },
-  meaningsContainer: {
-    marginBottom: 12,
-  },
-  meaningItem: {
-    marginBottom: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  meaningTranslation: {
-    fontSize: 18,
-    fontFamily: 'Inter-Regular',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  meaningContext: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  meaningExample: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
-    fontStyle: 'italic',
-  },
-  confidenceBar: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: 2,
-    overflow: 'hidden',
-    height: 4,
-  },
-  confidenceProgress: {
-    height: '100%',
-  },
-});

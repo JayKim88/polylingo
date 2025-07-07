@@ -1,5 +1,10 @@
 import React from 'react';
-import { View, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { Search, X } from 'lucide-react-native';
 
 interface SearchInputProps {
@@ -11,44 +16,43 @@ interface SearchInputProps {
   isLoading?: boolean;
 }
 
-export default function SearchInput({ 
-  value, 
-  onChangeText, 
-  onSearch, 
-  onClear, 
+export default function SearchInput({
+  value,
+  onChangeText,
+  onSearch,
+  onClear,
   placeholder,
-  isLoading 
+  isLoading,
 }: SearchInputProps) {
   return (
-    <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <Search size={20} color="#9CA3AF" style={styles.searchIcon} />
+    <View className="flex-row mb-5">
+      <View className="flex-1 flex-row items-center bg-white rounded-2xl px-4 py-3 mr-3 shadow-sm min-h-[56px]">
+        <Search size={20} color="#9CA3AF" className="mr-3" />
         <TextInput
-          style={styles.textInput}
+          className="flex-1 text-lg text-gray-900 leading-[18px] pl-2"
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor="#9CA3AF"
           onSubmitEditing={onSearch}
-          blurOnSubmit={false}
           keyboardType="default"
           autoCorrect={false}
           autoCapitalize="none"
           textContentType="none"
           returnKeyType="search"
+          textAlignVertical="center"
         />
         {value ? (
-          <TouchableOpacity onPress={onClear} style={styles.clearButton}>
+          <TouchableOpacity onPress={onClear} className="p-1 ml-2">
             <X size={20} color="#9CA3AF" />
           </TouchableOpacity>
         ) : null}
       </View>
-      
-      <TouchableOpacity 
-        style={[
-          styles.searchButton,
-          (isLoading || !value.trim()) && styles.searchButtonDisabled
-        ]}
+
+      <TouchableOpacity
+        className={`justify-center items-center rounded-2xl shadow-sm w-16 h-16 ${
+          isLoading || !value.trim() ? 'bg-gray-400' : 'bg-blue-500'
+        }`}
         onPress={onSearch}
         disabled={isLoading || !value.trim()}
       >
@@ -61,55 +65,3 @@ export default function SearchInput({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  inputContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginRight: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    minHeight: 56,
-  },
-  searchIcon: {
-    marginRight: 12,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#111827',
-    maxHeight: 120,
-  },
-  clearButton: {
-    padding: 4,
-    marginLeft: 8,
-  },
-  searchButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    width: 56,
-    height: 56,
-    backgroundColor: '#3B82F6',
-  },
-  searchButtonDisabled: {
-    backgroundColor: '#9CA3AF',
-  },
-});

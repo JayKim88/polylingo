@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  StyleSheet,
 } from 'react-native';
 import { FavoriteItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { Trash2, Heart } from 'lucide-react-native';
@@ -45,15 +44,15 @@ export default function FavoritesList({
     );
 
     return (
-      <View key={item.id} style={styles.favoriteCard}>
-        <View style={styles.favoriteHeader}>
-          <View style={styles.languageFlags}>
-            <Text style={styles.flag}>{sourceLanguage?.flag}</Text>
-            <Text style={styles.arrow}>→</Text>
-            <Text style={styles.flag}>{targetLanguage?.flag}</Text>
+      <View key={item.id} className="bg-white rounded-2xl p-5 mb-3 shadow-sm">
+        <View className="flex-row justify-between items-center mb-3">
+          <View className="flex-row items-center">
+            <Text className="text-xl">{sourceLanguage?.flag}</Text>
+            <Text className="text-base text-gray-400 mx-2">→</Text>
+            <Text className="text-xl">{targetLanguage?.flag}</Text>
           </View>
-          <View style={styles.headerActions}>
-            <Text style={styles.dateText}>
+          <View className="flex-row items-center">
+            <Text className="text-xs text-gray-400 text-right">
               {new Date(item.createdAt).toLocaleDateString('ko-KR', {
                 year: 'numeric',
                 month: 'long',
@@ -63,7 +62,7 @@ export default function FavoritesList({
               })}
             </Text>
             <TouchableOpacity
-              style={styles.deleteButton}
+              className="p-2"
               onPress={() => handleRemoveFavorite(item.id, item.sourceText)}
             >
               <Trash2 size={18} color="#EF4444" />
@@ -71,26 +70,26 @@ export default function FavoritesList({
           </View>
         </View>
 
-        <Text style={styles.sourceText}>{item.sourceText}</Text>
+        <Text className="text-base font-semibold text-gray-700 mb-2">{item.sourceText}</Text>
 
         {item.meanings && item.meanings.length > 0 ? (
-          <View style={styles.meaningsContainer}>
+          <View className="mb-3">
             {item.meanings.slice(0, 3).map((meaning, index) => (
-              <View key={index} style={styles.meaningItem}>
-                <Text style={styles.meaningTranslation}>
+              <View key={index} className="mb-2">
+                <Text className="text-base font-semibold text-gray-900 mb-0.5">
                   {index + 1}. {meaning.translation}
                 </Text>
-                <Text style={styles.meaningContext}>{meaning.type}</Text>
+                <Text className="text-sm text-gray-500">{meaning.type}</Text>
               </View>
             ))}
             {item.meanings.length > 3 && (
-              <Text style={styles.moreText}>
+              <Text className="text-sm font-medium text-indigo-600 mt-1">
                 +{item.meanings.length - 3}개 더
               </Text>
             )}
           </View>
         ) : (
-          <Text style={styles.translatedText}>{item.translatedText}</Text>
+          <Text className="text-lg text-gray-900 leading-6">{item.translatedText}</Text>
         )}
       </View>
     );
@@ -107,30 +106,30 @@ export default function FavoritesList({
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{getTitle()}</Text>
-        <Text style={styles.count}>{favorites.length}개</Text>
+    <View className="flex-1">
+      <View className="flex-row justify-between items-center px-5 py-4 bg-slate-50">
+        <Text className="text-lg font-bold text-gray-900">{getTitle()}</Text>
+        <Text className="text-sm font-medium text-gray-500">{favorites.length}개</Text>
       </View>
 
       <ScrollView
-        style={styles.scrollView}
+        className="flex-1 px-5"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={
-          favorites.length === 0
-            ? styles.emptyContainer
-            : styles.contentContainer
-        }
+        contentContainerStyle={{
+          ...(favorites.length === 0
+            ? { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 }
+            : { paddingVertical: 16 })
+        }}
       >
         {favorites.length === 0 ? (
-          <View style={styles.emptyState}>
+          <View className="items-center">
             <Heart size={64} color="#E5E7EB" />
-            <Text style={styles.emptyTitle}>
+            <Text className="text-lg font-semibold text-gray-500 mt-4 mb-2 text-center">
               {selectedDate
                 ? '선택한 날짜에 저장된 즐겨찾기가 없습니다'
                 : '저장된 즐겨찾기가 없습니다'}
             </Text>
-            <Text style={styles.emptySubtitle}>
+            <Text className="text-sm text-gray-400 text-center leading-5">
               검색 결과에서 하트 버튼을 눌러 즐겨찾기에 추가해보세요
             </Text>
           </View>
@@ -142,146 +141,3 @@ export default function FavoritesList({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#F8FAFC',
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    color: '#111827',
-  },
-  count: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  contentContainer: {
-    paddingVertical: 16,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyState: {
-    alignItems: 'center',
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#6B7280',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  favoriteCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  favoriteHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  languageFlags: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  flag: {
-    fontSize: 20,
-  },
-  arrow: {
-    fontSize: 16,
-    color: '#9CA3AF',
-    marginHorizontal: 8,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  searchTypeBadge: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  searchTypeText: {
-    fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
-    color: '#6366F1',
-  },
-  deleteButton: {
-    padding: 8,
-  },
-  sourceText: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  translatedText: {
-    fontSize: 18,
-    fontFamily: 'Inter-Regular',
-    color: '#111827',
-    lineHeight: 24,
-  },
-  meaningsContainer: {
-    marginBottom: 12,
-  },
-  meaningItem: {
-    marginBottom: 8,
-  },
-  meaningTranslation: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#111827',
-    marginBottom: 2,
-  },
-  meaningContext: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-  },
-  moreText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#6366F1',
-    marginTop: 4,
-  },
-  dateText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
-    textAlign: 'right',
-  },
-});

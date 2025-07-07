@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Clock, Calendar } from 'lucide-react-native';
 import CalendarView from '../../components/CalendarView';
@@ -11,6 +11,7 @@ import { HistoryItem } from '../../types/dictionary';
 import { ScrollView } from 'react-native-gesture-handler';
 
 export default function HistoryTab() {
+  const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [filteredHistory, setFilteredHistory] = useState<HistoryItem[]>([]);
@@ -72,21 +73,24 @@ export default function HistoryTab() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.titleSection}>
+    <SafeAreaView 
+      className="flex-1 bg-slate-50"
+      style={{ paddingBottom: insets.bottom - 50 }}
+    >
+      <View className="px-5 py-5 bg-white border-b border-gray-200 shadow-sm">
+        <View className="flex-row justify-between items-center mb-2">
+          <View className="flex-row items-center">
             <Clock size={32} color="#3B82F6" />
-            <Text style={styles.headerTitle}>히스토리</Text>
+            <Text className="text-3xl font-bold text-gray-800 ml-3">히스토리</Text>
           </View>
           <TouchableOpacity
-            style={styles.calendarButton}
+            className="p-3 bg-blue-50 rounded-xl"
             onPress={() => setShowDatePicker(true)}
           >
             <Calendar size={24} color="#3B82F6" />
           </TouchableOpacity>
         </View>
-        <Text style={styles.headerSubtitle}>
+        <Text className="text-base font-medium text-gray-500 ml-11">
           {selectedDate
             ? `${new Date(selectedDate).getFullYear()}년 ${
                 new Date(selectedDate).getMonth() + 1
@@ -111,51 +115,3 @@ export default function HistoryTab() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  titleSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: 'Inter-Bold',
-    color: '#1F2937',
-    marginLeft: 12,
-  },
-  calendarButton: {
-    padding: 12,
-    backgroundColor: '#EFF6FF',
-    borderRadius: 12,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-    marginLeft: 44,
-  },
-  content: {
-    flex: 1,
-  },
-});
