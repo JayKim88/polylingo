@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, Alert, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, Text, Alert, TouchableOpacity, Animated } from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -17,6 +17,8 @@ import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
 
 export default function SearchTab() {
   const insets = useSafeAreaInsets();
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const [isScrollingUp, setIsScrollingUp] = useState(false);
   const [sourceLanguage, setSourceLanguage] = useState('ko');
   const [searchText, setSearchText] = useState('');
   const [results, setResults] = useState<TranslationResult[]>([]);
@@ -140,27 +142,49 @@ export default function SearchTab() {
       </View>
 
       <View className="flex-1 pt-5 px-5">
-        <LanguageSelector
-          selectedLanguage={sourceLanguage}
-          onLanguageSelect={setSourceLanguage}
-          label="번역할 언어"
-          selectedLanguages={selectedLanguages}
-        />
+        <Animated.View
+          style={{
+            transform: [
+              {
+                translateY: isScrollingUp ? 0 : -120,
+              },
+            ],
+            opacity: isScrollingUp ? 1 : 0,
+          }}
+        >
+          <LanguageSelector
+            selectedLanguage={sourceLanguage}
+            onLanguageSelect={setSourceLanguage}
+            label="번역할 언어"
+            selectedLanguages={selectedLanguages}
+          />
 
-        <SearchInput
-          value={searchText}
-          onChangeText={setSearchText}
-          onSearch={handleSearch}
-          onClear={handleClear}
-          placeholder="번역할 텍스트를 입력하세요..."
-          isLoading={isLoading}
-        />
+          <SearchInput
+            value={searchText}
+            onChangeText={setSearchText}
+            onSearch={handleSearch}
+            onClear={handleClear}
+            placeholder="번역할 텍스트를 입력하세요..."
+            isLoading={isLoading}
+          />
+        </Animated.View>
 
-        <TranslationList
-          results={results}
-          favorites={favorites}
-          onFavoriteToggle={handleFavoriteToggle}
-        />
+        <Animated.View
+          style={{
+            flex: 1,
+            marginTop: isScrollingUp ? 0 : -170,
+          }}
+        >
+          <TranslationList
+            results={results}
+            favorites={favorites}
+            onFavoriteToggle={handleFavoriteToggle}
+            scrollY={scrollY}
+            onScrollDirectionChange={(scrollingUp) =>
+              setIsScrollingUp(scrollingUp)
+            }
+          />
+        </Animated.View>
       </View>
 
       <LanguageModal
