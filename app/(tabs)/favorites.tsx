@@ -1,21 +1,20 @@
 import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Heart, Calendar } from 'lucide-react-native';
-import CalendarView from '../../components/CalendarView';
 import FavoritesList from '../../components/FavoritesList';
 import DatePickerModal from '../../components/DatePickerModal';
 import { StorageService } from '../../utils/storage';
 import { FavoriteItem } from '../../types/dictionary';
+import { useTranslation } from 'react-i18next';
 
 export default function FavoritesTab() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [filteredFavorites, setFilteredFavorites] = useState<FavoriteItem[]>(
@@ -69,7 +68,7 @@ export default function FavoritesTab() {
   };
 
   return (
-    <SafeAreaView 
+    <SafeAreaView
       className="flex-1 bg-slate-50"
       style={{ paddingBottom: insets.bottom - 50 }}
     >
@@ -77,7 +76,9 @@ export default function FavoritesTab() {
         <View className="flex-row justify-between items-center mb-2">
           <View className="flex-row items-center">
             <Heart size={32} color="#EF4444" fill="#EF4444" />
-            <Text className="text-3xl font-bold text-gray-800 ml-3">좋아요</Text>
+            <Text className="text-3xl font-bold text-gray-800 ml-3">
+              {t('favorites.title')}
+            </Text>
           </View>
           <TouchableOpacity
             className="p-3 bg-red-50 rounded-xl"
@@ -88,10 +89,12 @@ export default function FavoritesTab() {
         </View>
         <Text className="text-base font-medium text-gray-500 ml-11">
           {selectedDate
-            ? `${new Date(selectedDate).getFullYear()}년 ${
-                new Date(selectedDate).getMonth() + 1
-              }월 ${new Date(selectedDate).getDate()}일`
-            : '저장한 번역 결과를 날짜별로 확인하세요'}
+            ? t('favorites.dateSubtitle', {
+                year: new Date(selectedDate).getFullYear(),
+                month: new Date(selectedDate).getMonth() + 1,
+                day: new Date(selectedDate).getDate(),
+              })
+            : t('favorites.subtitle')}
         </Text>
       </View>
       <View className="flex-1">
@@ -112,4 +115,3 @@ export default function FavoritesTab() {
     </SafeAreaView>
   );
 }
-

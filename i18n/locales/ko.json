@@ -1,0 +1,147 @@
+{
+  "tabs": {
+    "search": "찾기",
+    "favorites": "좋아요",
+    "history": "히스토리",
+    "settings": "설정"
+  },
+  "main": {
+    "title": "다국어 번역기",
+    "subtitle": "{{count}}개 언어로 동시 번역",
+    "sourceLanguageLabel": "번역할 언어",
+    "searchPlaceholder": "번역할 텍스트를 입력하세요...",
+    "resultsCount": "{{count}}개 언어로 번역됨",
+    "searchPrompt": "검색어를 입력해주세요"
+  },
+  "sourceLanguage": "언어 선택",
+  "favorites": {
+    "title": "좋아요",
+    "subtitle": "저장한 번역 결과를 날짜별로 확인하세요",
+    "dateSubtitle": "{{year}}년 {{month}}월 {{day}}일",
+    "allFavorites": "전체 즐겨찾기",
+    "count": "{{count}}개",
+    "moreItems": "+{{count}}개 더",
+    "empty": "저장된 즐겨찾기가 없습니다",
+    "emptyDate": "선택한 날짜에 저장된 즐겨찾기가 없습니다",
+    "addHint": "검색 결과에서 하트 버튼을 눌러 즐겨찾기에 추가해보세요",
+    "deleteTitle": "즐겨찾기 삭제",
+    "deleteMessage": "\"{{item}}\"을(를) 즐겨찾기에서 삭제하시겠습니까?",
+    "delete": "삭제"
+  },
+  "history": {
+    "title": "히스토리",
+    "subtitle": "검색 기록을 날짜별로 확인하세요",
+    "dateSubtitle": "{{year}}년 {{month}}월 {{day}}일",
+    "allHistory": "전체 히스토리",
+    "clearAll": "전체 삭제",
+    "count": "{{count}}개",
+    "timeAgo": "{{minutes}}분 전",
+    "hourAgo": "{{hours}}시간 전",
+    "dayAgo": "{{days}}일 전",
+    "justNow": "방금 전",
+    "empty": "검색 기록이 없습니다",
+    "emptyDate": "선택한 날짜에 검색 기록이 없습니다",
+    "searchHint": "단어나 문장을 검색하면 기록이 여기에 표시됩니다",
+    "deleteTitle": "기록 삭제",
+    "deleteAllMessage": "모든 검색 기록을 삭제하시겠습니까?",
+    "deleteItemMessage": "이 검색 기록을 삭제하시겠습니까?",
+    "delete": "삭제"
+  },
+  "settings": {
+    "title": "설정",
+    "subtitle": "앱 설정 및 정보를 확인하세요",
+    "appInfo": "앱 정보",
+    "users": "사용자",
+    "privacy": "개인정보",
+    "appLanguage": "앱 언어",
+    "appLanguageSubtitle": "앱 인터페이스 언어 설정",
+    "about": "앱 정보",
+    "aboutSubtitle": "버전 및 개발자 정보",
+    "features": "주요 기능",
+    "featuresSubtitle": "앱의 핵심 기능 소개",
+    "supportedLanguages": "지원 언어",
+    "supportedLanguagesSubtitle": "번역 가능한 언어 목록",
+    "feedback": "피드백 보내기",
+    "feedbackSubtitle": "의견이나 개선사항 제안",
+    "rate": "앱 평가하기",
+    "rateSubtitle": "앱스토어에서 평가해주세요",
+    "privacyPolicy": "개인정보 보호정책",
+    "privacyPolicySubtitle": "데이터 처리 및 보안 정책"
+  },
+  "alert": {
+    "error": "오류",
+    "info": "정보",
+    "confirm": "확인",
+    "cancel": "취소",
+    "later": "나중에",
+    "translationError": "번역 중 오류가 발생했습니다. 다시 시도해주세요."
+  },
+  "language": {
+    "korean": "한국어",
+    "english": "English"
+  },
+  "languageModal": {
+    "title": "언어 선택",
+    "searchPlaceholder": "언어 검색",
+    "allLanguages": "모든 언어",
+    "selectedLanguages": "{{count}}개 언어가 선택됨 - 선택된 언어를 길게 눌러서 순서 변경",
+    "cancel": "취소",
+    "confirm": "확인",
+    "selectPrompt": "번역할 언어를 선택하세요 (최소 2개)"
+  },
+  "voice": {
+    "title": "음성 설정",
+    "volume": "볼륨",
+    "rate": "속도",
+    "pitch": "음조",
+    "test": "테스트",
+    "testText": "안녕하세요. 음성 테스트입니다.",
+    "save": "저장",
+    "cancel": "취소",
+    "slow": "느림",
+    "fast": "빠름",
+    "high": "높음",
+    "medium": "중간",
+    "low": "낮음",
+    "normal": "보통",
+    "quiet": "조용함",
+    "loud": "큼",
+    "testing": "테스트 중...",
+    "reset": "기본값",
+    "notSupported": "이 기기에서는 음성 기능을 지원하지 않습니다.",
+    "testError": "음성 테스트 중 오류가 발생했습니다.",
+    "saveError": "설정 저장 중 오류가 발생했습니다."
+  },
+  "datePicker": {
+    "title": "날짜 선택",
+    "allFavorites": "전체 즐겨찾기",
+    "allHistory": "전체 히스토리"
+  },
+  "aboutModal": {
+    "title": "다국어 번역앱",
+    "version": "버전 1.0.0",
+    "description": "여러 언어를 동시에 학습하는 사람들을 위한 번역앱입니다.",
+    "features": "• 6개 언어 지원\n• 단어/문장 번역\n• 중의적 의미 표시\n• 드래그앤드롭 정렬\n• 달력 기반 히스토리"
+  },
+  "feedbackModal": {
+    "title": "피드백",
+    "message": "앱에 대한 의견이나 개선사항이 있으시면 언제든 알려주세요!\n\n더 나은 다국어 학습 경험을 제공하겠습니다."
+  },
+  "rateModal": {
+    "title": "앱 평가",
+    "message": "앱이 도움이 되셨나요? 평가해주시면 더 나은 서비스를 제공하는데 큰 도움이 됩니다.",
+    "rate": "평가하기"
+  },
+  "privacyModal": {
+    "title": "개인정보 보호",
+    "message": "본 앱은 사용자의 개인정보를 수집하지 않습니다.\n\n• 검색 기록은 기기에만 저장됩니다\n• 네트워크 연결은 번역을 위해서만 사용됩니다\n• 사용자 데이터를 외부로 전송하지 않습니다\n• 모든 데이터는 로컬에서 관리됩니다"
+  },
+  "featuresModal": {
+    "title": "주요 기능",
+    "message": "• 다국어 동시 번역\n• 단어/문장 검색 타입 선택\n• 중의적 의미 상세 표시\n• 드래그앤드롭으로 언어 순서 변경\n• 달력 기반 좋아요/히스토리 관리\n• 음성 재생 및 복사 기능\n• 오프라인 저장 기능"
+  },
+  "languageSupportModal": {
+    "title": "지원 언어",
+    "message": "현재 지원하는 언어:\n\n🇰🇷 한국어 (Korean)\n🇺🇸 영어 (English)\n🇯🇵 일본어 (Japanese)\n🇫🇷 프랑스어 (French)\n🇩🇪 독일어 (German)\n🇪🇸 스페인어 (Spanish)\n\n더 많은 언어 지원을 준비 중입니다!"
+  }
+}

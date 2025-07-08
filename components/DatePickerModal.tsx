@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { X, Check, RotateCcw } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 interface DatePickerModalProps {
   visible: boolean;
@@ -28,10 +29,15 @@ export default function DatePickerModal({
   onClose,
 }: DatePickerModalProps) {
   const insets = useSafeAreaInsets();
-  const [tempSelectedDate, setTempSelectedDate] = useState<string | null>(selectedDate);
+  const { t } = useTranslation();
+  const [tempSelectedDate, setTempSelectedDate] = useState<string | null>(
+    selectedDate
+  );
 
   const handleDayPress = (day: any) => {
-    setTempSelectedDate(day.dateString);
+    if (markedDates.includes(day.dateString)) {
+      setTempSelectedDate(day.dateString);
+    }
   };
 
   const handleConfirm = () => {
@@ -51,7 +57,7 @@ export default function DatePickerModal({
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
     const date = new Date(dateString);
-    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+    return `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`;
   };
 
   const calendarMarkedDates = markedDates.reduce((acc, date) => {
@@ -80,12 +86,14 @@ export default function DatePickerModal({
       onRequestClose={onClose}
     >
       <SafeAreaView className="flex-1 bg-white">
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           className="flex-1 bg-white"
           behavior={RNPlatform.OS === 'ios' ? 'padding' : 'height'}
         >
           <View className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b border-gray-100">
-            <Text className="text-xl font-bold text-gray-900">날짜 선택</Text>
+            <Text className="text-xl font-bold text-gray-900">
+              {t('datePicker.title')}
+            </Text>
             <TouchableOpacity onPress={handleCancel} className="p-2">
               <X size={24} color="#6B7280" />
             </TouchableOpacity>
@@ -93,10 +101,11 @@ export default function DatePickerModal({
 
           <View className="flex-1 px-5 pt-6">
             <Text className="text-sm font-medium text-gray-500 mb-6 text-center">
-              {tempSelectedDate 
-                ? `선택된 날짜: ${formatDate(tempSelectedDate)}` 
-                : '날짜를 선택하세요 (선택 안함 = 전체 보기)'
-              }
+              {tempSelectedDate
+                ? `${t('datePicker.selectedDate')}: ${formatDate(
+                    tempSelectedDate
+                  )}`
+                : t('datePicker.selectDate')}
             </Text>
 
             <Calendar
@@ -125,11 +134,17 @@ export default function DatePickerModal({
                 textDayHeaderFontSize: 14,
               }}
               className="rounded-2xl shadow-sm mb-5"
-              style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8 }}
+              style={{
+                elevation: 2,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+              }}
             />
           </View>
 
-          <View 
+          <View
             className="flex-row px-5 py-6 border-t border-gray-100 gap-3 bg-white"
             style={{ paddingBottom: Math.max(insets.bottom, 20) + 14 }}
           >
@@ -138,7 +153,9 @@ export default function DatePickerModal({
               onPress={handleClear}
             >
               <RotateCcw size={18} color="#6B7280" />
-              <Text className="text-sm font-semibold text-gray-500">전체 보기</Text>
+              <Text className="text-sm font-semibold text-gray-500">
+                {t('datePicker.all')}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -146,7 +163,9 @@ export default function DatePickerModal({
               onPress={handleConfirm}
             >
               <Check size={18} color="#FFFFFF" />
-              <Text className="text-sm font-semibold text-white">확인</Text>
+              <Text className="text-sm font-semibold text-white">
+                {t('alert.confirm')}
+              </Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -154,4 +173,3 @@ export default function DatePickerModal({
     </Modal>
   );
 }
-

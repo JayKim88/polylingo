@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { Language, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { ChevronDown } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 interface LanguageSelectorProps {
   selectedLanguage: string;
@@ -16,6 +17,7 @@ export default function LanguageSelector({
   label,
   selectedLanguages,
 }: LanguageSelectorProps) {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = React.useState(false);
 
   const selectedLang = SUPPORTED_LANGUAGES.find(
@@ -69,7 +71,7 @@ export default function LanguageSelector({
         <View className="flex-1 justify-center items-center bg-black/50">
           <View className="bg-white rounded-2xl p-5 w-[90%] max-h-[70%]">
             <Text className="text-lg font-bold text-center mb-5 text-gray-900">
-              언어 선택
+              {t('sourceLanguage.title')}
             </Text>
             <FlatList
               data={filteredLanguages}
@@ -82,7 +84,7 @@ export default function LanguageSelector({
               onPress={() => setIsVisible(false)}
             >
               <Text className="text-base text-gray-700 font-semibold">
-                취소
+                {t('sourceLanguage.cancel')}
               </Text>
             </TouchableOpacity>
           </View>

@@ -1,8 +1,10 @@
 import { Tabs } from 'expo-router';
 import { Search, Heart, Clock, Settings } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
+  const { t } = useTranslation();
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['left', 'right', 'bottom']}>
       <Tabs
@@ -35,7 +37,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: '찾기',
+            title: t('tabs.search'),
             tabBarIcon: ({ size, color }) => (
               <Search size={size} color={color} />
             ),
@@ -44,7 +46,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="favorites"
           options={{
-            title: '좋아요',
+            title: t('tabs.favorites'),
             tabBarIcon: ({ size, color }) => (
               <Heart size={size} color={color} />
             ),
@@ -53,7 +55,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="history"
           options={{
-            title: '히스토리',
+            title: t('tabs.history'),
             tabBarIcon: ({ size, color }) => (
               <Clock size={size} color={color} />
             ),
@@ -62,7 +64,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="settings"
           options={{
-            title: '설정',
+            title: t('tabs.settings'),
             tabBarIcon: ({ size, color }) => (
               <Settings size={size} color={color} />
             ),
@@ -72,4 +74,3 @@ export default function TabLayout() {
     </SafeAreaView>
   );
 }
-

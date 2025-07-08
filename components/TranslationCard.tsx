@@ -87,9 +87,9 @@ export default function TranslationCard({
   };
 
   const getConfidenceText = (confidence: number) => {
-    if (confidence >= 0.8) return '높음';
-    if (confidence >= 0.5) return '중간';
-    return '낮음';
+    if (confidence >= 0.8) return 'High';
+    if (confidence >= 0.5) return 'Medium';
+    return 'Low';
   };
 
   return (
@@ -106,7 +106,7 @@ export default function TranslationCard({
                 className="text-xs font-medium mt-0.5"
                 style={{ color: getConfidenceColor(result.confidence) }}
               >
-                신뢰도: {getConfidenceText(result.confidence)}
+                Reliability: {getConfidenceText(result.confidence)}
               </Text>
             )}
           </View>

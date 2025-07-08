@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { HistoryItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { Trash2, Clock, RefreshCw } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 interface HistoryListProps {
   history: HistoryItem[];
@@ -22,11 +23,12 @@ export default function HistoryList({
   onClearHistory,
   onRemoveHistoryItem,
 }: HistoryListProps) {
+  const { t, i18n } = useTranslation();
   const handleClearHistory = () => {
-    Alert.alert('기록 삭제', '모든 검색 기록을 삭제하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
+    Alert.alert(t('history.deleteTitle'), t('history.deleteAllMessage'), [
+      { text: t('alert.cancel'), style: 'cancel' },
       {
-        text: '삭제',
+        text: t('history.delete'),
         style: 'destructive',
         onPress: onClearHistory,
       },
@@ -34,10 +36,10 @@ export default function HistoryList({
   };
 
   const handleRemoveItem = (item: HistoryItem) => {
-    Alert.alert('기록 삭제', '이 검색 기록을 삭제하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
+    Alert.alert(t('history.deleteTitle'), t('history.deleteItemMessage'), [
+      { text: t('alert.cancel'), style: 'cancel' },
       {
-        text: '삭제',
+        text: t('history.delete'),
         style: 'destructive',
         onPress: () => onRemoveHistoryItem(item.id),
       },
@@ -50,11 +52,11 @@ export default function HistoryList({
     const minutes = Math.floor(diff / (1000 * 60));
     const hours = Math.floor(diff / (1000 * 60 * 60));
 
-    if (minutes < 1) return '방금 전';
-    if (minutes < 60) return `${minutes}분 전`;
-    if (hours < 24) return `${hours}시간 전`;
+    if (minutes < 1) return t('history.justNow');
+    if (minutes < 60) return t('history.timeAgo', { minutes });
+    if (hours < 24) return t('history.hourAgo', { hours });
 
-    return new Date().toLocaleDateString('ko-KR', {
+    return new Date(timestamp).toLocaleString(i18n.language === 'en' ? 'en-US' : 'ko-KR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -116,11 +118,21 @@ export default function HistoryList({
   const getTitle = () => {
     if (selectedDate) {
       const date = new Date(selectedDate);
-      return `${date.getFullYear()}년 ${
-        date.getMonth() + 1
-      }월 ${date.getDate()}일`;
+      if (i18n.language === 'en') {
+        return t('history.dateSubtitle', { 
+          month: date.getMonth() + 1, 
+          day: date.getDate(), 
+          year: date.getFullYear() 
+        });
+      } else {
+        return t('history.dateSubtitle', { 
+          year: date.getFullYear(), 
+          month: date.getMonth() + 1, 
+          day: date.getDate() 
+        });
+      }
     }
-    return '전체 히스토리';
+    return t('history.allHistory');
   };
 
   return (
@@ -128,7 +140,7 @@ export default function HistoryList({
       <View className="flex-row justify-between items-center px-5 py-4 bg-slate-50">
         <View className="flex-row items-center">
           <Text className="text-lg font-bold text-gray-800 mr-2">{getTitle()}</Text>
-          <Text className="text-sm font-medium text-gray-500">{history.length}개</Text>
+          <Text className="text-sm font-medium text-gray-500">{t('history.count', { count: history.length })}</Text>
         </View>
 
         {history.length > 0 && (
@@ -137,7 +149,7 @@ export default function HistoryList({
             onPress={handleClearHistory}
           >
             <Trash2 size={18} color="#EF4444" />
-            <Text className="text-sm font-semibold text-red-500 ml-1">전체 삭제</Text>
+            <Text className="text-sm font-semibold text-red-500 ml-1">{t('history.clearAll')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -154,11 +166,11 @@ export default function HistoryList({
             <Clock size={64} color="#E5E7EB" />
             <Text className="text-lg font-semibold text-gray-500 mt-4 mb-2 text-center">
               {selectedDate
-                ? '선택한 날짜에 검색 기록이 없습니다'
-                : '검색 기록이 없습니다'}
+                ? t('history.emptyDate')
+                : t('history.empty')}
             </Text>
             <Text className="text-sm text-gray-400 text-center leading-5">
-              단어나 문장을 검색하면 기록이 여기에 표시됩니다
+              {t('history.searchHint')}
             </Text>
           </View>
         ) : (

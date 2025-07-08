@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, Alert, TouchableOpacity, Animated } from 'react-native';
 import {
   SafeAreaView,
@@ -13,12 +13,15 @@ import LanguageModal from '../../components/LanguageModal';
 import VoiceSettingsModal from '../../components/VoiceSettingsModal';
 import { TranslationAPI } from '../../utils/translationAPI';
 import { StorageService } from '../../utils/storage';
+import { SpeechService } from '../../utils/speechService';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
+import { useTranslation } from 'react-i18next';
 
 export default function SearchTab() {
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [isScrollingUp, setIsScrollingUp] = useState(false);
+  const [isScrollingUp, setIsScrollingUp] = useState(true);
+  const { t, i18n } = useTranslation();
   const [sourceLanguage, setSourceLanguage] = useState('ko');
   const [searchText, setSearchText] = useState('');
   const [results, setResults] = useState<TranslationResult[]>([]);
@@ -29,13 +32,26 @@ export default function SearchTab() {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
     SUPPORTED_LANGUAGES.map((v) => v.code)
   );
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [isVoiceAvailable, setIsVoiceAvailable] = useState(false);
+  const [speechRecognition, setSpeechRecognition] = useState<{
+    stop: () => void;
+  } | null>(null);
+
+  const isEn = i18n.language === 'en';
 
   useFocusEffect(
     useCallback(() => {
       loadFavorites();
       loadSelectedLanguages();
+      checkVoiceAvailability();
     }, [])
   );
+
+  // Check voice availability on mount
+  useEffect(() => {
+    checkVoiceAvailability();
+  }, []);
 
   const loadFavorites = async () => {
     const favs = await StorageService.getFavorites();
@@ -52,8 +68,17 @@ export default function SearchTab() {
     }
   };
 
+  const checkVoiceAvailability = () => {
+    const available = SpeechService.isSpeechRecognitionAvailable();
+    setIsVoiceAvailable(available);
+  };
+
   const handleSearch = async () => {
     if (!searchText.trim()) return;
+
+    if (isVoiceActive) {
+      await stopVoiceRecording();
+    }
 
     setIsLoading(true);
     try {
@@ -86,7 +111,7 @@ export default function SearchTab() {
         });
       }
     } catch (error) {
-      Alert.alert('오류', '번역 중 오류가 발생했습니다. 다시 시도해주세요.');
+      Alert.alert(t('alert.error'), t('alert.translationError'));
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +133,52 @@ export default function SearchTab() {
     setShowLanguageModal(false);
   };
 
+  const startVoiceRecording = async () => {
+    if (!isVoiceAvailable) {
+      Alert.alert(
+        t('alert.error'),
+        'Speech recognition is not available on this device'
+      );
+      return;
+    }
+
+    setIsVoiceActive(true);
+
+    try {
+      const recognition = await SpeechService.startSpeechRecognition(
+        sourceLanguage,
+        (text: string) => {
+          setSearchText(text);
+        },
+        (error: string) => {
+          Alert.alert(t('alert.error'), error);
+          setIsVoiceActive(false);
+          setSpeechRecognition(null);
+        },
+        () => {
+          setIsVoiceActive(false);
+          setSpeechRecognition(null);
+        }
+      );
+
+      recognition && setSpeechRecognition(recognition);
+    } catch (error) {
+      Alert.alert(t('alert.error'), 'Failed to start voice recognition');
+      setIsVoiceActive(false);
+      setSpeechRecognition(null);
+    }
+  };
+
+  const stopVoiceRecording = async () => {
+    if (!speechRecognition) return;
+    await speechRecognition.stop();
+    setSpeechRecognition(null);
+    setIsVoiceActive(false);
+  };
+
+  const handleVoicePress = () =>
+    isVoiceActive ? stopVoiceRecording() : startVoiceRecording();
+
   return (
     <SafeAreaView
       className="flex-1 bg-slate-50"
@@ -117,8 +188,12 @@ export default function SearchTab() {
         <View className="flex-row justify-between items-center mb-2">
           <View className="flex-row items-center">
             <Globe size={32} color="#6366F1" />
-            <Text className="text-3xl font-bold text-gray-800 ml-3">
-              다국어 번역기
+            <Text
+              className={`${
+                isEn ? 'text-[16px]' : 'text-3xl'
+              } font-bold text-gray-800 ml-3`}
+            >
+              {t('main.title')}
             </Text>
           </View>
           <View className="flex-row items-center gap-3">
@@ -137,7 +212,7 @@ export default function SearchTab() {
           </View>
         </View>
         <Text className="text-base font-medium text-gray-500 ml-11">
-          {selectedLanguages.length}개 언어로 동시 번역
+          {t('main.subtitle', { count: selectedLanguages.length })}
         </Text>
       </View>
 
@@ -155,7 +230,7 @@ export default function SearchTab() {
           <LanguageSelector
             selectedLanguage={sourceLanguage}
             onLanguageSelect={setSourceLanguage}
-            label="번역할 언어"
+            label={t('main.sourceLanguageLabel')}
             selectedLanguages={selectedLanguages}
           />
 
@@ -164,8 +239,11 @@ export default function SearchTab() {
             onChangeText={setSearchText}
             onSearch={handleSearch}
             onClear={handleClear}
-            placeholder="번역할 텍스트를 입력하세요..."
+            placeholder={t('main.searchPlaceholder')}
             isLoading={isLoading}
+            onVoicePress={handleVoicePress}
+            isVoiceActive={isVoiceActive}
+            isVoiceAvailable={isVoiceAvailable}
           />
         </Animated.View>
 

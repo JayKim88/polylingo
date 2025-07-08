@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { Search, X } from 'lucide-react-native';
+import { Search, X, Mic } from 'lucide-react-native';
 
 interface SearchInputProps {
   value: string;
@@ -14,6 +14,9 @@ interface SearchInputProps {
   onClear: () => void;
   placeholder: string;
   isLoading?: boolean;
+  onVoicePress?: () => void;
+  isVoiceActive?: boolean;
+  isVoiceAvailable?: boolean;
 }
 
 export default function SearchInput({
@@ -23,7 +26,12 @@ export default function SearchInput({
   onClear,
   placeholder,
   isLoading,
+  onVoicePress,
+  isVoiceActive,
+  isVoiceAvailable,
 }: SearchInputProps) {
+  console.log('isVoiceActive', isVoiceActive);
+
   return (
     <View className="flex-row mb-5">
       <View className="flex-1 flex-row items-center bg-white rounded-2xl px-4 py-3 mr-3 shadow-sm min-h-[56px]">
@@ -48,6 +56,20 @@ export default function SearchInput({
           </TouchableOpacity>
         ) : null}
       </View>
+
+      {onVoicePress && isVoiceAvailable && (
+        <TouchableOpacity
+          className={`justify-center items-center rounded-2xl shadow-sm w-16 h-16 mr-3 ${
+            isVoiceActive ? 'bg-red-500' : 'bg-green-500'
+          }`}
+          style={{
+            backgroundColor: isVoiceActive ? 'red' : 'green',
+          }}
+          onPress={onVoicePress}
+        >
+          <Mic size={20} color="#fff" />
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity
         className={`justify-center items-center rounded-2xl shadow-sm w-16 h-16 ${

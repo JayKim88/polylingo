@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Animated } from 'react-native';
 import { TranslationResult } from '../types/dictionary';
 import TranslationCard from './TranslationCard';
+import { useTranslation } from 'react-i18next';
 
 interface TranslationListProps {
   results: TranslationResult[];
@@ -20,6 +21,7 @@ export default function TranslationList({
 }: TranslationListProps) {
   const lastScrollY = React.useRef(0);
   const lastDirection = React.useRef<boolean | null>(null);
+  const { t } = useTranslation();
   const isFavorite = (result: TranslationResult) => {
     const id = `${result.sourceText}-${result.sourceLanguage}-${result.targetLanguage}`;
     return favorites.includes(id);
@@ -29,7 +31,7 @@ export default function TranslationList({
     return (
       <View className="flex-1 justify-center items-center py-16">
         <Text className="text-base text-gray-400 text-center">
-          검색어를 입력해주세요
+          {t('main.searchPrompt')}
         </Text>
       </View>
     );
@@ -39,7 +41,7 @@ export default function TranslationList({
     <View className="flex-1">
       <View className="flex-row justify-start items-center mb-4 px-1">
         <Text className="text-base font-semibold text-gray-700">
-          {results.length}개 언어로 번역됨
+          {t('main.resultsCount', { count: results.length })}
         </Text>
       </View>
 

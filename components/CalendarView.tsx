@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 interface CalendarViewProps {
   markedDates: string[];
@@ -9,12 +10,13 @@ interface CalendarViewProps {
   markColor: string;
 }
 
-export default function CalendarView({ 
-  markedDates, 
-  selectedDate, 
-  onDateSelect, 
-  markColor 
+export default function CalendarView({
+  markedDates,
+  selectedDate,
+  onDateSelect,
+  markColor,
 }: CalendarViewProps) {
+  const { t } = useTranslation();
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const getDaysInMonth = (date: Date) => {
@@ -26,7 +28,9 @@ export default function CalendarView({
   };
 
   const formatDateString = (year: number, month: number, day: number) => {
-    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(
+      day
+    ).padStart(2, '0')}`;
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -44,7 +48,7 @@ export default function CalendarView({
     const month = currentDate.getMonth();
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
-    
+
     const days = [];
     const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -73,18 +77,28 @@ export default function CalendarView({
         <TouchableOpacity
           key={day}
           className={`relative justify-center items-center ${
-            isSelected ? 'bg-indigo-600 rounded-lg' : isToday ? 'bg-gray-100 rounded-lg' : ''
+            isSelected
+              ? 'bg-indigo-600 rounded-lg'
+              : isToday
+              ? 'bg-gray-100 rounded-lg'
+              : ''
           }`}
           style={{ width: '14.28%', aspectRatio: 1 }}
           onPress={() => onDateSelect(isSelected ? null : dateString)}
         >
-          <Text className={`text-base font-medium ${
-            isSelected ? 'text-white font-bold' : isToday ? 'text-indigo-600 font-bold' : 'text-gray-700'
-          }`}>
+          <Text
+            className={`text-base font-medium ${
+              isSelected
+                ? 'text-white font-bold'
+                : isToday
+                ? 'text-indigo-600 font-bold'
+                : 'text-gray-700'
+            }`}
+          >
             {day}
           </Text>
           {isMarked && (
-            <View 
+            <View
               className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${
                 isSelected ? 'bg-white' : ''
               }`}
@@ -97,19 +111,25 @@ export default function CalendarView({
 
     return (
       <View className="mb-4">
-        <View className="flex-row mb-2">
-          {weekHeaders}
-        </View>
-        <View className="flex-row flex-wrap">
-          {days}
-        </View>
+        <View className="flex-row mb-2">{weekHeaders}</View>
+        <View className="flex-row flex-wrap">{days}</View>
       </View>
     );
   };
 
   const monthNames = [
-    '1월', '2월', '3월', '4월', '5월', '6월',
-    '7월', '8월', '9월', '10월', '11월', '12월'
+    '1월',
+    '2월',
+    '3월',
+    '4월',
+    '5월',
+    '6월',
+    '7월',
+    '8월',
+    '9월',
+    '10월',
+    '11월',
+    '12월',
   ];
 
   return (
@@ -121,11 +141,11 @@ export default function CalendarView({
         >
           <ChevronLeft size={20} color="#6B7280" />
         </TouchableOpacity>
-        
+
         <Text className="text-lg font-bold text-gray-800">
           {currentDate.getFullYear()}년 {monthNames[currentDate.getMonth()]}
         </Text>
-        
+
         <TouchableOpacity
           className="p-2 rounded-lg bg-gray-50"
           onPress={() => navigateMonth('next')}
@@ -138,7 +158,10 @@ export default function CalendarView({
 
       <View className="flex-row justify-between items-center pt-4 border-t border-gray-100">
         <View className="flex-row items-center">
-          <View className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: markColor }} />
+          <View
+            className="w-2 h-2 rounded-full mr-2"
+            style={{ backgroundColor: markColor }}
+          />
           <Text className="text-sm text-gray-500">기록이 있는 날</Text>
         </View>
         {selectedDate && (
@@ -146,11 +169,12 @@ export default function CalendarView({
             className="px-3 py-1.5 bg-gray-100 rounded-lg"
             onPress={() => onDateSelect(null)}
           >
-            <Text className="text-sm font-semibold text-gray-700">전체 보기</Text>
+            <Text className="text-sm font-semibold text-gray-700">
+              {t('datePicker.all')}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
     </View>
   );
 }
-

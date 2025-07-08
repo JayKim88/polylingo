@@ -1,17 +1,20 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Clock, Calendar } from 'lucide-react-native';
-import CalendarView from '../../components/CalendarView';
 import HistoryList from '../../components/HistoryList';
 import DatePickerModal from '../../components/DatePickerModal';
 import { StorageService } from '../../utils/storage';
 import { HistoryItem } from '../../types/dictionary';
-import { ScrollView } from 'react-native-gesture-handler';
+import { useTranslation } from 'react-i18next';
 
 export default function HistoryTab() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [filteredHistory, setFilteredHistory] = useState<HistoryItem[]>([]);
@@ -73,7 +76,7 @@ export default function HistoryTab() {
   };
 
   return (
-    <SafeAreaView 
+    <SafeAreaView
       className="flex-1 bg-slate-50"
       style={{ paddingBottom: insets.bottom - 50 }}
     >
@@ -81,7 +84,9 @@ export default function HistoryTab() {
         <View className="flex-row justify-between items-center mb-2">
           <View className="flex-row items-center">
             <Clock size={32} color="#3B82F6" />
-            <Text className="text-3xl font-bold text-gray-800 ml-3">히스토리</Text>
+            <Text className="text-3xl font-bold text-gray-800 ml-3">
+              {t('history.title')}
+            </Text>
           </View>
           <TouchableOpacity
             className="p-3 bg-blue-50 rounded-xl"
@@ -92,10 +97,12 @@ export default function HistoryTab() {
         </View>
         <Text className="text-base font-medium text-gray-500 ml-11">
           {selectedDate
-            ? `${new Date(selectedDate).getFullYear()}년 ${
-                new Date(selectedDate).getMonth() + 1
-              }월 ${new Date(selectedDate).getDate()}일`
-            : '검색 기록을 날짜별로 확인하세요'}
+            ? t('history.dateSubtitle', {
+                year: new Date(selectedDate).getFullYear(),
+                month: new Date(selectedDate).getMonth() + 1,
+                day: new Date(selectedDate).getDate(),
+              })
+            : t('history.subtitle')}
         </Text>
       </View>
       <HistoryList
@@ -114,4 +121,3 @@ export default function HistoryTab() {
     </SafeAreaView>
   );
 }
-

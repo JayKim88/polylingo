@@ -15,24 +15,25 @@ import { X, RotateCcw, TestTube, Save } from 'lucide-react-native';
 import { StorageService, VoiceSettings } from '../utils/storage';
 import { SpeechService } from '../utils/speechService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 interface VoiceSettingsModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-// const { width } = Dimensions.get('window'); // Unused for now
-
 export default function VoiceSettingsModal({
   visible,
   onClose,
 }: VoiceSettingsModalProps) {
   const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
   const [settings, setSettings] = useState<VoiceSettings>({
     volume: 1.0,
     rate: 0.8,
     pitch: 1.0,
   });
+  const isEn = i18n.language === 'en';
 
   const [isTesting, setIsTesting] = useState(false);
 
@@ -58,7 +59,7 @@ export default function VoiceSettingsModal({
 
   const handleTest = async () => {
     if (!SpeechService.isAvailable()) {
-      Alert.alert('알림', '이 기기에서는 음성 기능을 지원하지 않습니다.');
+      Alert.alert(t('alert.info'), t('voice.notSupported'));
       return;
     }
 
@@ -73,14 +74,10 @@ export default function VoiceSettingsModal({
         );
       }
 
-      await SpeechService.speak(
-        '안녕하세요. 음성 설정을 테스트합니다.',
-        'ko',
-        settings
-      );
+      await SpeechService.speak(t('voice.testText'), 'en', settings);
     } catch (error) {
       console.error('🔊 TTS Test Error:', error);
-      Alert.alert('오류', '음성 테스트 중 오류가 발생했습니다.');
+      Alert.alert(t('alert.error'), t('voice.testError'));
     } finally {
       setIsTesting(false);
     }
@@ -91,26 +88,26 @@ export default function VoiceSettingsModal({
       await StorageService.saveVoiceSettings(settings);
       onClose();
     } catch (error) {
-      Alert.alert('오류', '설정 저장 중 오류가 발생했습니다.');
+      Alert.alert(t('alert.error'), t('voice.saveError'));
     }
   };
 
   const getVolumeText = (value: number) => {
-    if (value >= 0.8) return '높음';
-    if (value >= 0.5) return '중간';
-    return '낮음';
+    if (value >= 0.8) return t('voice.high');
+    if (value >= 0.5) return t('voice.medium');
+    return t('voice.low');
   };
 
   const getRateText = (value: number) => {
-    if (value >= 1.2) return '빠름';
-    if (value >= 0.6) return '보통';
-    return '느림';
+    if (value >= 1.2) return t('voice.fast');
+    if (value >= 0.6) return t('voice.normal');
+    return t('voice.slow');
   };
 
   const getPitchText = (value: number) => {
-    if (value >= 1.3) return '높음';
-    if (value >= 0.8) return '보통';
-    return '낮음';
+    if (value >= 1.3) return t('voice.high');
+    if (value >= 0.8) return t('voice.normal');
+    return t('voice.low');
   };
 
   return (
@@ -126,7 +123,9 @@ export default function VoiceSettingsModal({
           behavior={RNPlatform.OS === 'ios' ? 'padding' : 'height'}
         >
           <View className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b border-gray-100">
-            <Text className="text-xl font-bold text-gray-900">음성 설정</Text>
+            <Text className="text-xl font-bold text-gray-900">
+              {t('voice.title')}
+            </Text>
             <TouchableOpacity onPress={onClose} className="p-2">
               <X size={24} color="#6B7280" />
             </TouchableOpacity>
@@ -134,13 +133,19 @@ export default function VoiceSettingsModal({
 
           <ScrollView
             className="flex-1"
-            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20 }}
+            contentContainerStyle={{
+              paddingHorizontal: 20,
+              paddingTop: 24,
+              paddingBottom: 20,
+            }}
             showsVerticalScrollIndicator={false}
           >
             {RNPlatform.OS !== 'ios' && (
               <View className="mb-8">
                 <View className="flex-row justify-between items-center mb-4">
-                  <Text className="text-base font-semibold text-gray-700">음량</Text>
+                  <Text className="text-base font-semibold text-gray-700">
+                    {t('voice.volume')}
+                  </Text>
                   <Text className="text-sm font-medium text-indigo-500">
                     {getVolumeText(settings.volume)} (
                     {Math.round(settings.volume * 100)}%)
@@ -166,7 +171,9 @@ export default function VoiceSettingsModal({
 
             <View className="mb-8">
               <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-base font-semibold text-gray-700">속도</Text>
+                <Text className="text-base font-semibold text-gray-700">
+                  {t('voice.speed')}
+                </Text>
                 <Text className="text-sm font-medium text-indigo-500">
                   {getRateText(settings.rate)} ({settings.rate.toFixed(1)}x)
                 </Text>
@@ -183,14 +190,16 @@ export default function VoiceSettingsModal({
                 maximumTrackTintColor="#E5E7EB"
               />
               <View className="flex-row justify-between mt-2">
-                <Text className="text-xs text-gray-400">느림</Text>
-                <Text className="text-xs text-gray-400">빠름</Text>
+                <Text className="text-xs text-gray-400">{t('voice.slow')}</Text>
+                <Text className="text-xs text-gray-400">{t('voice.fast')}</Text>
               </View>
             </View>
 
             <View className="mb-8">
               <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-base font-semibold text-gray-700">음조</Text>
+                <Text className="text-base font-semibold text-gray-700">
+                  {t('voice.pitch')}
+                </Text>
                 <Text className="text-sm font-medium text-indigo-500">
                   {getPitchText(settings.pitch)} ({settings.pitch.toFixed(1)})
                 </Text>
@@ -207,8 +216,8 @@ export default function VoiceSettingsModal({
                 maximumTrackTintColor="#E5E7EB"
               />
               <View className="flex-row justify-between mt-2">
-                <Text className="text-xs text-gray-400">낮음</Text>
-                <Text className="text-xs text-gray-400">높음</Text>
+                <Text className="text-xs text-gray-400">{t('voice.low')}</Text>
+                <Text className="text-xs text-gray-400">{t('voice.high')}</Text>
               </View>
             </View>
           </ScrollView>
@@ -221,7 +230,9 @@ export default function VoiceSettingsModal({
               onPress={handleReset}
             >
               <RotateCcw size={18} color="#6B7280" />
-              <Text className="text-sm font-semibold text-gray-500">기본값</Text>
+              <Text className="text-sm font-semibold text-gray-500">
+                {t('voice.reset')}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -231,7 +242,7 @@ export default function VoiceSettingsModal({
             >
               <TestTube size={18} color="#F59E0B" />
               <Text className="text-sm font-semibold text-yellow-600">
-                {isTesting ? '테스트 중...' : '테스트'}
+                {isTesting ? t('voice.inTesting') : t('voice.test')}
               </Text>
             </TouchableOpacity>
 
@@ -240,7 +251,9 @@ export default function VoiceSettingsModal({
               onPress={handleSave}
             >
               <Save size={18} color="#FFFFFF" />
-              <Text className="text-sm font-semibold text-white">저장</Text>
+              <Text className="text-sm font-semibold text-white">
+                {t('voice.save')}
+              </Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -248,4 +261,3 @@ export default function VoiceSettingsModal({
     </Modal>
   );
 }
-

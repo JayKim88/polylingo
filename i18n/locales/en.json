@@ -1,0 +1,154 @@
+{
+  "tabs": {
+    "search": "Search",
+    "favorites": "Favorites",
+    "history": "History",
+    "settings": "Settings"
+  },
+  "main": {
+    "title": "Multi-language Translator",
+    "subtitle": "Translate to {{count}} languages simultaneously",
+    "sourceLanguageLabel": "Source Language",
+    "searchPlaceholder": "Enter text to translate...",
+    "resultsCount": "Translated to {{count}} languages",
+    "searchPrompt": "Please enter search term"
+  },
+  "sourceLanguage": {
+    "title": "Source language",
+    "cancel": "Cancel"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "subtitle": "View saved translation results by date",
+    "dateSubtitle": "{{month}}/{{day}}/{{year}}",
+    "allFavorites": "All Favorites",
+    "count": "{{count}} items",
+    "moreItems": "+{{count}} more",
+    "empty": "No saved favorites",
+    "emptyDate": "No favorites saved on the selected date",
+    "addHint": "Tap the heart button in search results to add to favorites",
+    "deleteTitle": "Delete Favorite",
+    "deleteMessage": "Would you like to delete \"{{item}}\" from favorites?",
+    "delete": "Delete"
+  },
+  "history": {
+    "title": "History",
+    "subtitle": "View search history by date",
+    "dateSubtitle": "{{month}}/{{day}}/{{year}}",
+    "allHistory": "All History",
+    "clearAll": "Clear All",
+    "count": "{{count}} items",
+    "timeAgo": "{{minutes}} minutes ago",
+    "hourAgo": "{{hours}} hours ago",
+    "dayAgo": "{{days}} days ago",
+    "justNow": "Just now",
+    "empty": "No search history",
+    "emptyDate": "No search history on the selected date",
+    "searchHint": "Search history will appear here when you search for words or sentences",
+    "deleteTitle": "Delete History",
+    "deleteAllMessage": "Would you like to delete all search history?",
+    "deleteItemMessage": "Would you like to delete this search history?",
+    "delete": "Delete"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Configure app settings and view information",
+    "appInfo": "App Information",
+    "users": "User",
+    "privacy": "Privacy",
+    "appLanguage": "App Language",
+    "appLanguageSubtitle": "Set app interface language",
+    "about": "About",
+    "aboutSubtitle": "Version and developer information",
+    "features": "Features",
+    "featuresSubtitle": "Core app features overview",
+    "supportedLanguages": "Supported Languages",
+    "supportedLanguagesSubtitle": "Available translation languages",
+    "feedback": "Send Feedback",
+    "feedbackSubtitle": "Share your opinions and suggestions",
+    "rate": "Rate App",
+    "rateSubtitle": "Rate us on the App Store",
+    "privacyPolicy": "Privacy Policy",
+    "privacyPolicySubtitle": "Data handling and security policy"
+  },
+  "alert": {
+    "error": "Error",
+    "info": "Information",
+    "confirm": "OK",
+    "cancel": "Cancel",
+    "later": "Later",
+    "translationError": "An error occurred during translation. Please try again."
+  },
+  "language": {
+    "korean": "한국어",
+    "english": "English"
+  },
+  "languageModal": {
+    "title": "Language Selection",
+    "searchPlaceholder": "Search language",
+    "allLanguages": "All Languages",
+    "selectedLanguages": "{{count}} Languages Selected - Long press on the selected language to change its order",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "selectPrompt": "Select languages to translate (min 2)"
+  },
+  "voice": {
+    "title": "Voice Settings",
+    "volume": "Volume",
+    "speed": "Speed",
+    "pitch": "Pitch",
+    "test": "Test",
+    "inTesting": "Testing...",
+    "testText": "Hello. This is a voice test.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "slow": "Slow",
+    "fast": "Fast",
+    "low": "Low",
+    "high": "High",
+    "medium": "Medium",
+    "normal": "Normal",
+    "quiet": "Quiet",
+    "loud": "Loud",
+    "testing": "Testing...",
+    "reset": "Reset",
+    "notSupported": "Voice function is not supported on this device.",
+    "testError": "An error occurred during voice test.",
+    "saveError": "An error occurred while saving settings."
+  },
+  "datePicker": {
+    "title": "Select Date",
+    "allFavorites": "All Favorites",
+    "allHistory": "All History",
+    "all": "All",
+    "selectDate": "Select a date (no selection = see all)",
+    "selectedDate": "Selected Date"
+  },
+  "aboutModal": {
+    "title": "Multi-language Translation App",
+    "version": "Version 1.0.0",
+    "description": "A translation app for people learning multiple languages simultaneously.",
+    "features": "• 6 language support\n• Word/sentence translation\n• Ambiguous meaning display\n• Drag-and-drop sorting\n• Calendar-based history"
+  },
+  "feedbackModal": {
+    "title": "Feedback",
+    "message": "If you have any opinions or suggestions for improvement, please let us know anytime!\n\nWe will provide a better multilingual learning experience."
+  },
+  "rateModal": {
+    "title": "Rate App",
+    "message": "Has the app been helpful? Your rating would be a great help in providing better service.",
+    "rate": "Rate Now"
+  },
+  "privacyModal": {
+    "title": "Privacy Policy",
+    "message": "This app does not collect user personal information.\n\n• Search history is stored only on your device\n• Network connection is used only for translation\n• User data is not transmitted externally\n• All data is managed locally"
+  },
+  "featuresModal": {
+    "title": "Key Features",
+    "message": "• Simultaneous multi-language translation\n• Word/sentence search type selection\n• Detailed ambiguous meaning display\n• Drag-and-drop language order change\n• Calendar-based favorites/history management\n• Voice playback and copy function\n• Offline storage function"
+  },
+  "languageSupportModal": {
+    "title": "Supported Languages",
+    "message": "Currently supported languages:\n\n🇰🇷 Korean (한국어)\n🇺🇸 English (English)\n🇯🇵 Japanese (日本語)\n🇫🇷 French (Français)\n🇩🇪 German (Deutsch)\n🇪🇸 Spanish (Español)\n\nMore language support is coming!"
+  }
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import DraggableFlatList, {
 import { Language, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { X, Check, GripVertical } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 interface LanguageModalProps {
   visible: boolean;
@@ -29,6 +30,7 @@ export default function LanguageModal({
   onLanguageSelection,
   onClose,
 }: LanguageModalProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [tempSelected, setTempSelected] = useState<string[]>(selectedLanguages);
 
@@ -45,11 +47,11 @@ export default function LanguageModal({
     const selectedLanguages = tempSelected
       .map((code) => SUPPORTED_LANGUAGES.find((lang) => lang.code === code)!)
       .filter(Boolean);
-    
+
     const unselectedLanguages = SUPPORTED_LANGUAGES.filter(
       (lang) => !tempSelected.includes(lang.code)
     );
-    
+
     return [...selectedLanguages, ...unselectedLanguages];
   };
 
@@ -68,13 +70,13 @@ export default function LanguageModal({
     isActive,
   }: RenderItemParams<Language>) => {
     const isSelected = tempSelected.includes(item.code);
-    
+
     return (
       <View className={`mb-2 ${isActive ? 'opacity-80' : ''}`}>
         <TouchableOpacity
           className={`flex-row items-center justify-between p-4 rounded-xl border-2 ${
-            isSelected 
-              ? 'bg-indigo-50 border-indigo-500' 
+            isSelected
+              ? 'bg-indigo-50 border-indigo-500'
               : 'bg-gray-50 border-gray-50'
           }`}
           onPress={() => toggleLanguage(item.code)}
@@ -119,7 +121,7 @@ export default function LanguageModal({
         >
           <View className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b border-gray-200">
             <Text className="text-xl font-bold text-gray-900">
-              번역할 언어 선택
+              {t('languageModal.title')}
             </Text>
             <TouchableOpacity onPress={handleCancel} className="p-2">
               <X size={24} color="#6B7280" />
@@ -128,10 +130,11 @@ export default function LanguageModal({
 
           <View className="flex-1 px-5 pt-6">
             <Text className="text-sm font-medium text-gray-500 mb-5">
-              {tempSelected.length > 0 
-                ? `${tempSelected.length}개 언어가 선택됨 - 선택된 언어를 길게 눌러서 순서 변경` 
-                : '번역할 언어를 선택하세요 (최소 2개)'
-              }
+              {tempSelected.length > 0
+                ? t('languageModal.selectedLanguages', {
+                    count: tempSelected.length,
+                  })
+                : t('languageModal.selectPrompt')}
             </Text>
 
             <DraggableFlatList
@@ -141,9 +144,9 @@ export default function LanguageModal({
               onDragEnd={({ data }) => {
                 // 선택된 언어들만 순서 변경, 선택되지 않은 언어들은 그대로 유지
                 const newSelectedOrder = data
-                  .filter(item => tempSelected.includes(item.code))
-                  .map(item => item.code);
-                
+                  .filter((item) => tempSelected.includes(item.code))
+                  .map((item) => item.code);
+
                 setTempSelected(newSelectedOrder);
               }}
               showsVerticalScrollIndicator={false}
@@ -159,7 +162,9 @@ export default function LanguageModal({
               className="flex-1 py-3 px-4 rounded-xl items-center bg-gray-50 border border-gray-300"
               onPress={handleCancel}
             >
-              <Text className="text-sm font-semibold text-gray-500">취소</Text>
+              <Text className="text-sm font-semibold text-gray-500">
+                {t('languageModal.cancel')}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               className={`flex-1 py-3 px-4 rounded-xl items-center ${
@@ -168,7 +173,9 @@ export default function LanguageModal({
               onPress={handleConfirm}
               disabled={tempSelected.length < 2}
             >
-              <Text className="text-sm font-semibold text-white">확인</Text>
+              <Text className="text-sm font-semibold text-white">
+                {t('languageModal.confirm')}
+              </Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
