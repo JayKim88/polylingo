@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { Language, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { ChevronDown } from 'lucide-react-native';
@@ -7,15 +7,15 @@ import { useTranslation } from 'react-i18next';
 interface LanguageSelectorProps {
   selectedLanguage: string;
   onLanguageSelect: (languageCode: string) => void;
-  label: string;
   selectedLanguages: string[];
+  onOpen: () => void;
 }
 
 export default function LanguageSelector({
   selectedLanguage,
   onLanguageSelect,
-  label,
   selectedLanguages,
+  onOpen,
 }: LanguageSelectorProps) {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = React.useState(false);
@@ -23,6 +23,11 @@ export default function LanguageSelector({
   const selectedLang = SUPPORTED_LANGUAGES.find(
     (lang) => lang.code === selectedLanguage
   );
+
+  useEffect(() => {
+    if(!isVisible) return 
+    onOpen()
+  }, [isVisible]);
 
   const renderLanguageItem = ({ item }: { item: Language }) => (
     <TouchableOpacity
@@ -49,8 +54,7 @@ export default function LanguageSelector({
   );
 
   return (
-    <View className="mb-4">
-      <Text className="text-sm font-semibold text-gray-700 mb-2">{label}</Text>
+    <View className="mb-4 flex-1">
       <TouchableOpacity
         className="flex-row items-center p-3 bg-white rounded-2xl px-4 py-3 shadow-sm min-h-[56px]"
         onPress={() => setIsVisible(true)}

@@ -1,11 +1,18 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text, Alert, TouchableOpacity, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  Alert,
+  TouchableOpacity,
+  Animated,
+  ActivityIndicator,
+} from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { Languages, Globe, Mic } from 'lucide-react-native';
+import { Languages, Globe, Volume2, Mic, Search } from 'lucide-react-native';
 import LanguageSelector from '../../components/LanguageSelector';
 import SearchInput from '../../components/SearchInput';
 import TranslationList from '../../components/TranslationList';
@@ -117,13 +124,13 @@ export default function SearchTab() {
     }
   };
 
-  const handleClear = () => {
+  const handleClear = async () => {
     setSearchText('');
     setResults([]);
-  };
 
-  const handleFavoriteToggle = () => {
-    loadFavorites();
+    if (isVoiceActive) {
+      await stopVoiceRecording();
+    }
   };
 
   const handleLanguageSelection = async (languages: string[]) => {
@@ -201,7 +208,7 @@ export default function SearchTab() {
               className="p-3 bg-amber-100 rounded-xl"
               onPress={() => setShowVoiceSettingsModal(true)}
             >
-              <Mic size={24} color="#6366F1" />
+              <Volume2 size={24} color="#6366F1" />
             </TouchableOpacity>
             <TouchableOpacity
               className="p-3 bg-indigo-100 rounded-xl"
@@ -227,24 +234,59 @@ export default function SearchTab() {
             opacity: isScrollingUp ? 1 : 0,
           }}
         >
-          <LanguageSelector
-            selectedLanguage={sourceLanguage}
-            onLanguageSelect={setSourceLanguage}
-            label={t('main.sourceLanguageLabel')}
-            selectedLanguages={selectedLanguages}
-          />
+          <Text className="text-sm font-semibold text-gray-700 mb-2">
+            {t('main.sourceLanguageLabel')}
+          </Text>
+          <View className="flex flex-row gap-x-2">
+            <LanguageSelector
+              selectedLanguage={sourceLanguage}
+              onLanguageSelect={setSourceLanguage}
+              selectedLanguages={selectedLanguages}
+              onOpen={async () => {
+                if (isVoiceActive) {
+                  await stopVoiceRecording();
+                }
+              }}
+            />
+            {isVoiceAvailable && (
+              <TouchableOpacity
+                className={`justify-center items-center rounded-2xl shadow-sm w-16 h-16 ${
+                  isVoiceActive ? 'bg-red-500' : 'bg-green-500'
+                }`}
+                onPress={handleVoicePress}
+              >
+                <Mic size={20} color="#fff" />
+              </TouchableOpacity>
+            )}
 
-          <SearchInput
-            value={searchText}
-            onChangeText={setSearchText}
-            onSearch={handleSearch}
-            onClear={handleClear}
-            placeholder={t('main.searchPlaceholder')}
-            isLoading={isLoading}
-            onVoicePress={handleVoicePress}
-            isVoiceActive={isVoiceActive}
-            isVoiceAvailable={isVoiceAvailable}
-          />
+            <TouchableOpacity
+              className={`justify-center items-center rounded-2xl shadow-sm w-16 h-16 ${
+                isLoading || !searchText.trim() ? 'bg-gray-400' : 'bg-blue-500'
+              }`}
+              onPress={handleSearch}
+              disabled={isLoading || !searchText.trim()}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Search size={20} color="#fff" />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View className="flex-row items-center gap-3 mb-5">
+            <SearchInput
+              value={searchText}
+              onChangeText={setSearchText}
+              onClear={handleClear}
+              onSearch={handleSearch}
+              placeholder={
+                isVoiceActive ? 'Speak now' : t('main.searchPlaceholder')
+              }
+              isVoiceActive={isVoiceActive}
+              editable={!isVoiceActive}
+            />
+          </View>
         </Animated.View>
 
         <Animated.View
@@ -256,7 +298,7 @@ export default function SearchTab() {
           <TranslationList
             results={results}
             favorites={favorites}
-            onFavoriteToggle={handleFavoriteToggle}
+            onFavoriteToggle={loadFavorites}
             scrollY={scrollY}
             onScrollDirectionChange={(scrollingUp) =>
               setIsScrollingUp(scrollingUp)

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, Linking } from 'react-native';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { Heart, Copy, Volume2, VolumeX } from 'lucide-react-native';
+import Svg, { Path } from 'react-native-svg';
 import { StorageService } from '../utils/storage';
 import { SpeechService } from '../utils/speechService';
 import * as Clipboard from 'expo-clipboard';
@@ -11,6 +12,16 @@ interface TranslationCardProps {
   onFavoriteToggle?: () => void;
   isFavorite?: boolean;
 }
+
+// Google Icon SVG Component
+const GoogleIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 512 512">
+    <Path
+      d="M32.582 370.734C15.127 336.291 5.12 297.425 5.12 256c0-41.426 10.007-80.291 27.462-114.735C74.705 57.484 161.047 0 261.12 0c69.12 0 126.836 25.367 171.287 66.793l-73.31 73.309c-26.763-25.135-60.276-38.168-97.977-38.168-66.56 0-123.113 44.917-143.36 105.426-5.12 15.36-8.146 31.65-8.146 48.64 0 16.989 3.026 33.28 8.146 48.64l-.303.232h.303c20.247 60.51 76.8 105.426 143.36 105.426 34.443 0 63.534-9.31 86.341-24.67 27.23-18.152 45.382-45.148 51.433-77.032H261.12v-99.142h241.105c3.025 16.757 4.654 34.211 4.654 52.364 0 77.963-27.927 143.592-76.334 188.276-42.356 39.098-100.305 61.905-169.425 61.905-100.073 0-186.415-57.483-228.538-141.032v-.233z"
+      fill={MIN_BUTTON_COLOR}
+    />
+  </Svg>
+);
 
 export default function TranslationCard({
   result,
@@ -23,7 +34,15 @@ export default function TranslationCard({
   );
 
   const handleFavorite = async () => {
-    if (!isFavorite) {
+    if (isFavorite) {
+      // Remove from favorites
+      await StorageService.removeFavoriteByContent(
+        result.sourceText,
+        result.sourceLanguage,
+        result.targetLanguage
+      );
+    } else {
+      // Add to favorites
       await StorageService.addFavorite({
         sourceLanguage: result.sourceLanguage,
         targetLanguage: result.targetLanguage,
@@ -80,16 +99,26 @@ export default function TranslationCard({
     }
   };
 
+  const handleGoogleSearch = async () => {
+    try {
+      const searchQuery = encodeURIComponent(result.translatedText);
+      const googleUrl = `https://www.google.com/search?q=${searchQuery}`;
+
+      const canOpen = await Linking.canOpenURL(googleUrl);
+      if (canOpen) {
+        await Linking.openURL(googleUrl);
+      } else {
+        Alert.alert('Error', 'Unable to open Google search');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to open Google search');
+    }
+  };
+
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.8) return '#10B981';
     if (confidence >= 0.5) return '#F59E0B';
     return '#EF4444';
-  };
-
-  const getConfidenceText = (confidence: number) => {
-    if (confidence >= 0.8) return 'High';
-    if (confidence >= 0.5) return 'Medium';
-    return 'Low';
   };
 
   return (
@@ -97,19 +126,9 @@ export default function TranslationCard({
       <View className="flex-row justify-between items-start mb-4">
         <View className="flex-row items-center flex-1">
           <Text className="text-2xl mr-3">{targetLanguage?.flag}</Text>
-          <View className="flex-1">
-            <Text className="text-base font-semibold text-gray-700">
-              {targetLanguage?.nativeName}
-            </Text>
-            {result.confidence > 0 && (
-              <Text
-                className="text-xs font-medium mt-0.5"
-                style={{ color: getConfidenceColor(result.confidence) }}
-              >
-                Reliability: {getConfidenceText(result.confidence)}
-              </Text>
-            )}
-          </View>
+          <Text className="text-base font-semibold text-gray-700">
+            {targetLanguage?.nativeName}
+          </Text>
         </View>
 
         <View className="flex-row items-center">
@@ -120,9 +139,16 @@ export default function TranslationCard({
           >
             <Heart
               size={20}
-              color={isFavorite ? '#EF4444' : '#9CA3AF'}
+              color={isFavorite ? '#EF4444' : MIN_BUTTON_COLOR}
               fill={isFavorite ? '#EF4444' : 'none'}
             />
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="p-2 ml-1"
+            onPress={handleGoogleSearch}
+            disabled={result.confidence === 0}
+          >
+            <GoogleIcon />
           </TouchableOpacity>
           <TouchableOpacity
             className="p-2 ml-1"
@@ -131,7 +157,11 @@ export default function TranslationCard({
           >
             <Copy
               size={20}
-              color={result.confidence === 0 ? '#D1D5DB' : '#9CA3AF'}
+              color={
+                result.confidence === 0
+                  ? CONFIDENCE_ZERO_COLOR
+                  : MIN_BUTTON_COLOR
+              }
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -146,8 +176,8 @@ export default function TranslationCard({
                 size={20}
                 color={
                   result.confidence === 0 || !SpeechService.isAvailable()
-                    ? '#D1D5DB'
-                    : '#9CA3AF'
+                    ? CONFIDENCE_ZERO_COLOR
+                    : MIN_BUTTON_COLOR
                 }
               />
             )}
@@ -211,3 +241,6 @@ export default function TranslationCard({
     </View>
   );
 }
+
+const MIN_BUTTON_COLOR = '#9CA3AF';
+const CONFIDENCE_ZERO_COLOR = '#D1D5DB';

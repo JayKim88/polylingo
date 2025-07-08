@@ -68,6 +68,28 @@ export class StorageService {
     }
   }
 
+  static async removeFavoriteByContent(
+    sourceText: string,
+    sourceLanguage: string,
+    targetLanguage: string
+  ): Promise<void> {
+    try {
+      const favorites = await this.getFavorites();
+      const filteredFavorites = favorites.filter(
+        (fav) =>
+          !(fav.sourceText === sourceText &&
+            fav.sourceLanguage === sourceLanguage &&
+            fav.targetLanguage === targetLanguage)
+      );
+      await AsyncStorage.setItem(
+        FAVORITES_KEY,
+        JSON.stringify(filteredFavorites)
+      );
+    } catch (error) {
+      console.error('Error removing favorite by content:', error);
+    }
+  }
+
   static async getHistory(): Promise<HistoryItem[]> {
     try {
       const data = await AsyncStorage.getItem(HISTORY_KEY);
