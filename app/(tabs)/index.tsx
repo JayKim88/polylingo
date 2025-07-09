@@ -13,6 +13,7 @@ import {
 } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Languages, Globe, Volume2, Mic, Search } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../../components/LanguageSelector';
 import SearchInput from '../../components/SearchInput';
 import TranslationList from '../../components/TranslationList';
@@ -22,13 +23,12 @@ import { TranslationAPI } from '../../utils/translationAPI';
 import { StorageService } from '../../utils/storage';
 import { SpeechService } from '../../utils/speechService';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
-import { useTranslation } from 'react-i18next';
 
 export default function SearchTab() {
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [isScrollingUp, setIsScrollingUp] = useState(true);
-  const { t, i18n } = useTranslation();
   const [sourceLanguage, setSourceLanguage] = useState('ko');
   const [searchText, setSearchText] = useState('');
   const [results, setResults] = useState<TranslationResult[]>([]);
@@ -127,7 +127,6 @@ export default function SearchTab() {
   const handleClear = async () => {
     setSearchText('');
     setResults([]);
-
     if (isVoiceActive) {
       await stopVoiceRecording();
     }
@@ -222,7 +221,6 @@ export default function SearchTab() {
           {t('main.subtitle', { count: selectedLanguages.length })}
         </Text>
       </View>
-
       <View className="flex-1 pt-5 px-5">
         <Animated.View
           style={{
@@ -258,7 +256,6 @@ export default function SearchTab() {
                 <Mic size={20} color="#fff" />
               </TouchableOpacity>
             )}
-
             <TouchableOpacity
               className={`justify-center items-center rounded-2xl shadow-sm w-16 h-16 ${
                 isLoading || !searchText.trim() ? 'bg-gray-400' : 'bg-blue-500'
@@ -273,7 +270,6 @@ export default function SearchTab() {
               )}
             </TouchableOpacity>
           </View>
-
           <View className="flex-row items-center gap-3 mb-5">
             <SearchInput
               value={searchText}
@@ -288,7 +284,6 @@ export default function SearchTab() {
             />
           </View>
         </Animated.View>
-
         <Animated.View
           style={{
             flex: 1,
@@ -306,14 +301,12 @@ export default function SearchTab() {
           />
         </Animated.View>
       </View>
-
       <LanguageModal
         visible={showLanguageModal}
         selectedLanguages={selectedLanguages}
         onLanguageSelection={handleLanguageSelection}
         onClose={() => setShowLanguageModal(false)}
       />
-
       <VoiceSettingsModal
         visible={showVoiceSettingsModal}
         onClose={() => setShowVoiceSettingsModal(false)}

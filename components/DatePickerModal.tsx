@@ -13,13 +13,13 @@ import { Calendar } from 'react-native-calendars';
 import { X, Check, RotateCcw } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
-interface DatePickerModalProps {
+type DatePickerModalProps = {
   visible: boolean;
   selectedDate: string | null;
   markedDates: string[];
   onDateSelect: (date: string | null) => void;
   onClose: () => void;
-}
+};
 
 export default function DatePickerModal({
   visible,

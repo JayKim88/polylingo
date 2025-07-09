@@ -10,12 +10,12 @@ import { HistoryItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { Trash2, Clock, RefreshCw } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
-interface HistoryListProps {
+type HistoryListProps = {
   history: HistoryItem[];
   selectedDate: string | null;
   onClearHistory: () => void;
   onRemoveHistoryItem: (id: string) => void;
-}
+};
 
 export default function HistoryList({
   history,
@@ -180,4 +180,3 @@ export default function HistoryList({
     </View>
   );
 }
-

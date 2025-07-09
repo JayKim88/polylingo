@@ -17,12 +17,12 @@ import { X, Check, GripVertical } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-interface LanguageModalProps {
+type LanguageModalProps = {
   visible: boolean;
   selectedLanguages: string[];
   onLanguageSelection: (languages: string[]) => void;
   onClose: () => void;
-}
+};
 
 export default function LanguageModal({
   visible,

@@ -12,21 +12,7 @@ export default function TabLayout() {
           headerShown: false,
           tabBarActiveTintColor: '#6366F1',
           tabBarInactiveTintColor: '#9CA3AF',
-          tabBarStyle: {
-            backgroundColor: '#FFFFFF',
-            borderTopWidth: 1,
-            borderTopColor: '#E5E7EB',
-            paddingTop: 8,
-            paddingBottom: 8,
-            height: 70,
-            shadowColor: '#5e5757',
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 8,
-            borderRadius: 30,
-            margin: 16,
-          },
+          tabBarStyle,
           tabBarLabelStyle: {
             fontSize: 12,
             fontFamily: 'Inter-SemiBold',
@@ -74,3 +60,19 @@ export default function TabLayout() {
     </SafeAreaView>
   );
 }
+
+const tabBarStyle = {
+  backgroundColor: '#FFFFFF',
+  borderTopWidth: 1,
+  borderTopColor: '#E5E7EB',
+  paddingTop: 8,
+  paddingBottom: 8,
+  height: 70,
+  shadowColor: '#5e5757',
+  shadowOffset: { width: 0, height: -2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 8,
+  elevation: 8,
+  borderRadius: 30,
+  margin: 16,
+};

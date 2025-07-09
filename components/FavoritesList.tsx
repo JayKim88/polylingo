@@ -4,11 +4,11 @@ import { FavoriteItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { Trash2, Heart } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
-interface FavoritesListProps {
+type FavoritesListProps = {
   favorites: FavoriteItem[];
   selectedDate: string | null;
   onRemoveFavorite: (id: string) => void;
-}
+};
 
 export default function FavoritesList({
   favorites,

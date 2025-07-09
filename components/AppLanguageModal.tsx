@@ -10,10 +10,10 @@ import {
 import { X, Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
-interface AppLanguageModalProps {
+type AppLanguageModalProps = {
   visible: boolean;
   onClose: () => void;
-}
+};
 
 const { height } = Dimensions.get('window');
 

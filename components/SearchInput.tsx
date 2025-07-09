@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TextInput, TouchableOpacity } from 'react-native';
 import { Search, X } from 'lucide-react-native';
 
-interface SearchInputProps {
+type SearchInputProps = {
   value: string;
   onChangeText: (text: string) => void;
   onClear: () => void;
@@ -10,7 +10,7 @@ interface SearchInputProps {
   placeholder: string;
   isVoiceActive?: boolean;
   editable?: boolean;
-}
+};
 
 export default function SearchInput({
   value,

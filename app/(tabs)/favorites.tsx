@@ -6,11 +6,12 @@ import {
 } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Heart, Calendar } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+
 import FavoritesList from '../../components/FavoritesList';
 import DatePickerModal from '../../components/DatePickerModal';
 import { StorageService } from '../../utils/storage';
 import { FavoriteItem } from '../../types/dictionary';
-import { useTranslation } from 'react-i18next';
 
 export default function FavoritesTab() {
   const insets = useSafeAreaInsets();
@@ -104,7 +105,6 @@ export default function FavoritesTab() {
           onRemoveFavorite={handleRemoveFavorite}
         />
       </View>
-
       <DatePickerModal
         visible={showDatePicker}
         selectedDate={selectedDate}

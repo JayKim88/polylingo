@@ -4,12 +4,12 @@ import { Language, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { ChevronDown } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
-interface LanguageSelectorProps {
+type LanguageSelectorProps = {
   selectedLanguage: string;
   onLanguageSelect: (languageCode: string) => void;
   selectedLanguages: string[];
   onOpen: () => void;
-}
+};
 
 export default function LanguageSelector({
   selectedLanguage,

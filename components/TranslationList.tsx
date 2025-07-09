@@ -4,13 +4,13 @@ import { TranslationResult } from '../types/dictionary';
 import TranslationCard from './TranslationCard';
 import { useTranslation } from 'react-i18next';
 
-interface TranslationListProps {
+type TranslationListProps = {
   results: TranslationResult[];
   favorites: string[];
   onFavoriteToggle: () => void;
   scrollY?: Animated.Value;
   onScrollDirectionChange?: (isScrollingUp: boolean) => void;
-}
+};
 
 export default function TranslationList({
   results,

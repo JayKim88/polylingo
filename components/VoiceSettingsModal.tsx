@@ -17,10 +17,10 @@ import { SpeechService } from '../utils/speechService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-interface VoiceSettingsModalProps {
+type VoiceSettingsModalProps = {
   visible: boolean;
   onClose: () => void;
-}
+};
 
 export default function VoiceSettingsModal({
   visible,

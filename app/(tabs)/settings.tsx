@@ -15,7 +15,18 @@ import {
   Languages,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+
 import AppLanguageModal from '../../components/AppLanguageModal';
+
+type SettingItemProps = {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  onPress: () => void;
+  showChevron?: boolean;
+  iconColor?: string;
+  backgroundColor?: string;
+};
 
 export default function SettingsTab() {
   const insets = useSafeAreaInsets();
@@ -77,15 +88,7 @@ export default function SettingsTab() {
     showChevron = true,
     iconColor = '#6B7280',
     backgroundColor = '#F3F4F6',
-  }: {
-    icon: React.ReactNode;
-    title: string;
-    subtitle?: string;
-    onPress: () => void;
-    showChevron?: boolean;
-    iconColor?: string;
-    backgroundColor?: string;
-  }) => (
+  }: SettingItemProps) => (
     <TouchableOpacity
       className="flex-row items-center bg-white rounded-2xl p-4 mb-3 shadow-sm"
       onPress={onPress}

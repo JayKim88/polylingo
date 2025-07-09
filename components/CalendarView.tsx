@@ -3,12 +3,12 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
-interface CalendarViewProps {
+type CalendarViewProps = {
   markedDates: string[];
   selectedDate: string | null;
   onDateSelect: (date: string | null) => void;
   markColor: string;
-}
+};
 
 export default function CalendarView({
   markedDates,
