@@ -44,8 +44,23 @@ export default function SearchTab() {
   const [speechRecognition, setSpeechRecognition] = useState<{
     stop: () => void;
   } | null>(null);
+  const [translationProvider, setTranslationProvider] = useState<
+    'default' | 'claude'
+  >('default');
 
   const isEn = i18n.language === 'en';
+  const isPremiumUser = true; // TODO: 실제 프리미엄 체크로 대체
+  const MAX_LENGTH = isPremiumUser ? 50 : 30;
+  const isInputTooLong = searchText.length > MAX_LENGTH;
+
+  const handleRefresh = () =>
+    results.forEach((r) =>
+      TranslationAPI.deleteCacheFor(
+        r.sourceText,
+        r.sourceLanguage,
+        r.targetLanguage
+      )
+    );
 
   useFocusEffect(
     useCallback(() => {
@@ -89,25 +104,35 @@ export default function SearchTab() {
 
     setIsLoading(true);
     try {
-      const translationResults =
-        await TranslationAPI.translateToMultipleLanguages(
-          searchText.trim(),
-          sourceLanguage,
-          selectedLanguages
-        );
-
+      const translationResults = await Promise.all(
+        selectedLanguages.map(async (targetLang) => {
+          const result = await TranslationAPI.translate(
+            searchText.trim(),
+            sourceLanguage,
+            targetLang,
+            { provider: translationProvider }
+          );
+          return {
+            sourceLanguage,
+            targetLanguage: targetLang,
+            sourceText: searchText.trim(),
+            translatedText: result.translation,
+            meanings: result.meanings,
+            confidence:
+              result.translation === '번역을 찾을 수 없습니다' ? 0 : 0.9,
+            timestamp: Date.now(),
+            pronunciation: result.pronunciation,
+          };
+        })
+      );
       const exceptSourceLngResults = translationResults.filter(
         (v) => v.targetLanguage !== sourceLanguage
       );
-
       setResults(exceptSourceLngResults);
-
       const searchedData = exceptSourceLngResults.map((v) => ({
         lng: v.targetLanguage,
         text: v.translatedText,
       }));
-
-      // Add to history
       if (exceptSourceLngResults.length > 0) {
         await StorageService.addToHistory({
           sourceLanguage,
@@ -222,6 +247,58 @@ export default function SearchTab() {
         </Text>
       </View>
       <View className="flex-1 pt-5 px-5">
+        {/* Provider toggle UI */}
+        <View className="flex-row items-center mb-3 gap-3">
+          <TouchableOpacity
+            className={`px-4 py-2 rounded-xl border ${
+              translationProvider === 'default'
+                ? 'bg-blue-500 border-blue-500'
+                : 'bg-white border-gray-300'
+            }`}
+            onPress={() => setTranslationProvider('default')}
+          >
+            <Text
+              className={
+                translationProvider === 'default'
+                  ? 'text-white font-bold'
+                  : 'text-blue-500 font-bold'
+              }
+            >
+              기본 번역
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className={`px-4 py-2 rounded-xl border ${
+              translationProvider === 'claude'
+                ? 'bg-indigo-500 border-indigo-500'
+                : 'bg-white border-gray-300'
+            }`}
+            onPress={() => setTranslationProvider('claude')}
+          >
+            <Text
+              className={
+                translationProvider === 'claude'
+                  ? 'text-white font-bold'
+                  : 'text-indigo-500 font-bold'
+              }
+            >
+              Claude 번역
+            </Text>
+          </TouchableOpacity>
+          <Text className="ml-2 text-xs text-gray-400">
+            {translationProvider === 'claude'
+              ? 'Claude 3 Haiku API 사용'
+              : '기본 번역 API 사용'}
+          </Text>
+          {isPremiumUser && (
+            <TouchableOpacity
+              className="ml-2 px-3 py-2 rounded-xl bg-yellow-400"
+              onPress={handleRefresh}
+            >
+              <Text className="text-xs font-bold text-white">새로고침</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <Animated.View
           style={{
             transform: [
@@ -258,10 +335,12 @@ export default function SearchTab() {
             )}
             <TouchableOpacity
               className={`justify-center items-center rounded-2xl shadow-sm w-16 h-16 ${
-                isLoading || !searchText.trim() ? 'bg-gray-400' : 'bg-blue-500'
+                isLoading || !searchText.trim() || isInputTooLong
+                  ? 'bg-gray-400'
+                  : 'bg-blue-500'
               }`}
               onPress={handleSearch}
-              disabled={isLoading || !searchText.trim()}
+              disabled={isLoading || !searchText.trim() || isInputTooLong}
             >
               {isLoading ? (
                 <ActivityIndicator size="small" color="#fff" />
@@ -279,8 +358,7 @@ export default function SearchTab() {
               placeholder={
                 isVoiceActive ? 'Speak now' : t('main.searchPlaceholder')
               }
-              isVoiceActive={isVoiceActive}
-              editable={!isVoiceActive}
+              maxLength={MAX_LENGTH}
             />
           </View>
         </Animated.View>

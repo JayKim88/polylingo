@@ -1,5 +1,6 @@
 import { TranslationResult, TranslationMeaning } from '../types/dictionary';
 import { PronunciationService } from './pronunciationService';
+import { translateWithClaude } from './claudeAPI';
 
 const MYMEMORY_BASE_URL = 'https://mymemory.translated.net/api/get';
 const LIBRETRANSLATE_BASE_URL =
@@ -16,7 +17,7 @@ interface CacheEntry {
 export class TranslationAPI {
   // In-memory cache for translations
   private static translationCache = new Map<string, CacheEntry>();
-  private static readonly CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+  private static readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24시간
 
   // Generate cache key
   private static getCacheKey(
@@ -247,11 +248,25 @@ export class TranslationAPI {
     return [];
   }
 
+  static async translateWithClaude(
+    text: string,
+    targetLanguage: string
+  ): Promise<{ translation: string; pronunciation?: string }> {
+    try {
+      const result = await translateWithClaude(text, targetLanguage);
+      return result;
+    } catch (error) {
+      console.log('💥 Claude API error:', error);
+      return { translation: '' };
+    }
+  }
+
   // 메인 번역 함수
   static async translate(
     text: string,
     sourceLanguage: string,
-    targetLanguage: string
+    targetLanguage: string,
+    options?: { provider?: 'claude' | 'default' }
   ): Promise<{
     translation: string;
     meanings?: TranslationMeaning[];
@@ -307,16 +322,12 @@ export class TranslationAPI {
     }
 
     let translation: string | null = null;
-
-    // MyMemory API 우선 사용 (모든 언어 지원)
-    // console.log('🌍 Using MyMemory for translation...');
-    // translation = await this.translateWithMyMemory(
-    //   text,
-    //   sourceLanguage,
-    //   targetLanguage
-    // );
-
-    if (LIBRETRANSLATE_BASE_URL) {
+    let pronunciation: string | null = null;
+    if (options?.provider === 'claude') {
+      const result = await this.translateWithClaude(text, targetLanguage);
+      translation = result.translation;
+      pronunciation = result.pronunciation || null;
+    } else if (LIBRETRANSLATE_BASE_URL) {
       console.log('🔄 Falling back to LibreTranslate...');
       translation = await this.translateWithLibreTranslate(
         text,
@@ -335,11 +346,12 @@ export class TranslationAPI {
       targetLanguage
     );
 
-    let pronunciation: string | null = null;
-    pronunciation = await PronunciationService.getPronunciation(
-      translation,
-      targetLanguage
-    );
+    pronunciation =
+      pronunciation ||
+      (await PronunciationService.getPronunciation(
+        translation,
+        targetLanguage
+      ));
 
     const result: {
       translation: string;
@@ -453,5 +465,10 @@ export class TranslationAPI {
       size: this.translationCache.size,
       entries,
     };
+  }
+
+  static deleteCacheFor(text: string, sourceLanguage: string, targetLanguage: string) {
+    const key = this.getCacheKey(text, sourceLanguage, targetLanguage);
+    this.translationCache.delete(key);
   }
 }
