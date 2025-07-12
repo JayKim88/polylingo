@@ -2,13 +2,45 @@
 
 export async function translateWithClaude(
   text: string,
+  sourceLang: string,
   targetLang: string
 ): Promise<{ translation: string; pronunciation?: string }> {
   const apiKey = process.env.CLAUDE_API_KEY || 'YOUR_CLAUDE_API_KEY';
-  const prompt = `Translate the following text to ${targetLang} and provide 
-  the pronunciation of the translated text(IPA or romanized if available and for example, if the translated language is English, the pronunciation should be for English."). 
-  Return the result in the following JSON format without additional explantion or extra words: 
-  {"translation": "<translated text>", "pronunciation": "<IPA or romanized pronunciation>"}\nText: ${text}`;
+
+  // 한국어 → 영어 번역 시 특별한 프롬프트 사용
+  let prompt: string;
+
+  if (sourceLang === 'Korean' && targetLang === 'English') {
+    prompt = `Translate the following Korean text to English and provide ONLY the English pronunciation (IPA format) of the translated English word/phrase.
+
+IMPORTANT: 
+- The pronunciation should be for the ENGLISH translation, NOT the Korean original
+- Use IPA (International Phonetic Alphabet) format for English pronunciation
+- For example: "안녕" → "hello" → pronunciation: "/həˈloʊ/" or "/hɛˈloʊ/"
+- Return ONLY the following JSON. Do not include any explanation, description, or extra text.
+- Your response must be a single line JSON object, nothing else.
+
+Text: ${text}
+
+Return the result in this exact JSON format:
+{"translation": "<English translation>", "pronunciation": "<IPA pronunciation of English word>"}`;
+  } else {
+    prompt = `Translate the following ${sourceLang} text to ${targetLang} and provide the pronunciation of the translated ${targetLang} text.
+
+IMPORTANT: 
+- The pronunciation must be for the TRANSLATED ${targetLang} text, NOT the original ${sourceLang} text.
+- If the target language is not written in the Latin alphabet, provide the pronunciation in Romanized form or IPA.
+- DO NOT use the original script for the pronunciation if it is not Latin.
+- Return ONLY the following JSON. Do not include any explanation, description, or extra text.
+- Your response must be a single line JSON object, nothing else.
+- Before returning the result, check again if the pronunciation is for the translated ${targetLang} text and fix it if is required.
+
+
+Text: ${text}
+
+Return the result in this exact JSON format:
+{"translation": "<translated text>", "pronunciation": "<pronunciation of translated text>"}`;
+  }
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -47,5 +79,6 @@ export async function translateWithClaude(
   } catch {
     translation = content;
   }
+
   return { translation, pronunciation };
 }

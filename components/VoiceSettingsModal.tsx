@@ -27,13 +27,12 @@ export default function VoiceSettingsModal({
   onClose,
 }: VoiceSettingsModalProps) {
   const insets = useSafeAreaInsets();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<VoiceSettings>({
-    volume: 1.0,
+    volume: 0.9,
     rate: 0.8,
     pitch: 1.0,
   });
-  const isEn = i18n.language === 'en';
 
   const [isTesting, setIsTesting] = useState(false);
 
@@ -181,7 +180,7 @@ export default function VoiceSettingsModal({
               <Slider
                 style={{ width: '100%', height: 40 }}
                 minimumValue={0.1}
-                maximumValue={2.0}
+                maximumValue={1.5}
                 value={settings.rate}
                 onValueChange={(value) =>
                   setSettings({ ...settings, rate: value })
@@ -207,7 +206,7 @@ export default function VoiceSettingsModal({
               <Slider
                 style={{ width: '100%', height: 40 }}
                 minimumValue={0.5}
-                maximumValue={2.0}
+                maximumValue={1.5}
                 value={settings.pitch}
                 onValueChange={(value) =>
                   setSettings({ ...settings, pitch: value })

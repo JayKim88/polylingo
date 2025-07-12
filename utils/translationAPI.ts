@@ -1,4 +1,8 @@
-import { TranslationResult, TranslationMeaning } from '../types/dictionary';
+import {
+  TranslationResult,
+  TranslationMeaning,
+  SUPPORTED_LANGUAGES,
+} from '../types/dictionary';
 import { PronunciationService } from './pronunciationService';
 import { translateWithClaude } from './claudeAPI';
 
@@ -13,6 +17,12 @@ interface CacheEntry {
   pronunciation?: string;
   timestamp: number;
 }
+
+type getFromCacheProps = {
+  translation: string;
+  meanings?: TranslationMeaning[];
+  pronunciation?: string;
+};
 
 export class TranslationAPI {
   // In-memory cache for translations
@@ -38,11 +48,7 @@ export class TranslationAPI {
     text: string,
     sourceLanguage: string,
     targetLanguage: string
-  ): {
-    translation: string;
-    meanings?: TranslationMeaning[];
-    pronunciation?: string;
-  } | null {
+  ): getFromCacheProps | null {
     const key = this.getCacheKey(text, sourceLanguage, targetLanguage);
     const entry = this.translationCache.get(key);
 
@@ -250,10 +256,23 @@ export class TranslationAPI {
 
   static async translateWithClaude(
     text: string,
+    sourceLanguage: string,
     targetLanguage: string
   ): Promise<{ translation: string; pronunciation?: string }> {
     try {
-      const result = await translateWithClaude(text, targetLanguage);
+      const sourceLangName =
+        SUPPORTED_LANGUAGES.find((v) => v.code === sourceLanguage)?.name ||
+        sourceLanguage;
+      const targetLangName =
+        SUPPORTED_LANGUAGES.find((v) => v.code === targetLanguage)?.name ||
+        targetLanguage;
+
+      const result = await translateWithClaude(
+        text,
+        sourceLangName,
+        targetLangName
+      );
+
       return result;
     } catch (error) {
       console.log('💥 Claude API error:', error);
@@ -324,7 +343,11 @@ export class TranslationAPI {
     let translation: string | null = null;
     let pronunciation: string | null = null;
     if (options?.provider === 'claude') {
-      const result = await this.translateWithClaude(text, targetLanguage);
+      const result = await this.translateWithClaude(
+        text,
+        sourceLanguage,
+        targetLanguage
+      );
       translation = result.translation;
       pronunciation = result.pronunciation || null;
     } else if (LIBRETRANSLATE_BASE_URL) {
@@ -467,7 +490,11 @@ export class TranslationAPI {
     };
   }
 
-  static deleteCacheFor(text: string, sourceLanguage: string, targetLanguage: string) {
+  static deleteCacheFor(
+    text: string,
+    sourceLanguage: string,
+    targetLanguage: string
+  ) {
     const key = this.getCacheKey(text, sourceLanguage, targetLanguage);
     this.translationCache.delete(key);
   }

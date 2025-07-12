@@ -69,7 +69,7 @@ export default function FavoritesList({
             </TouchableOpacity>
           </View>
         </View>
-        <View className="flex-row items-center">
+        <View className="flex-row items-center flex-wrap">
           <Text className="text-lg font-semibold text-gray-700">
             {item.sourceText}
           </Text>

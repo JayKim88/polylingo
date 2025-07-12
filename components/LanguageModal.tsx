@@ -1,10 +1,9 @@
-import React, { useState, useTransition } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   Modal,
-  FlatList,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform as RNPlatform,
@@ -22,6 +21,7 @@ type LanguageModalProps = {
   selectedLanguages: string[];
   onLanguageSelection: (languages: string[]) => void;
   onClose: () => void;
+  isPaidUser?: boolean;
 };
 
 export default function LanguageModal({
@@ -29,25 +29,26 @@ export default function LanguageModal({
   selectedLanguages,
   onLanguageSelection,
   onClose,
+  isPaidUser = false,
 }: LanguageModalProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [tempSelected, setTempSelected] = useState<string[]>(selectedLanguages);
 
+  const maxSelectable = isPaidUser ? 5 : 3;
+
   const toggleLanguage = (languageCode: string) => {
     if (tempSelected.includes(languageCode)) {
       setTempSelected(tempSelected.filter((code) => code !== languageCode));
-    } else {
+    } else if (tempSelected.length < maxSelectable) {
       setTempSelected([...tempSelected, languageCode]);
     }
   };
 
   const getSortedLanguages = () => {
-    // 선택된 언어들을 순서대로 정렬하고, 선택되지 않은 언어들을 뒤에 추가
     const selectedLanguages = tempSelected
       .map((code) => SUPPORTED_LANGUAGES.find((lang) => lang.code === code)!)
       .filter(Boolean);
-
     const unselectedLanguages = SUPPORTED_LANGUAGES.filter(
       (lang) => !tempSelected.includes(lang.code)
     );
@@ -55,9 +56,7 @@ export default function LanguageModal({
     return [...selectedLanguages, ...unselectedLanguages];
   };
 
-  const handleConfirm = () => {
-    onLanguageSelection(tempSelected);
-  };
+  const handleConfirm = () => onLanguageSelection(tempSelected);
 
   const handleCancel = () => {
     setTempSelected(selectedLanguages);
@@ -70,6 +69,7 @@ export default function LanguageModal({
     isActive,
   }: RenderItemParams<Language>) => {
     const isSelected = tempSelected.includes(item.code);
+    const isDisabled = tempSelected.length >= maxSelectable && !isSelected;
 
     return (
       <View className={`mb-2 ${isActive ? 'opacity-80' : ''}`}>
@@ -77,11 +77,14 @@ export default function LanguageModal({
           className={`flex-row items-center justify-between p-4 rounded-xl border-2 ${
             isSelected
               ? 'bg-indigo-50 border-indigo-500'
+              : tempSelected.length >= maxSelectable
+              ? 'bg-gray-100 border-gray-200'
               : 'bg-gray-50 border-gray-50'
           }`}
           onPress={() => toggleLanguage(item.code)}
           onLongPress={isSelected ? drag : undefined}
-          activeOpacity={0.7}
+          activeOpacity={isDisabled ? 0.5 : 0.7}
+          disabled={isDisabled}
         >
           <View className="flex-row items-center flex-1">
             <Text className="text-2xl mr-3">{item.flag}</Text>
@@ -107,6 +110,15 @@ export default function LanguageModal({
     );
   };
 
+  useEffect(() => {
+    setTempSelected(selectedLanguages);
+  }, [selectedLanguages]);
+
+  const buttonAreaHeight =
+    48 + // py-6 (24px top + 24px bottom)
+    Math.max(insets.bottom, 20) +
+    14; // bottom padding calculation
+
   return (
     <Modal
       visible={visible}
@@ -127,16 +139,21 @@ export default function LanguageModal({
               <X size={24} color="#6B7280" />
             </TouchableOpacity>
           </View>
-
           <View className="flex-1 px-5 pt-6">
-            <Text className="text-sm font-medium text-gray-500 mb-5">
-              {tempSelected.length > 0
-                ? t('languageModal.selectedLanguages', {
-                    count: tempSelected.length,
-                  })
-                : t('languageModal.selectPrompt')}
-            </Text>
-
+            <View className="mb-5">
+              <Text className="text-sm font-medium text-gray-500 mb-2">
+                {tempSelected.length > 0
+                  ? t('languageModal.selectedLanguages', {
+                      count: tempSelected.length,
+                    })
+                  : t('languageModal.selectPrompt')}
+              </Text>
+              <Text className="text-xs text-gray-400">
+                {isPaidUser
+                  ? `Select up to ${maxSelectable} languages (Premium)`
+                  : `Select up to ${maxSelectable} languages (Free)`}
+              </Text>
+            </View>
             <DraggableFlatList
               data={getSortedLanguages()}
               renderItem={renderLanguageItem}
@@ -151,6 +168,9 @@ export default function LanguageModal({
               }}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 20 }}
+              containerStyle={{
+                paddingBottom: buttonAreaHeight,
+              }}
             />
           </View>
 

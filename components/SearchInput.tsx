@@ -10,6 +10,7 @@ interface SearchInputProps {
   placeholder: string;
   isLoading?: boolean;
   maxLength: number;
+  disabled?: boolean;
 }
 
 export default function SearchInput({
@@ -20,13 +21,16 @@ export default function SearchInput({
   placeholder,
   isLoading,
   maxLength,
+  disabled = false,
 }: SearchInputProps) {
   return (
     <View className="flex-row mb-5">
       <View className="flex-1 flex-row items-center bg-white rounded-2xl px-4 py-323 shadow-sm min-h-[56px] relative">
         <Search size={20} color="#9CA3AF" className="mr-3" />
         <TextInput
-          className="flex-1 text-lg text-gray-900 leading-[18px] pl-2 pr-20"
+          className={`flex-1 text-lg leading-[18px] pl-2 pr-20 ${
+            disabled ? 'text-gray-400' : 'text-gray-900'
+          }`}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -39,6 +43,7 @@ export default function SearchInput({
           returnKeyType="search"
           textAlignVertical="center"
           maxLength={maxLength}
+          editable={!disabled}
         />
         <View className="absolute right-4 flex-row items-center h-full">
           {value ? (

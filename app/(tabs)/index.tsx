@@ -12,7 +12,7 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { Languages, Globe, Volume2, Mic, Search } from 'lucide-react-native';
+import { Languages, Globe, Volume2, Mic, Search, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../../components/LanguageSelector';
 import SearchInput from '../../components/SearchInput';
@@ -24,21 +24,21 @@ import { StorageService } from '../../utils/storage';
 import { SpeechService } from '../../utils/speechService';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
 
+export const isPremiumUser = true; // TODO: 실제 프리미엄 체크로 대체
+
 export default function SearchTab() {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [isScrollingUp, setIsScrollingUp] = useState(true);
-  const [sourceLanguage, setSourceLanguage] = useState('ko');
   const [searchText, setSearchText] = useState('');
   const [results, setResults] = useState<TranslationResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showVoiceSettingsModal, setShowVoiceSettingsModal] = useState(false);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
-    SUPPORTED_LANGUAGES.map((v) => v.code)
-  );
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [sourceLanguage, setSourceLanguage] = useState(selectedLanguages[0]);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [isVoiceAvailable, setIsVoiceAvailable] = useState(false);
   const [speechRecognition, setSpeechRecognition] = useState<{
@@ -46,21 +46,13 @@ export default function SearchTab() {
   } | null>(null);
   const [translationProvider, setTranslationProvider] = useState<
     'default' | 'claude'
-  >('default');
+  >('claude');
+  const [searchAbortController, setSearchAbortController] =
+    useState<AbortController | null>(null);
 
   const isEn = i18n.language === 'en';
-  const isPremiumUser = true; // TODO: 실제 프리미엄 체크로 대체
   const MAX_LENGTH = isPremiumUser ? 50 : 30;
   const isInputTooLong = searchText.length > MAX_LENGTH;
-
-  const handleRefresh = () =>
-    results.forEach((r) =>
-      TranslationAPI.deleteCacheFor(
-        r.sourceText,
-        r.sourceLanguage,
-        r.targetLanguage
-      )
-    );
 
   useFocusEffect(
     useCallback(() => {
@@ -70,7 +62,6 @@ export default function SearchTab() {
     }, [])
   );
 
-  // Check voice availability on mount
   useEffect(() => {
     checkVoiceAvailability();
   }, []);
@@ -84,10 +75,18 @@ export default function SearchTab() {
   };
 
   const loadSelectedLanguages = async () => {
-    const langs = await StorageService.getSelectedLanguages();
-    if (langs.length > 0) {
-      setSelectedLanguages(langs);
+    const cachedlangs = await StorageService.getSelectedLanguages();
+
+    if (cachedlangs.length > 0) {
+      setSelectedLanguages(cachedlangs);
+      setSourceLanguage(cachedlangs[0]);
+      return;
     }
+    const defaultLanguages = SUPPORTED_LANGUAGES.map((v) => v.code).slice(0, 2);
+
+    setSelectedLanguages(defaultLanguages);
+    setSourceLanguage(defaultLanguages[0]);
+    await StorageService.saveSelectedLanguages(defaultLanguages);
   };
 
   const checkVoiceAvailability = () => {
@@ -97,15 +96,25 @@ export default function SearchTab() {
 
   const handleSearch = async () => {
     if (!searchText.trim()) return;
+    if (selectedLanguages.length === 0) return;
 
     if (isVoiceActive) {
       await stopVoiceRecording();
     }
 
+    // Create new AbortController for this search
+    const abortController = new AbortController();
+    setSearchAbortController(abortController);
+
     setIsLoading(true);
     try {
       const translationResults = await Promise.all(
         selectedLanguages.map(async (targetLang) => {
+          // Check if search was cancelled
+          if (abortController.signal.aborted) {
+            throw new Error('Search cancelled');
+          }
+
           const result = await TranslationAPI.translate(
             searchText.trim(),
             sourceLanguage,
@@ -125,6 +134,12 @@ export default function SearchTab() {
           };
         })
       );
+
+      // Check if search was cancelled before processing results
+      if (abortController.signal.aborted) {
+        return;
+      }
+
       const exceptSourceLngResults = translationResults.filter(
         (v) => v.targetLanguage !== sourceLanguage
       );
@@ -143,10 +158,20 @@ export default function SearchTab() {
         });
       }
     } catch (error) {
-      Alert.alert(t('alert.error'), t('alert.translationError'));
+      if ((error as Error).message !== 'Search cancelled') {
+        Alert.alert(t('alert.error'), t('alert.translationError'));
+      }
     } finally {
       setIsLoading(false);
+      setSearchAbortController(null);
     }
+  };
+
+  const handleCancelSearch = () => {
+    if (!searchAbortController) return;
+    searchAbortController.abort();
+    setSearchAbortController(null);
+    setIsLoading(false);
   };
 
   const handleClear = async () => {
@@ -158,9 +183,11 @@ export default function SearchTab() {
   };
 
   const handleLanguageSelection = async (languages: string[]) => {
+    console.log('📱 Language selection changed:', languages);
     setSourceLanguage(languages[0]);
     setSelectedLanguages(languages);
     await StorageService.saveSelectedLanguages(languages);
+    console.log('📱 Languages saved to storage:', languages);
     setShowLanguageModal(false);
   };
 
@@ -247,58 +274,7 @@ export default function SearchTab() {
         </Text>
       </View>
       <View className="flex-1 pt-5 px-5">
-        {/* Provider toggle UI */}
-        <View className="flex-row items-center mb-3 gap-3">
-          <TouchableOpacity
-            className={`px-4 py-2 rounded-xl border ${
-              translationProvider === 'default'
-                ? 'bg-blue-500 border-blue-500'
-                : 'bg-white border-gray-300'
-            }`}
-            onPress={() => setTranslationProvider('default')}
-          >
-            <Text
-              className={
-                translationProvider === 'default'
-                  ? 'text-white font-bold'
-                  : 'text-blue-500 font-bold'
-              }
-            >
-              기본 번역
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`px-4 py-2 rounded-xl border ${
-              translationProvider === 'claude'
-                ? 'bg-indigo-500 border-indigo-500'
-                : 'bg-white border-gray-300'
-            }`}
-            onPress={() => setTranslationProvider('claude')}
-          >
-            <Text
-              className={
-                translationProvider === 'claude'
-                  ? 'text-white font-bold'
-                  : 'text-indigo-500 font-bold'
-              }
-            >
-              Claude 번역
-            </Text>
-          </TouchableOpacity>
-          <Text className="ml-2 text-xs text-gray-400">
-            {translationProvider === 'claude'
-              ? 'Claude 3 Haiku API 사용'
-              : '기본 번역 API 사용'}
-          </Text>
-          {isPremiumUser && (
-            <TouchableOpacity
-              className="ml-2 px-3 py-2 rounded-xl bg-yellow-400"
-              onPress={handleRefresh}
-            >
-              <Text className="text-xs font-bold text-white">새로고침</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        <View className="flex-row items-center mb-3 gap-3"></View>
         <Animated.View
           style={{
             transform: [
@@ -335,15 +311,17 @@ export default function SearchTab() {
             )}
             <TouchableOpacity
               className={`justify-center items-center rounded-2xl shadow-sm w-16 h-16 ${
-                isLoading || !searchText.trim() || isInputTooLong
+                isLoading
+                  ? 'bg-red-500'
+                  : !searchText.trim() || isInputTooLong
                   ? 'bg-gray-400'
                   : 'bg-blue-500'
               }`}
-              onPress={handleSearch}
-              disabled={isLoading || !searchText.trim() || isInputTooLong}
+              onPress={isLoading ? handleCancelSearch : handleSearch}
+              disabled={(!searchText.trim() || isInputTooLong) && !isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <X size={20} color="#fff" />
               ) : (
                 <Search size={20} color="#fff" />
               )}
@@ -359,6 +337,7 @@ export default function SearchTab() {
                 isVoiceActive ? 'Speak now' : t('main.searchPlaceholder')
               }
               maxLength={MAX_LENGTH}
+              disabled={isVoiceActive}
             />
           </View>
         </Animated.View>
@@ -376,6 +355,7 @@ export default function SearchTab() {
             onScrollDirectionChange={(scrollingUp) =>
               setIsScrollingUp(scrollingUp)
             }
+            isLoading={isLoading}
           />
         </Animated.View>
       </View>
@@ -384,6 +364,7 @@ export default function SearchTab() {
         selectedLanguages={selectedLanguages}
         onLanguageSelection={handleLanguageSelection}
         onClose={() => setShowLanguageModal(false)}
+        isPaidUser={isPremiumUser}
       />
       <VoiceSettingsModal
         visible={showVoiceSettingsModal}

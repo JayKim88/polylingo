@@ -48,6 +48,14 @@ export class SpeechService {
       fr: 'fr-FR',
       de: 'de-DE',
       es: 'es-ES',
+      pt: 'pt-BR',
+      hi: 'hi-IN',
+      id: 'id-ID',
+      ar: 'ar-SA',
+      it: 'it-IT',
+      th: 'th-TH',
+      ru: 'ru-RU',
+      zh: 'zh-CN',
     };
     return languageMap[languageCode] || 'en-US';
   }

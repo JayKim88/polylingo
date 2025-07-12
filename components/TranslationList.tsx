@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Animated } from 'react-native';
+import { View, Text, Animated, ActivityIndicator } from 'react-native';
 import { TranslationResult } from '../types/dictionary';
 import TranslationCard from './TranslationCard';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ type TranslationListProps = {
   onFavoriteToggle: () => void;
   scrollY?: Animated.Value;
   onScrollDirectionChange?: (isScrollingUp: boolean) => void;
+  isLoading?: boolean;
 };
 
 export default function TranslationList({
@@ -18,6 +19,7 @@ export default function TranslationList({
   onFavoriteToggle,
   scrollY,
   onScrollDirectionChange,
+  isLoading = false,
 }: TranslationListProps) {
   const lastScrollY = React.useRef(0);
   const lastDirection = React.useRef<boolean | null>(null);
@@ -27,7 +29,9 @@ export default function TranslationList({
     return favorites.includes(id);
   };
 
-  if (results.length === 0) {
+  const resultAvailable = !!results.length;
+
+  if (!resultAvailable && !isLoading) {
     return (
       <View className="flex-1 justify-center items-center py-16">
         <Text className="text-base text-gray-400 text-center">
@@ -38,13 +42,26 @@ export default function TranslationList({
   }
 
   return (
-    <View className="flex-1">
-      <View className="flex-row justify-start items-center mb-4 px-1">
-        <Text className="text-base font-semibold text-gray-700">
-          {t('main.resultsCount', { count: results.length })}
-        </Text>
-      </View>
-
+    <View className="flex-1 relative">
+      {isLoading && (
+        <View
+          className={`absolute inset-0 z-10 justify-center items-center ${
+            resultAvailable && 'bg-white/80 backdrop-blur-sm'
+          }`}
+        >
+          <ActivityIndicator size="large" color="#6366F1" />
+          <Text className="text-base text-gray-600 text-center mt-4 font-medium">
+            Searching...
+          </Text>
+        </View>
+      )}
+      {resultAvailable && (
+        <View className="flex-row justify-start items-center mb-4 px-1">
+          <Text className="text-base font-semibold text-gray-700">
+            {t('main.resultsCount', { count: results.length })}
+          </Text>
+        </View>
+      )}
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
@@ -57,16 +74,21 @@ export default function TranslationList({
                   listener: ({ nativeEvent }: { nativeEvent: any }) => {
                     if (onScrollDirectionChange) {
                       const currentScrollY = nativeEvent.contentOffset.y;
-                      const scrollDiff = Math.abs(currentScrollY - lastScrollY.current);
+                      const scrollDiff = Math.abs(
+                        currentScrollY - lastScrollY.current
+                      );
                       const { contentSize, layoutMeasurement } = nativeEvent;
-                      const isAtBottom = currentScrollY >= (contentSize.height - layoutMeasurement.height - 10);
+                      const isAtBottom =
+                        currentScrollY >=
+                        contentSize.height - layoutMeasurement.height - 10;
 
                       // 스크롤 변화량이 작으면 무시
                       if (scrollDiff < 20) {
                         return;
                       }
 
-                      const isScrollingUp = currentScrollY < lastScrollY.current;
+                      const isScrollingUp =
+                        currentScrollY < lastScrollY.current;
 
                       // 스크롤 위치가 0에 가까우면 항상 보이도록 설정
                       if (currentScrollY <= 5) {
@@ -74,7 +96,7 @@ export default function TranslationList({
                           lastDirection.current = true;
                           onScrollDirectionChange(true);
                         }
-                      } 
+                      }
                       // 맨 아래에 있으면 숨김 상태 유지
                       else if (isAtBottom) {
                         if (lastDirection.current !== false) {

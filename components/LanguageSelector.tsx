@@ -25,8 +25,8 @@ export default function LanguageSelector({
   );
 
   useEffect(() => {
-    if(!isVisible) return 
-    onOpen()
+    if (!isVisible) return;
+    onOpen();
   }, [isVisible]);
 
   const renderLanguageItem = ({ item }: { item: Language }) => (
@@ -49,9 +49,9 @@ export default function LanguageSelector({
     </TouchableOpacity>
   );
 
-  const filteredLanguages = SUPPORTED_LANGUAGES.filter((lang) =>
-    selectedLanguages.includes(lang.code)
-  );
+  const filteredLanguages = selectedLanguages
+    .map((code) => SUPPORTED_LANGUAGES.find((lang) => lang.code === code)!)
+    .filter(Boolean);
 
   return (
     <View className="mb-4 flex-1">
@@ -61,7 +61,7 @@ export default function LanguageSelector({
       >
         <Text className="text-2xl mr-3">{selectedLang?.flag}</Text>
         <Text className="flex-1 text-base text-gray-700 font-medium">
-          {selectedLang?.nativeName}
+          {selectedLang?.name}
         </Text>
         <ChevronDown size={20} color="#666" />
       </TouchableOpacity>
