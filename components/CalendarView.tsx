@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 
 type CalendarViewProps = {
   markedDates: string[];
@@ -17,6 +18,7 @@ export default function CalendarView({
   markColor,
 }: CalendarViewProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const getDaysInMonth = (date: Date) => {
@@ -55,7 +57,7 @@ export default function CalendarView({
     // Week day headers
     const weekHeaders = weekDays.map((day, index) => (
       <View key={`header-${index}`} className="flex-1 items-center py-2">
-        <Text className="text-sm font-semibold text-gray-500">{day}</Text>
+        <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>{day}</Text>
       </View>
     ));
 
@@ -76,33 +78,37 @@ export default function CalendarView({
       days.push(
         <TouchableOpacity
           key={day}
-          className={`relative justify-center items-center ${
-            isSelected
-              ? 'bg-indigo-600 rounded-lg'
+          className="relative justify-center items-center rounded-lg"
+          style={{ 
+            width: '14.28%', 
+            aspectRatio: 1,
+            backgroundColor: isSelected
+              ? colors.primary
               : isToday
-              ? 'bg-gray-100 rounded-lg'
-              : ''
-          }`}
-          style={{ width: '14.28%', aspectRatio: 1 }}
+              ? colors.primaryContainer
+              : 'transparent'
+          }}
           onPress={() => onDateSelect(isSelected ? null : dateString)}
         >
           <Text
-            className={`text-base font-medium ${
-              isSelected
-                ? 'text-white font-bold'
+            className="text-base font-medium"
+            style={{
+              color: isSelected
+                ? '#FFFFFF'
                 : isToday
-                ? 'text-indigo-600 font-bold'
-                : 'text-gray-700'
-            }`}
+                ? colors.primary
+                : colors.text,
+              fontWeight: isSelected || isToday ? 'bold' : 'normal'
+            }}
           >
             {day}
           </Text>
           {isMarked && (
             <View
-              className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${
-                isSelected ? 'bg-white' : ''
-              }`}
-              style={!isSelected ? { backgroundColor: markColor } : {}}
+              className="absolute bottom-1 w-1.5 h-1.5 rounded-full"
+              style={{ 
+                backgroundColor: isSelected ? '#FFFFFF' : markColor 
+              }}
             />
           )}
         </TouchableOpacity>
@@ -133,43 +139,46 @@ export default function CalendarView({
   ];
 
   return (
-    <View className="bg-white m-5 rounded-2xl p-5 shadow-sm">
+    <View className="m-5 rounded-2xl p-5 shadow-sm" style={{ backgroundColor: colors.surface }}>
       <View className="flex-row justify-between items-center mb-5">
         <TouchableOpacity
-          className="p-2 rounded-lg bg-gray-50"
+          className="p-2 rounded-lg"
+          style={{ backgroundColor: colors.background }}
           onPress={() => navigateMonth('prev')}
         >
-          <ChevronLeft size={20} color="#6B7280" />
+          <ChevronLeft size={20} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        <Text className="text-lg font-bold text-gray-800">
+        <Text className="text-lg font-bold" style={{ color: colors.text }}>
           {currentDate.getFullYear()}년 {monthNames[currentDate.getMonth()]}
         </Text>
 
         <TouchableOpacity
-          className="p-2 rounded-lg bg-gray-50"
+          className="p-2 rounded-lg"
+          style={{ backgroundColor: colors.background }}
           onPress={() => navigateMonth('next')}
         >
-          <ChevronRight size={20} color="#6B7280" />
+          <ChevronRight size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
       {renderCalendar()}
 
-      <View className="flex-row justify-between items-center pt-4 border-t border-gray-100">
+      <View className="flex-row justify-between items-center pt-4 border-t" style={{ borderTopColor: colors.borderLight }}>
         <View className="flex-row items-center">
           <View
             className="w-2 h-2 rounded-full mr-2"
             style={{ backgroundColor: markColor }}
           />
-          <Text className="text-sm text-gray-500">기록이 있는 날</Text>
+          <Text className="text-sm" style={{ color: colors.textSecondary }}>기록이 있는 날</Text>
         </View>
         {selectedDate && (
           <TouchableOpacity
-            className="px-3 py-1.5 bg-gray-100 rounded-lg"
+            className="px-3 py-1.5 rounded-lg"
+            style={{ backgroundColor: colors.background }}
             onPress={() => onDateSelect(null)}
           >
-            <Text className="text-sm font-semibold text-gray-700">
+            <Text className="text-sm font-semibold" style={{ color: colors.text }}>
               {t('datePicker.all')}
             </Text>
           </TouchableOpacity>

@@ -7,6 +7,7 @@ const SELECTED_LANGUAGES_KEY = 'selected_languages';
 const LANGUAGE_ORDER_KEY = 'language_order';
 const VOICE_SETTINGS_KEY = 'voice_settings';
 const APP_LANGUAGE_KEY = 'app_language';
+const THEME_KEY = 'app_theme';
 const MAX_HISTORY_ITEMS = 100;
 
 export interface VoiceSettings {
@@ -232,6 +233,24 @@ export class StorageService {
       await AsyncStorage.setItem(APP_LANGUAGE_KEY, language);
     } catch (error) {
       console.error('Error saving app language:', error);
+    }
+  }
+
+  static async getTheme(): Promise<'light' | 'dark'> {
+    try {
+      const theme = await AsyncStorage.getItem(THEME_KEY);
+      return (theme as 'light' | 'dark') || 'light';
+    } catch (error) {
+      console.error('Error loading theme:', error);
+      return 'light';
+    }
+  }
+
+  static async saveTheme(theme: 'light' | 'dark'): Promise<void> {
+    try {
+      await AsyncStorage.setItem(THEME_KEY, theme);
+    } catch (error) {
+      console.error('Error saving theme:', error);
     }
   }
 }

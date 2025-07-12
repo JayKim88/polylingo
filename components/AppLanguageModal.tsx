@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { X, Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 
 type AppLanguageModalProps = {
   visible: boolean;
@@ -27,6 +28,7 @@ export default function AppLanguageModal({
   onClose,
 }: AppLanguageModalProps) {
   const { t, i18n } = useTranslation();
+  const { colors } = useTheme();
 
   const handleLanguageSelect = async (selectedLanguage: string) => {
     await i18n.changeLanguage(selectedLanguage);
@@ -42,18 +44,18 @@ export default function AppLanguageModal({
     >
       <View className="flex-1 bg-black/50 justify-end">
         <View
-          className="bg-white rounded-t-3xl px-5 pt-5 pb-8"
-          style={{ maxHeight: height * 0.7 }}
+          className="rounded-t-3xl px-5 pt-5 pb-8"
+          style={{ maxHeight: height * 0.7, backgroundColor: colors.surface }}
         >
           <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-2xl font-bold text-gray-800">
+            <Text className="text-2xl font-bold" style={{ color: colors.text }}>
               {t('settings.appLanguage')}
             </Text>
             <TouchableOpacity
               onPress={onClose}
               className="w-8 h-8 justify-center items-center"
             >
-              <X size={24} color="#6B7280" />
+              <X size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -61,18 +63,19 @@ export default function AppLanguageModal({
             {languages.map((lang) => (
               <TouchableOpacity
                 key={lang.code}
-                className="flex-row items-center justify-between bg-gray-50 rounded-2xl p-4 mb-3"
+                className="flex-row items-center justify-between rounded-2xl p-4 mb-3"
+                style={{ backgroundColor: colors.background }}
                 onPress={() => handleLanguageSelect(lang.code)}
               >
                 <View className="flex-1">
-                  <Text className="text-lg font-semibold text-gray-800 mb-1">
+                  <Text className="text-lg font-semibold mb-1" style={{ color: colors.text }}>
                     {lang.nativeName}
                   </Text>
-                  <Text className="text-sm text-gray-500">{lang.name}</Text>
+                  <Text className="text-sm" style={{ color: colors.textSecondary }}>{lang.name}</Text>
                 </View>
                 {i18n.language === lang.code && (
-                  <View className="w-6 h-6 bg-blue-500 rounded-full justify-center items-center">
-                    <Check size={16} color="#fff" />
+                  <View className="w-6 h-6 rounded-full justify-center items-center" style={{ backgroundColor: colors.primary }}>
+                    <Check size={16} color="#FFFFFF" />
                   </View>
                 )}
               </TouchableOpacity>

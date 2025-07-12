@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { X, Check, RotateCcw } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 
 type DatePickerModalProps = {
   visible: boolean;
@@ -30,6 +31,7 @@ export default function DatePickerModal({
 }: DatePickerModalProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const [tempSelectedDate, setTempSelectedDate] = useState<string | null>(
     selectedDate
   );
@@ -63,7 +65,7 @@ export default function DatePickerModal({
   const calendarMarkedDates = markedDates.reduce((acc, date) => {
     acc[date] = {
       marked: true,
-      dotColor: '#6366F1',
+      dotColor: colors.primary,
     };
     return acc;
   }, {} as any);
@@ -73,7 +75,7 @@ export default function DatePickerModal({
     calendarMarkedDates[tempSelectedDate] = {
       ...calendarMarkedDates[tempSelectedDate],
       selected: true,
-      selectedColor: '#6366F1',
+      selectedColor: colors.primary,
       selectedTextColor: '#FFFFFF',
     };
   }
@@ -85,22 +87,23 @@ export default function DatePickerModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
         <KeyboardAvoidingView
-          className="flex-1 bg-white"
+          className="flex-1"
+          style={{ backgroundColor: colors.background }}
           behavior={RNPlatform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b border-gray-100">
-            <Text className="text-xl font-bold text-gray-900">
+          <View className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b" style={{ borderBottomColor: colors.borderLight }}>
+            <Text className="text-xl font-bold" style={{ color: colors.text }}>
               {t('datePicker.title')}
             </Text>
             <TouchableOpacity onPress={handleCancel} className="p-2">
-              <X size={24} color="#6B7280" />
+              <X size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <View className="flex-1 px-5 pt-6">
-            <Text className="text-sm font-medium text-gray-500 mb-6 text-center">
+            <Text className="text-sm font-medium mb-6 text-center" style={{ color: colors.textSecondary }}>
               {tempSelectedDate
                 ? `${t('datePicker.selectedDate')}: ${formatDate(
                     tempSelectedDate
@@ -112,20 +115,20 @@ export default function DatePickerModal({
               onDayPress={handleDayPress}
               markedDates={calendarMarkedDates}
               theme={{
-                backgroundColor: '#FFFFFF',
-                calendarBackground: '#FFFFFF',
-                textSectionTitleColor: '#6B7280',
-                selectedDayBackgroundColor: '#6366F1',
+                backgroundColor: colors.surface,
+                calendarBackground: colors.surface,
+                textSectionTitleColor: colors.textSecondary,
+                selectedDayBackgroundColor: colors.primary,
                 selectedDayTextColor: '#FFFFFF',
-                todayTextColor: '#6366F1',
-                dayTextColor: '#111827',
-                textDisabledColor: '#D1D5DB',
-                dotColor: '#6366F1',
+                todayTextColor: colors.primary,
+                dayTextColor: colors.text,
+                textDisabledColor: colors.textTertiary,
+                dotColor: colors.primary,
                 selectedDotColor: '#FFFFFF',
-                arrowColor: '#6366F1',
-                disabledArrowColor: '#D1D5DB',
-                monthTextColor: '#111827',
-                indicatorColor: '#6366F1',
+                arrowColor: colors.primary,
+                disabledArrowColor: colors.textTertiary,
+                monthTextColor: colors.text,
+                indicatorColor: colors.primary,
                 textDayFontFamily: 'Inter-Regular',
                 textMonthFontFamily: 'Inter-SemiBold',
                 textDayHeaderFontFamily: 'Inter-Medium',
@@ -145,25 +148,31 @@ export default function DatePickerModal({
           </View>
 
           <View
-            className="flex-row px-5 py-6 border-t border-gray-100 gap-3 bg-white"
-            style={{ paddingBottom: Math.max(insets.bottom, 20) + 14 }}
+            className="flex-row px-5 py-6 border-t gap-3"
+            style={{ 
+              borderTopColor: colors.borderLight, 
+              backgroundColor: colors.surface,
+              paddingBottom: Math.max(insets.bottom, 20) + 14 
+            }}
           >
             <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 bg-gray-50 border border-gray-200"
+              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 border"
+              style={{ backgroundColor: colors.background, borderColor: colors.border }}
               onPress={handleClear}
             >
-              <RotateCcw size={18} color="#6B7280" />
-              <Text className="text-sm font-semibold text-gray-500">
+              <RotateCcw size={18} color={colors.textSecondary} />
+              <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>
                 {t('datePicker.all')}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 bg-indigo-500"
+              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2"
+              style={{ backgroundColor: colors.primary }}
               onPress={handleConfirm}
             >
               <Check size={18} color="#FFFFFF" />
-              <Text className="text-sm font-semibold text-white">
+              <Text className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>
                 {t('alert.confirm')}
               </Text>
             </TouchableOpacity>

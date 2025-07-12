@@ -1,10 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Clock, Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -12,23 +7,19 @@ import HistoryList from '../../components/HistoryList';
 import DatePickerModal from '../../components/DatePickerModal';
 import { StorageService } from '../../utils/storage';
 import { HistoryItem } from '../../types/dictionary';
+import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function HistoryTab() {
-  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [filteredHistory, setFilteredHistory] = useState<HistoryItem[]>([]);
   const [historyDates, setHistoryDates] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadHistory();
-    }, [])
-  );
-
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     const hist = await StorageService.getHistory();
     setHistory(hist);
 
@@ -44,7 +35,11 @@ export default function HistoryTab() {
 
     // Show all history initially
     setFilteredHistory(hist);
-  };
+  }, []);
+
+  const { animatedStyle } = useTabSlideAnimation({
+    onFocus: loadHistory,
+  });
 
   const handleDateSelect = (date: string | null) => {
     setSelectedDate(date);
@@ -77,26 +72,41 @@ export default function HistoryTab() {
   };
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-slate-50"
-      style={{ paddingBottom: insets.bottom - 50 }}
+    <Animated.View
+      style={{
+        ...animatedStyle,
+        backgroundColor: colors.background,
+      }}
     >
-      <View className="px-5 py-5 bg-white border-b border-gray-200 shadow-sm">
+      <View
+        className="px-5 py-5 border-b shadow-sm"
+        style={{
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+        }}
+      >
         <View className="flex-row justify-between items-center mb-2">
           <View className="flex-row items-center">
             <Clock size={32} color="#3B82F6" />
-            <Text className="text-3xl font-bold text-gray-800 ml-3">
+            <Text
+              className="text-3xl font-bold ml-3"
+              style={{ color: colors.text }}
+            >
               {t('history.title')}
             </Text>
           </View>
           <TouchableOpacity
-            className="p-3 bg-blue-50 rounded-xl"
+            className="p-3 rounded-xl"
+            style={{ backgroundColor: colors.infoContainer }}
             onPress={() => setShowDatePicker(true)}
           >
             <Calendar size={24} color="#3B82F6" />
           </TouchableOpacity>
         </View>
-        <Text className="text-base font-medium text-gray-500 ml-11">
+        <Text
+          className="text-base font-medium ml-11"
+          style={{ color: colors.textSecondary }}
+        >
           {selectedDate
             ? t('history.dateSubtitle', {
                 year: new Date(selectedDate).getFullYear(),
@@ -119,6 +129,6 @@ export default function HistoryTab() {
         onDateSelect={handleDatePickerSelect}
         onClose={() => setShowDatePicker(false)}
       />
-    </SafeAreaView>
+    </Animated.View>
   );
 }

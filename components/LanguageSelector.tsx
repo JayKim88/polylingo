@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { Language, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { ChevronDown } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/contexts/ThemeContext';
 
 type LanguageSelectorProps = {
   selectedLanguage: string;
@@ -19,6 +20,7 @@ export default function LanguageSelector({
 }: LanguageSelectorProps) {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = React.useState(false);
+  const { colors } = useTheme();
 
   const selectedLang = SUPPORTED_LANGUAGES.find(
     (lang) => lang.code === selectedLanguage
@@ -31,9 +33,10 @@ export default function LanguageSelector({
 
   const renderLanguageItem = ({ item }: { item: Language }) => (
     <TouchableOpacity
-      className={`flex-row items-center p-4 rounded-xl mb-2 ${
-        item.code === selectedLanguage ? 'bg-blue-50' : ''
-      }`}
+      className="flex-row items-center p-4 rounded-xl mb-2"
+      style={{
+        backgroundColor: item.code === selectedLanguage ? colors.primaryContainer : 'transparent'
+      }}
       onPress={() => {
         onLanguageSelect(item.code);
         setIsVisible(false);
@@ -41,10 +44,18 @@ export default function LanguageSelector({
     >
       <Text className="text-2xl">{item.flag}</Text>
       <View className="flex-1 ml-3">
-        <Text className="text-base font-semibold text-gray-700">
+        <Text 
+          className="text-base font-semibold"
+          style={{ color: colors.text }}
+        >
           {item.name}
         </Text>
-        <Text className="text-sm text-gray-500 mt-0.5">{item.nativeName}</Text>
+        <Text 
+          className="text-sm mt-0.5"
+          style={{ color: colors.textSecondary }}
+        >
+          {item.nativeName}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -56,14 +67,18 @@ export default function LanguageSelector({
   return (
     <View className="mb-4 flex-1">
       <TouchableOpacity
-        className="flex-row items-center p-3 bg-white rounded-2xl px-4 py-3 shadow-sm min-h-[56px]"
+        className="flex-row items-center p-3 rounded-2xl px-4 py-3 shadow-sm min-h-[56px]"
+        style={{ backgroundColor: colors.surface }}
         onPress={() => setIsVisible(true)}
       >
         <Text className="text-2xl mr-3">{selectedLang?.flag}</Text>
-        <Text className="flex-1 text-base text-gray-700 font-medium">
+        <Text 
+          className="flex-1 text-base font-medium"
+          style={{ color: colors.text }}
+        >
           {selectedLang?.name}
         </Text>
-        <ChevronDown size={20} color="#666" />
+        <ChevronDown size={20} color={colors.textSecondary} />
       </TouchableOpacity>
 
       <Modal
@@ -73,8 +88,14 @@ export default function LanguageSelector({
         onRequestClose={() => setIsVisible(false)}
       >
         <View className="flex-1 justify-center items-center bg-black/50">
-          <View className="bg-white rounded-2xl p-5 w-[90%] max-h-[70%]">
-            <Text className="text-lg font-bold text-center mb-5 text-gray-900">
+          <View 
+            className="rounded-2xl p-5 w-[90%] max-h-[70%]"
+            style={{ backgroundColor: colors.surface }}
+          >
+            <Text 
+              className="text-lg font-bold text-center mb-5"
+              style={{ color: colors.text }}
+            >
               {t('sourceLanguage.title')}
             </Text>
             <FlatList
@@ -84,10 +105,14 @@ export default function LanguageSelector({
               className="max-h-[400px]"
             />
             <TouchableOpacity
-              className="mt-4 p-3 bg-gray-100 rounded-xl items-center"
+              className="mt-4 p-3 rounded-xl items-center"
+              style={{ backgroundColor: colors.borderLight }}
               onPress={() => setIsVisible(false)}
             >
-              <Text className="text-base text-gray-700 font-semibold">
+              <Text 
+                className="text-base font-semibold"
+                style={{ color: colors.text }}
+              >
                 {t('sourceLanguage.cancel')}
               </Text>
             </TouchableOpacity>

@@ -16,6 +16,7 @@ import { StorageService, VoiceSettings } from '../utils/storage';
 import { SpeechService } from '../utils/speechService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../contexts/ThemeContext';
 
 type VoiceSettingsModalProps = {
   visible: boolean;
@@ -28,6 +29,7 @@ export default function VoiceSettingsModal({
 }: VoiceSettingsModalProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const [settings, setSettings] = useState<VoiceSettings>({
     volume: 0.9,
     rate: 0.8,
@@ -116,17 +118,18 @@ export default function VoiceSettingsModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
         <KeyboardAvoidingView
-          className="flex-1 bg-white"
+          className="flex-1"
+          style={{ backgroundColor: colors.background }}
           behavior={RNPlatform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b border-gray-100">
-            <Text className="text-xl font-bold text-gray-900">
+          <View className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b" style={{ borderBottomColor: colors.borderLight }}>
+            <Text className="text-xl font-bold" style={{ color: colors.text }}>
               {t('voice.title')}
             </Text>
             <TouchableOpacity onPress={onClose} className="p-2">
-              <X size={24} color="#6B7280" />
+              <X size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -142,10 +145,10 @@ export default function VoiceSettingsModal({
             {RNPlatform.OS !== 'ios' && (
               <View className="mb-8">
                 <View className="flex-row justify-between items-center mb-4">
-                  <Text className="text-base font-semibold text-gray-700">
+                  <Text className="text-base font-semibold" style={{ color: colors.text }}>
                     {t('voice.volume')}
                   </Text>
-                  <Text className="text-sm font-medium text-indigo-500">
+                  <Text className="text-sm font-medium" style={{ color: colors.primary }}>
                     {getVolumeText(settings.volume)} (
                     {Math.round(settings.volume * 100)}%)
                   </Text>
@@ -162,18 +165,18 @@ export default function VoiceSettingsModal({
                   maximumTrackTintColor="#E5E7EB"
                 />
                 <View className="flex-row justify-between mt-2">
-                  <Text className="text-xs text-gray-400">조용함</Text>
-                  <Text className="text-xs text-gray-400">큼</Text>
+                  <Text className="text-xs" style={{ color: colors.textTertiary }}>조용함</Text>
+                  <Text className="text-xs" style={{ color: colors.textTertiary }}>큼</Text>
                 </View>
               </View>
             )}
 
             <View className="mb-8">
               <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-base font-semibold text-gray-700">
+                <Text className="text-base font-semibold" style={{ color: colors.text }}>
                   {t('voice.speed')}
                 </Text>
-                <Text className="text-sm font-medium text-indigo-500">
+                <Text className="text-sm font-medium" style={{ color: colors.primary }}>
                   {getRateText(settings.rate)} ({settings.rate.toFixed(1)}x)
                 </Text>
               </View>
@@ -185,21 +188,21 @@ export default function VoiceSettingsModal({
                 onValueChange={(value) =>
                   setSettings({ ...settings, rate: value })
                 }
-                minimumTrackTintColor="#6366F1"
-                maximumTrackTintColor="#E5E7EB"
+                minimumTrackTintColor={colors.primary}
+                maximumTrackTintColor={colors.borderLight}
               />
               <View className="flex-row justify-between mt-2">
-                <Text className="text-xs text-gray-400">{t('voice.slow')}</Text>
-                <Text className="text-xs text-gray-400">{t('voice.fast')}</Text>
+                <Text className="text-xs" style={{ color: colors.textTertiary }}>{t('voice.slow')}</Text>
+                <Text className="text-xs" style={{ color: colors.textTertiary }}>{t('voice.fast')}</Text>
               </View>
             </View>
 
             <View className="mb-8">
               <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-base font-semibold text-gray-700">
+                <Text className="text-base font-semibold" style={{ color: colors.text }}>
                   {t('voice.pitch')}
                 </Text>
-                <Text className="text-sm font-medium text-indigo-500">
+                <Text className="text-sm font-medium" style={{ color: colors.primary }}>
                   {getPitchText(settings.pitch)} ({settings.pitch.toFixed(1)})
                 </Text>
               </View>
@@ -211,46 +214,53 @@ export default function VoiceSettingsModal({
                 onValueChange={(value) =>
                   setSettings({ ...settings, pitch: value })
                 }
-                minimumTrackTintColor="#6366F1"
-                maximumTrackTintColor="#E5E7EB"
+                minimumTrackTintColor={colors.primary}
+                maximumTrackTintColor={colors.borderLight}
               />
               <View className="flex-row justify-between mt-2">
-                <Text className="text-xs text-gray-400">{t('voice.low')}</Text>
-                <Text className="text-xs text-gray-400">{t('voice.high')}</Text>
+                <Text className="text-xs" style={{ color: colors.textTertiary }}>{t('voice.low')}</Text>
+                <Text className="text-xs" style={{ color: colors.textTertiary }}>{t('voice.high')}</Text>
               </View>
             </View>
           </ScrollView>
           <View
-            className="flex-row px-5 py-6 border-t border-gray-100 gap-3 bg-white"
-            style={{ paddingBottom: Math.max(insets.bottom, 20) + 14 }}
+            className="flex-row px-5 py-6 border-t gap-3"
+            style={{ 
+              borderTopColor: colors.borderLight, 
+              backgroundColor: colors.surface,
+              paddingBottom: Math.max(insets.bottom, 20) + 14 
+            }}
           >
             <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 bg-gray-50 border border-gray-200"
+              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 border"
+              style={{ backgroundColor: colors.background, borderColor: colors.border }}
               onPress={handleReset}
             >
-              <RotateCcw size={18} color="#6B7280" />
-              <Text className="text-sm font-semibold text-gray-500">
+              <RotateCcw size={18} color={colors.textSecondary} />
+              <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>
                 {t('voice.reset')}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 bg-yellow-50 border border-yellow-300"
+              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 border"
+              style={{ backgroundColor: colors.warningContainer, borderColor: colors.warning }}
               onPress={handleTest}
               disabled={isTesting}
             >
-              <TestTube size={18} color="#F59E0B" />
-              <Text className="text-sm font-semibold text-yellow-600">
+              <TestTube size={18} color={colors.warning} />
+              <Text className="text-sm font-semibold" style={{ color: colors.warning }}>
                 {isTesting ? t('voice.inTesting') : t('voice.test')}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 bg-indigo-500"
+              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2"
+              style={{ backgroundColor: colors.primary }}
               onPress={handleSave}
             >
               <Save size={18} color="#FFFFFF" />
-              <Text className="text-sm font-semibold text-white">
+              <Text className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>
                 {t('voice.save')}
               </Text>
             </TouchableOpacity>

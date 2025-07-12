@@ -7,6 +7,7 @@ import { TranslationResult, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { StorageService } from '../utils/storage';
 import { SpeechService } from '../utils/speechService';
 import { GoogleIcon } from './GoogleIcon';
+import { useTheme } from '@/contexts/ThemeContext';
 
 type TranslationCardProps = {
   result: TranslationResult;
@@ -21,6 +22,7 @@ export default function TranslationCard({
   isFavorite,
 }: TranslationCardProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const { colors } = useTheme();
   const targetLanguage = SUPPORTED_LANGUAGES.find(
     (lang) => lang.code === result.targetLanguage
   );
@@ -114,11 +116,22 @@ export default function TranslationCard({
   };
 
   return (
-    <View className="bg-white rounded-2xl p-5 border border-gray-100">
-      <View className="flex-row justify-between items-start mb-4">
+    <View
+      className="rounded-2xl p-5 border"
+      style={{
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+      }}
+    >
+      <View className="flex-row justify-between items-start mb-2">
         <View className="flex-row items-center flex-1">
           <Text className="text-2xl mr-3">{targetLanguage?.flag}</Text>
-          <Text className="text-base font-semibold text-gray-700">
+          <Text
+            className="text-base font-semibold"
+            style={{
+              color: colors.text,
+            }}
+          >
             {targetLanguage?.nativeName}
           </Text>
         </View>
@@ -178,34 +191,66 @@ export default function TranslationCard({
       </View>
 
       {result.meanings && result.meanings.length > 1 ? (
-        <View className="mb-3">
-          <View className="mb-3">
+        <View>
+          <View>
             <Text
-              className={`text-2xl font-medium leading-7 text-gray-900 mb-1 ${
+              style={{
+                color: colors.text,
+              }}
+              className={`text-2xl font-medium leading-7 mb-1 ${
                 result.confidence === 0 ? 'text-red-500 italic' : ''
               }`}
             >
               {result.translatedText}
             </Text>
             {result.pronunciation && (
-              <Text className="text-sm text-indigo-600 italic mb-2 tracking-wide">
+              <Text
+                className="text-sm italic mb-2 tracking-wide"
+                style={{ color: colors.primary }}
+              >
                 {result.pronunciation}
               </Text>
             )}
           </View>
-          {result.meanings.slice(0, 5).map((meaning, index) => (
-            <View key={index} className="mb-3 pb-3 border-b border-gray-100">
-              <Text className="text-lg text-gray-900 mb-1">
-                {index + 1}. {meaning.translation}
-              </Text>
-              <Text className="text-sm text-gray-500 mb-1">{meaning.type}</Text>
-            </View>
-          ))}
+          {result.meanings.slice(0, 5).map((meaning, index) => {
+            const isLast =
+              index === (result.meanings?.slice(0, 5).length ?? 0) - 1;
+
+            return (
+              <View
+                key={index}
+                style={{
+                  borderBottomWidth: isLast ? 0 : 1,
+                  borderBottomColor: colors.borderLight,
+                  marginBottom: isLast ? 0 : 12,
+                  paddingBottom: isLast ? 0 : 12,
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.text,
+                  }}
+                  className="text-lg mb-1"
+                >
+                  {index + 1}. {meaning.translation}
+                </Text>
+                <Text
+                  className="text-sm"
+                  style={{ color: colors.textSecondary }}
+                >
+                  {meaning.type}
+                </Text>
+              </View>
+            );
+          })}
         </View>
       ) : (
-        <View className="mb-3">
+        <View>
           <Text
-            className={`text-lg leading-7 text-gray-900 mb-1 ${
+            style={{
+              color: colors.text,
+            }}
+            className={`text-lg leading-7 mb-1 ${
               result.confidence === 0 ? 'text-red-500 italic' : ''
             }`}
           >
@@ -216,18 +261,6 @@ export default function TranslationCard({
               {result.pronunciation}
             </Text>
           )}
-        </View>
-      )}
-
-      {result.confidence > 0 && (
-        <View className="bg-gray-200 rounded-sm overflow-hidden h-1">
-          <View
-            className="h-full"
-            style={{
-              width: `${result.confidence * 100}%`,
-              backgroundColor: getConfidenceColor(result.confidence),
-            }}
-          />
         </View>
       )}
     </View>

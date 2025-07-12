@@ -1,21 +1,19 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Heart, Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
+import { useTabSlideAnimation } from '../../hooks/useTabSlideAnimation';
 import FavoritesList from '../../components/FavoritesList';
 import DatePickerModal from '../../components/DatePickerModal';
 import { StorageService } from '../../utils/storage';
 import { FavoriteItem } from '../../types/dictionary';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function FavoritesTab() {
-  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [filteredFavorites, setFilteredFavorites] = useState<FavoriteItem[]>(
@@ -24,13 +22,7 @@ export default function FavoritesTab() {
   const [favoriteDates, setFavoriteDates] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadFavorites();
-    }, [])
-  );
-
-  const loadFavorites = async () => {
+  const loadFavorites = useCallback(async () => {
     const favs = await StorageService.getFavorites();
     setFavorites(favs);
 
@@ -44,7 +36,11 @@ export default function FavoritesTab() {
 
     // Show all favorites initially
     setFilteredFavorites(favs);
-  };
+  }, []);
+
+  const { animatedStyle } = useTabSlideAnimation({
+    onFocus: loadFavorites,
+  });
 
   const handleDateSelect = (date: string | null) => {
     setSelectedDate(date);
@@ -69,26 +65,41 @@ export default function FavoritesTab() {
   };
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-slate-50"
-      style={{ paddingBottom: insets.bottom - 50 }}
+    <Animated.View 
+      style={{
+        ...animatedStyle,
+        backgroundColor: colors.background
+      }}
     >
-      <View className="px-5 py-5 bg-white border-b border-gray-200 shadow-sm">
+      <View 
+        className="px-5 py-5 border-b shadow-sm"
+        style={{
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border
+        }}
+      >
         <View className="flex-row justify-between items-center mb-2">
           <View className="flex-row items-center">
             <Heart size={32} color="#EF4444" fill="#EF4444" />
-            <Text className="text-3xl font-bold text-gray-800 ml-3">
+            <Text 
+              className="text-3xl font-bold ml-3"
+              style={{ color: colors.text }}
+            >
               {t('favorites.title')}
             </Text>
           </View>
           <TouchableOpacity
-            className="p-3 bg-red-50 rounded-xl"
+            className="p-3 rounded-xl"
+            style={{ backgroundColor: colors.errorContainer }}
             onPress={() => setShowDatePicker(true)}
           >
             <Calendar size={24} color="#EF4444" />
           </TouchableOpacity>
         </View>
-        <Text className="text-base font-medium text-gray-500 ml-11">
+        <Text 
+          className="text-base font-medium ml-11"
+          style={{ color: colors.textSecondary }}
+        >
           {selectedDate
             ? t('favorites.dateSubtitle', {
                 year: new Date(selectedDate).getFullYear(),
@@ -112,6 +123,6 @@ export default function FavoritesTab() {
         onDateSelect={handleDatePickerSelect}
         onClose={() => setShowDatePicker(false)}
       />
-    </SafeAreaView>
+    </Animated.View>
   );
 }

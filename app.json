@@ -8,9 +8,14 @@
     "scheme": "polyglot-dictionary",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#000000"
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#000000"
+    },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.polyglot.dictionary"
+      "backgroundColor": "#000000"
     },
     "android": {
       "adaptiveIcon": {

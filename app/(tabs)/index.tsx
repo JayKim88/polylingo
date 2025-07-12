@@ -1,17 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Alert,
-  TouchableOpacity,
-  Animated,
-  ActivityIndicator,
-} from 'react-native';
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { View, Text, Alert, TouchableOpacity, Animated } from 'react-native';
 import { Languages, Globe, Volume2, Mic, Search, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../../components/LanguageSelector';
@@ -23,12 +11,14 @@ import { TranslationAPI } from '../../utils/translationAPI';
 import { StorageService } from '../../utils/storage';
 import { SpeechService } from '../../utils/speechService';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
+import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export const isPremiumUser = true; // TODO: 실제 프리미엄 체크로 대체
 
 export default function SearchTab() {
   const { t, i18n } = useTranslation();
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [isScrollingUp, setIsScrollingUp] = useState(true);
   const [searchText, setSearchText] = useState('');
@@ -54,27 +44,15 @@ export default function SearchTab() {
   const MAX_LENGTH = isPremiumUser ? 50 : 30;
   const isInputTooLong = searchText.length > MAX_LENGTH;
 
-  useFocusEffect(
-    useCallback(() => {
-      loadFavorites();
-      loadSelectedLanguages();
-      checkVoiceAvailability();
-    }, [])
-  );
-
-  useEffect(() => {
-    checkVoiceAvailability();
-  }, []);
-
-  const loadFavorites = async () => {
+  const loadFavorites = useCallback(async () => {
     const favs = await StorageService.getFavorites();
     const favIds = favs.map(
       (f) => `${f.sourceText}-${f.sourceLanguage}-${f.targetLanguage}`
     );
     setFavorites(favIds);
-  };
+  }, []);
 
-  const loadSelectedLanguages = async () => {
+  const loadSelectedLanguages = useCallback(async () => {
     const cachedlangs = await StorageService.getSelectedLanguages();
 
     if (cachedlangs.length > 0) {
@@ -87,12 +65,30 @@ export default function SearchTab() {
     setSelectedLanguages(defaultLanguages);
     setSourceLanguage(defaultLanguages[0]);
     await StorageService.saveSelectedLanguages(defaultLanguages);
-  };
+  }, []);
 
-  const checkVoiceAvailability = () => {
+  const checkVoiceAvailability = useCallback(() => {
     const available = SpeechService.isSpeechRecognitionAvailable();
     setIsVoiceAvailable(available);
-  };
+  }, []);
+
+  const handleFocus = useCallback(() => {
+    loadFavorites();
+    loadSelectedLanguages();
+    checkVoiceAvailability();
+  }, [loadFavorites, loadSelectedLanguages, checkVoiceAvailability]);
+
+  const handleScrollDirectionChange = useCallback((scrollingUp: boolean) => {
+    setIsScrollingUp(scrollingUp);
+  }, []);
+
+  const { animatedStyle } = useTabSlideAnimation({
+    onFocus: handleFocus,
+  });
+
+  useEffect(() => {
+    checkVoiceAvailability();
+  }, [checkVoiceAvailability]);
 
   const handleSearch = async () => {
     if (!searchText.trim()) return;
@@ -238,38 +234,50 @@ export default function SearchTab() {
     isVoiceActive ? stopVoiceRecording() : startVoiceRecording();
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-slate-50"
-      style={{ paddingBottom: insets.bottom - 50 }}
+    <Animated.View
+      style={{
+        ...animatedStyle,
+        backgroundColor: colors.background,
+      }}
     >
-      <View className="px-5 py-5 bg-white border-b border-gray-200">
+      <View
+        className="px-5 py-5 border-b"
+        style={{
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+        }}
+      >
         <View className="flex-row justify-between items-center mb-2">
           <View className="flex-row items-center">
             <Globe size={32} color="#6366F1" />
             <Text
-              className={`${
-                isEn ? 'text-[16px]' : 'text-3xl'
-              } font-bold text-gray-800 ml-3`}
+              className={`${isEn ? 'text-[16px]' : 'text-3xl'} font-bold ml-3`}
+              style={{ color: colors.text }}
             >
               {t('main.title')}
             </Text>
           </View>
           <View className="flex-row items-center gap-3">
             <TouchableOpacity
-              className="p-3 bg-amber-100 rounded-xl"
+              className="p-3 rounded-xl"
+              style={{ backgroundColor: colors.warningContainer }}
               onPress={() => setShowVoiceSettingsModal(true)}
             >
               <Volume2 size={24} color="#6366F1" />
             </TouchableOpacity>
             <TouchableOpacity
-              className="p-3 bg-indigo-100 rounded-xl"
+              className="p-3 rounded-xl"
+              style={{ backgroundColor: colors.primaryContainer }}
               onPress={() => setShowLanguageModal(true)}
             >
               <Languages size={24} color="#6366F1" />
             </TouchableOpacity>
           </View>
         </View>
-        <Text className="text-base font-medium text-gray-500 ml-11">
+        <Text
+          className="text-base font-medium ml-11"
+          style={{ color: colors.textSecondary }}
+        >
           {t('main.subtitle', { count: selectedLanguages.length })}
         </Text>
       </View>
@@ -285,7 +293,10 @@ export default function SearchTab() {
             opacity: isScrollingUp ? 1 : 0,
           }}
         >
-          <Text className="text-sm font-semibold text-gray-700 mb-2">
+          <Text
+            className="text-sm font-semibold mb-2"
+            style={{ color: colors.text }}
+          >
             {t('main.sourceLanguageLabel')}
           </Text>
           <View className="flex flex-row gap-x-2">
@@ -352,9 +363,7 @@ export default function SearchTab() {
             favorites={favorites}
             onFavoriteToggle={loadFavorites}
             scrollY={scrollY}
-            onScrollDirectionChange={(scrollingUp) =>
-              setIsScrollingUp(scrollingUp)
-            }
+            onScrollDirectionChange={handleScrollDirectionChange}
             isLoading={isLoading}
           />
         </Animated.View>
@@ -370,6 +379,6 @@ export default function SearchTab() {
         visible={showVoiceSettingsModal}
         onClose={() => setShowVoiceSettingsModal(false)}
       />
-    </SafeAreaView>
+    </Animated.View>
   );
 }
