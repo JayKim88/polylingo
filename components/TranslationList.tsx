@@ -98,7 +98,7 @@ export default function TranslationList({
   return (
     <View className="flex-1 relative">
       {isLoading && (
-        <Loading isHeaderVisible={isHeaderVisible} message="Searching..." />
+        <Loading isHeaderVisible={isHeaderVisible} />
       )}
       <Animated.View style={{ opacity: fadeAnim }}>
         {resultAvailable && (

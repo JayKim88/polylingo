@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+} from 'react';
 import { View, Text, Alert, TouchableOpacity, Animated } from 'react-native';
 import { Languages, Volume2, Mic, Search, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +54,14 @@ export default function SearchTab() {
 
   const MAX_LENGTH = isPremiumUser ? 50 : 30;
   const isInputTooLong = searchText.length > MAX_LENGTH;
+
+  // 시간대에 따라 인사말 결정
+  const greetingKey = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'search.goodMorning';
+    if (hour < 18) return 'search.goodAfternoon';
+    return 'search.goodEvening';
+  }, []);
 
   const loadFavorites = useCallback(async () => {
     const favs = await StorageService.getFavorites();
@@ -237,10 +251,7 @@ export default function SearchTab() {
 
   const startVoiceRecording = async () => {
     if (!isVoiceAvailable) {
-      Alert.alert(
-        t('alert.error'),
-        'Speech recognition is not available on this device'
-      );
+      Alert.alert(t('alert.error'), t('search.speechNotAvailable'));
       return;
     }
 
@@ -265,7 +276,7 @@ export default function SearchTab() {
 
       recognition && setSpeechRecognition(recognition);
     } catch (error) {
-      Alert.alert(t('alert.error'), 'Failed to start voice recognition');
+      Alert.alert(t('alert.error'), t('search.voiceStartError'));
       setIsVoiceActive(false);
       setSpeechRecognition(null);
     }
@@ -288,7 +299,7 @@ export default function SearchTab() {
         className="text-sm font-medium mb-4 opacity-70"
         style={{ color: colors.textSecondary }}
       >
-        Translate from
+        {t('search.translateFrom')}
       </Text>
       <View style={{ marginBottom: 16 }}>
         <LanguageSelector
@@ -313,7 +324,9 @@ export default function SearchTab() {
         onChangeText={setSearchText}
         onClear={handleClear}
         onSearch={handleSearch}
-        placeholder={isVoiceActive ? 'Listening...' : 'Enter text to translate'}
+        placeholder={
+          isVoiceActive ? t('search.listening') : t('search.enterText')
+        }
         maxLength={MAX_LENGTH}
         disabled={isVoiceActive}
       />
@@ -369,7 +382,7 @@ export default function SearchTab() {
                 color: isVoiceActive ? '#fff' : colors.textSecondary,
               }}
             >
-              {isVoiceActive ? 'Stop' : 'Voice'}
+              {isVoiceActive ? t('search.stop') : t('search.voice')}
             </Text>
           </View>
         </TouchableOpacity>
@@ -427,7 +440,7 @@ export default function SearchTab() {
                   : colors.background,
             }}
           >
-            {isLoading ? 'Cancel' : 'Translate'}
+            {isLoading ? t('search.cancel') : t('search.translate')}
           </Text>
         </View>
       </TouchableOpacity>
@@ -483,13 +496,13 @@ export default function SearchTab() {
               className="text-sm font-medium opacity-60"
               style={{ color: colors.headerSubTitle }}
             >
-              Good morning 👋
+              {t(greetingKey)}
             </Text>
             <Text
               className="text-2xl font-bold mt-1"
               style={{ color: colors.headerTitle }}
             >
-              Translate
+              {t('search.translateTitle')}
             </Text>
           </View>
           <View className="flex-row gap-3">

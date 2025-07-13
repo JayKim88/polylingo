@@ -47,55 +47,68 @@ export default function SettingsTab() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
 
-  // const handleAppLanguage = () => {
-  //   setShowLanguageModal(true);
-  // };
-
   const handleAbout = () => {
     Alert.alert(
-      t('aboutModal.title'),
-      `${t('aboutModal.version')}\n\n${t('aboutModal.description')}\n\n${t(
-        'aboutModal.features'
-      )}`,
-      [{ text: t('alert.confirm') }]
+      t('settings.aboutTitle'),
+      `${t('settings.aboutVersion')}\n\n${t('settings.aboutSubtitle')}\n\n${t(
+        'settings.aboutFeatures'
+      )}\n\n${t('settings.aboutBuiltWith')}\n\n${t('settings.aboutCopyright')}`,
+      [{ text: t('settings.aboutButton') }]
     );
   };
 
   const handleFeedback = () => {
-    Alert.alert(t('feedbackModal.title'), t('feedbackModal.message'), [
-      { text: t('alert.confirm') },
-    ]);
+    Alert.alert(
+      'Send Feedback',
+      `We'd love to hear from you! 💬\n\nHelp us improve Polyglot Dictionary by sharing:\n\n• Feature requests\n• Bug reports\n• Language accuracy feedback\n• UI/UX suggestions\n• General thoughts\n\nYour feedback helps us make the app better for everyone!\n\nContact: feedback@polyglot-dictionary.com`,
+      [
+        { text: 'Maybe Later', style: 'cancel' },
+        { text: 'Send Feedback', onPress: () => {} },
+      ]
+    );
   };
 
   const handleRate = () => {
-    Alert.alert(t('rateModal.title'), t('rateModal.message'), [
-      { text: t('alert.later') },
-      { text: t('rateModal.rate'), onPress: () => {} },
-    ]);
+    Alert.alert(
+      'Rate Our App ⭐',
+      `Enjoying Polyglot Dictionary?\n\nYour rating helps others discover our app and motivates us to keep improving!\n\n⭐⭐⭐⭐⭐\n\n• Quick & accurate translations\n• Beautiful, intuitive interface\n• Regular updates & new features\n• Free with premium features\n\nIt only takes 30 seconds and means the world to us! 🙏`,
+      [
+        { text: 'Not Now', style: 'cancel' },
+        { text: 'Rate 5 Stars ⭐', onPress: () => {} },
+      ]
+    );
   };
 
   const handlePrivacy = () => {
-    Alert.alert(t('privacyModal.title'), t('privacyModal.message'), [
-      { text: t('alert.confirm') },
-    ]);
+    Alert.alert(
+      'Privacy Policy 🔒',
+      `Your Privacy Matters\n\nWe are committed to protecting your privacy:\n\n✅ No personal data collection\n✅ Translations processed securely\n✅ No tracking or analytics\n✅ Local storage only for your convenience\n✅ No ads or data selling\n\nYour translation data stays on your device and is only sent to our secure servers for processing.\n\nLast updated: December 2024\n\nFor full details, visit: polyglot-dictionary.com/privacy`,
+      [{ text: 'Understood' }]
+    );
   };
 
   const handleLanguageSupport = () => {
     Alert.alert(
-      t('languageSupportModal.title'),
-      t('languageSupportModal.message'),
-      [{ text: t('alert.confirm') }]
+      'Supported Languages 🌍',
+      `14 Languages Available:\n\n🌏 Asian: Chinese, Japanese, Korean, Thai, Hindi, Arabic, Indonesian\n\n🌍 European: English, Spanish, French, German, Italian, Portuguese, Russian\n\nNew languages added regularly!\n\nLanguage not available? Let us know:\nlanguages@polyglot-dictionary.com`,
+      [{ text: 'Great!' }]
     );
   };
 
   const handleFeatures = () => {
-    Alert.alert(t('featuresModal.title'), t('featuresModal.message'), [
-      { text: t('alert.confirm') },
-    ]);
+    Alert.alert(
+      'App Features 🚀',
+      `Powerful Translation Tools:\n\n🗣️ Voice Input: Speak to translate\n🔊 Text-to-Speech: Hear pronunciations\n❤️ Favorites: Save important translations\n📚 History: Access past translations\n📅 Date Filtering: Find translations by date\n🌙 Dark Mode: Easy on the eyes\n⚡ Instant Results: Lightning-fast translations\n🎯 Accurate: AI-powered precision\n🎨 Beautiful UI: Clean, modern design\n📱 Cross-platform: Works on iOS & Android\n\nMore features coming soon!`,
+      [{ text: 'Awesome!' }]
+    );
   };
 
   const handleThemeToggle = () => {
     toggleTheme();
+  };
+
+  const handleAppLanguage = () => {
+    setShowLanguageModal(true);
   };
 
   const handleScrollDirectionChange = useCallback(() => {
@@ -183,28 +196,33 @@ export default function SettingsTab() {
           onPressOut={() => animateButton(1)}
           activeOpacity={1}
         >
-      <View className="flex-1 flex-row items-center">
-        <View
-          className="w-11 h-11 justify-center items-center rounded-xl mr-4"
-          style={{ backgroundColor }}
-        >
-          {icon}
-        </View>
-        <View className="flex-1">
-          <Text
-            className="text-base font-semibold mb-0.5"
-            style={{ color: colors.text }}
-          >
-            {title}
-          </Text>
-          {subtitle && (
-            <Text className="text-sm" style={{ color: colors.textSecondary }}>
-              {subtitle}
-            </Text>
+          <View className="flex-1 flex-row items-center">
+            <View
+              className="w-11 h-11 justify-center items-center rounded-xl mr-4"
+              style={{ backgroundColor }}
+            >
+              {icon}
+            </View>
+            <View className="flex-1">
+              <Text
+                className="text-base font-semibold mb-0.5"
+                style={{ color: colors.text }}
+              >
+                {title}
+              </Text>
+              {subtitle && (
+                <Text
+                  className="text-sm"
+                  style={{ color: colors.textSecondary }}
+                >
+                  {subtitle}
+                </Text>
+              )}
+            </View>
+          </View>
+          {showChevron && (
+            <ChevronRight size={20} color={colors.textTertiary} />
           )}
-        </View>
-      </View>
-      {showChevron && <ChevronRight size={20} color={colors.textTertiary} />}
         </TouchableOpacity>
       </Animated.View>
     );
@@ -238,7 +256,7 @@ export default function SettingsTab() {
               className="text-sm font-medium opacity-60"
               style={{ color: colors.headerSubTitle }}
             >
-              Customize your experience ⚙️
+              {t('settings.subtitle')}
             </Text>
             <Text
               className="text-2xl font-bold mt-1"
@@ -280,6 +298,14 @@ export default function SettingsTab() {
               {t('settings.appInfo')}
             </Text>
             <SettingItem
+              icon={<Globe size={20} color="#059669" />}
+              title={t('settings.appLanguage')}
+              subtitle="English, 한국어, 中文"
+              onPress={handleAppLanguage}
+              iconColor="#059669"
+              backgroundColor="#ECFDF5"
+            />
+            <SettingItem
               icon={
                 theme === 'dark' ? (
                   <Sun size={20} color="#F59E0B" />
@@ -287,11 +313,15 @@ export default function SettingsTab() {
                   <Moon size={20} color="#6366F1" />
                 )
               }
-              title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              title={
+                theme === 'dark'
+                  ? t('settings.lightMode')
+                  : t('settings.darkMode')
+              }
               subtitle={
                 theme === 'dark'
-                  ? 'Switch to light theme'
-                  : 'Switch to dark theme'
+                  ? t('settings.switchToLightTheme')
+                  : t('settings.switchToDarkTheme')
               }
               onPress={handleThemeToggle}
               iconColor={theme === 'dark' ? '#F59E0B' : '#6366F1'}

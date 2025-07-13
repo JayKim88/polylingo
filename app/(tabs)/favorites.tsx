@@ -140,7 +140,7 @@ export default function FavoritesTab() {
               className="text-sm font-medium opacity-60"
               style={{ color: colors.headerSubTitle }}
             >
-              Your saved translations ❤️
+              {t('message.savedTranslations')}
             </Text>
             <Text
               className="text-2xl font-bold mt-1"

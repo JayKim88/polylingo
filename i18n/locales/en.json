@@ -33,7 +33,7 @@
   },
   "history": {
     "title": "History",
-    "subtitle": "View search history by date",
+    "subtitle": "Your translation journey ⏰",
     "dateSubtitle": "{{month}}/{{day}}/{{year}}",
     "allHistory": "All History",
     "clearAll": "Clear All",
@@ -52,14 +52,17 @@
   },
   "settings": {
     "title": "Settings",
-    "subtitle": "Configure app settings and view information",
+    "subtitle": "Customize your experience ⚙️",
     "appInfo": "App Information",
     "users": "User",
     "privacy": "Privacy",
     "appLanguage": "App Language",
     "appLanguageSubtitle": "Set app interface language",
+    "lightMode": "Light Mode",
+    "darkMode": "Dark Mode",
+    "switchToLightTheme": "Switch to light theme",
+    "switchToDarkTheme": "Switch to dark theme",
     "about": "About",
-    "aboutSubtitle": "Version and developer information",
     "features": "Features",
     "featuresSubtitle": "Core app features overview",
     "supportedLanguages": "Supported Languages",
@@ -69,7 +72,14 @@
     "rate": "Rate App",
     "rateSubtitle": "Rate us on the App Store",
     "privacyPolicy": "Privacy Policy",
-    "privacyPolicySubtitle": "Data handling and security policy"
+    "privacyPolicySubtitle": "Data handling and security policy",
+    "aboutTitle": "About Polyglot Dictionary",
+    "aboutVersion": "Version 1.0.0",
+    "aboutSubtitle": "Your AI-powered multilingual translator",
+    "aboutFeatures": "Features:\n• Instant translation across 14 languages\n• Voice input and text-to-speech\n• Favorite translations for quick access\n• Translation history with date filtering\n• Dark/Light theme support\n• Beautiful, intuitive interface",
+    "aboutBuiltWith": "Built with React Native & Claude AI",
+    "aboutCopyright": "© 2024 Polyglot Dictionary Team",
+    "aboutButton": "Got it"
   },
   "alert": {
     "error": "Error",
@@ -90,7 +100,9 @@
     "selectedLanguages": "{{count}} Languages Selected - Long press on the selected language to change its order",
     "cancel": "Cancel",
     "confirm": "Confirm",
-    "selectPrompt": "Select languages to translate (min 2)"
+    "selectPrompt": "Select languages to translate (min 2)",
+    "selectUpToPremium": "Select up to {{count}} languages (Premium)",
+    "selectUpToFree": "Select up to {{count}} languages (Free)"
   },
   "voice": {
     "title": "Voice Settings",
@@ -150,5 +162,63 @@
   "languageSupportModal": {
     "title": "Supported Languages",
     "message": "Currently supported languages:\n\n🇰🇷 Korean (한국어)\n🇺🇸 English (English)\n🇯🇵 Japanese (日本語)\n🇫🇷 French (Français)\n🇩🇪 German (Deutsch)\n🇪🇸 Spanish (Español)\n\nMore language support is coming!"
+  },
+  "search": {
+    "translateFrom": "Translate from",
+    "listening": "Listening...",
+    "enterText": "Enter text to translate",
+    "stop": "Stop",
+    "voice": "Voice",
+    "cancel": "Cancel",
+    "translate": "Translate",
+    "goodMorning": "Good morning ☀️",
+    "goodAfternoon": "Good afternoon 🌤️",
+    "goodEvening": "Good evening 🌙",
+    "translateTitle": "Polyglot translation",
+    "speechNotAvailable": "Speech recognition is not available on this device",
+    "voiceStartError": "Failed to start voice recognition",
+    "searching": "Searching..."
+  },
+  "loading": {
+    "searching": "Searching..."
+  },
+  "calendar": {
+    "weekDays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "monthsShort": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ]
+  },
+  "message": {
+    "savedTranslations": "Your saved translations ❤️",
+    "copyError": "An error occurred while copying",
+    "speechError": "An error occurred during voice playback",
+    "speechNotSupported": "Voice function is not supported on this device.",
+    "googleSearchError": "Unable to open Google search",
+    "googleSearchFailed": "Failed to open Google search"
   }
 }

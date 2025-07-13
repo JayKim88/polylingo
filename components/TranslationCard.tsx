@@ -8,6 +8,7 @@ import { StorageService } from '../utils/storage';
 import { SpeechService } from '../utils/speechService';
 import { GoogleIcon } from './GoogleIcon';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 type TranslationCardProps = {
   result: TranslationResult;
@@ -23,6 +24,7 @@ export default function TranslationCard({
 }: TranslationCardProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const targetLanguage = SUPPORTED_LANGUAGES.find(
     (lang) => lang.code === result.targetLanguage
   );
@@ -60,7 +62,7 @@ export default function TranslationCard({
 
       await Clipboard.setStringAsync(textToCopy);
     } catch (error) {
-      Alert.alert('오류', '복사 중 오류가 발생했습니다.');
+      Alert.alert(t('alert.error'), t('message.copyError'));
     }
   };
 
@@ -73,8 +75,8 @@ export default function TranslationCard({
 
     if (!SpeechService.isAvailable()) {
       Alert.alert(
-        '알림',
-        `이 기기에서는 음성 기능을 지원하지 않습니다.\n\n${SpeechService.getPlatformInfo()}`
+        t('alert.info'),
+        `${t('message.speechNotSupported')}\n\n${SpeechService.getPlatformInfo()}`
       );
       return;
     }
@@ -87,7 +89,7 @@ export default function TranslationCard({
       await SpeechService.speak(result.translatedText, result.targetLanguage);
     } catch (error) {
       console.log('🔊 TTS Error:', error);
-      Alert.alert('오류', '음성 재생 중 오류가 발생했습니다.');
+      Alert.alert(t('alert.error'), t('message.speechError'));
     } finally {
       setIsSpeaking(false);
     }
@@ -102,10 +104,10 @@ export default function TranslationCard({
       if (canOpen) {
         await Linking.openURL(googleUrl);
       } else {
-        Alert.alert('Error', 'Unable to open Google search');
+        Alert.alert(t('alert.error'), t('message.googleSearchError'));
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to open Google search');
+      Alert.alert(t('alert.error'), t('message.googleSearchFailed'));
     }
   };
 

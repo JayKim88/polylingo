@@ -147,7 +147,8 @@ export default function HistoryTab() {
               className="text-sm font-medium opacity-60"
               style={{ color: colors.headerSubTitle }}
             >
-              Your translation journey 📚
+              {t('history.subtitle')}
+              
             </Text>
             <Text
               className="text-2xl font-bold mt-1"

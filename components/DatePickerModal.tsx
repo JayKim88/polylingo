@@ -99,13 +99,19 @@ export default function DatePickerModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
+      <SafeAreaView
+        className="flex-1"
+        style={{ backgroundColor: colors.background }}
+      >
         <KeyboardAvoidingView
           className="flex-1"
           style={{ backgroundColor: colors.background }}
           behavior={RNPlatform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b" style={{ borderBottomColor: colors.borderLight }}>
+          <View
+            className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b"
+            style={{ borderBottomColor: colors.border }}
+          >
             <Text className="text-xl font-bold" style={{ color: colors.text }}>
               {t('datePicker.title')}
             </Text>
@@ -115,7 +121,10 @@ export default function DatePickerModal({
           </View>
 
           <View className="flex-1 px-5 pt-6">
-            <Text className="text-sm font-medium mb-6 text-center" style={{ color: colors.textSecondary }}>
+            <Text
+              className="text-sm font-medium mb-6 text-center"
+              style={{ color: colors.textSecondary }}
+            >
               {tempSelectedDate
                 ? `${t('datePicker.selectedDate')}: ${formatDate(
                     tempSelectedDate
@@ -155,35 +164,47 @@ export default function DatePickerModal({
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.05,
                 shadowRadius: 8,
+                borderRadius: 16,
+                overflow: 'hidden',
               }}
             />
           </View>
 
           <View
             className="flex-row px-5 py-6 border-t gap-3"
-            style={{ 
-              borderTopColor: colors.borderLight, 
+            style={{
+              borderTopColor: colors.border,
               backgroundColor: colors.surface,
-              paddingBottom: Math.max(insets.bottom, 20) + 14 
+              paddingBottom: Math.max(insets.bottom, 20) + 14,
             }}
           >
-            <Animated.View style={{ transform: [{ scale: clearButtonScale }], flex: 1 }}>
+            <Animated.View
+              style={{ transform: [{ scale: clearButtonScale }], flex: 1 }}
+            >
               <TouchableOpacity
                 className="flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 border"
-                style={{ backgroundColor: colors.background, borderColor: colors.border }}
+                style={{
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                }}
                 onPress={handleClear}
                 onPressIn={() => animateButton(clearButtonScale, 0.95)}
                 onPressOut={() => animateButton(clearButtonScale, 1)}
                 activeOpacity={1}
               >
-              <RotateCcw size={18} color={colors.textSecondary} />
-              <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>
-                {t('datePicker.all')}
-              </Text>
+                <RotateCcw size={18} color={colors.textSecondary} />
+                <Text
+                  className="text-sm font-semibold"
+                  style={{ color: colors.textSecondary }}
+                >
+                  {t('datePicker.all')}
+                </Text>
               </TouchableOpacity>
             </Animated.View>
 
-            <Animated.View style={{ transform: [{ scale: confirmButtonScale }], flex: 1 }}>
+            <Animated.View
+              style={{ transform: [{ scale: confirmButtonScale }], flex: 1 }}
+            >
               <TouchableOpacity
                 className="flex-row items-center justify-center py-3 px-4 rounded-xl gap-2"
                 style={{ backgroundColor: colors.primary }}
@@ -192,10 +213,13 @@ export default function DatePickerModal({
                 onPressOut={() => animateButton(confirmButtonScale, 1)}
                 activeOpacity={1}
               >
-              <Check size={18} color="#FFFFFF" />
-              <Text className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>
-                {t('alert.confirm')}
-              </Text>
+                <Check size={18} color="#FFFFFF" />
+                <Text
+                  className="text-sm font-semibold"
+                  style={{ color: '#FFFFFF' }}
+                >
+                  {t('alert.confirm')}
+                </Text>
               </TouchableOpacity>
             </Animated.View>
           </View>

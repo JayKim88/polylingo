@@ -52,7 +52,7 @@ export default function CalendarView({
     const firstDay = getFirstDayOfMonth(currentDate);
 
     const days = [];
-    const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+    const weekDays = t('calendar.weekDays', { returnObjects: true }) as string[];
 
     // Week day headers
     const weekHeaders = weekDays.map((day, index) => (
@@ -123,20 +123,7 @@ export default function CalendarView({
     );
   };
 
-  const monthNames = [
-    '1월',
-    '2월',
-    '3월',
-    '4월',
-    '5월',
-    '6월',
-    '7월',
-    '8월',
-    '9월',
-    '10월',
-    '11월',
-    '12월',
-  ];
+  const monthNames = t('calendar.months', { returnObjects: true }) as string[];
 
   return (
     <View className="m-5 rounded-2xl p-5 shadow-sm" style={{ backgroundColor: colors.surface }}>

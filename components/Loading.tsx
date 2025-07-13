@@ -1,13 +1,17 @@
 import { useTheme } from '@/contexts/ThemeContext';
 import { ActivityIndicator, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 type LoadingProps = {
   isHeaderVisible: boolean;
   message?: string;
 };
 
-const Loading = ({ isHeaderVisible, message = 'Searching...' }: LoadingProps) => {
+const Loading = ({ isHeaderVisible, message }: LoadingProps) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  
+  const displayMessage = message || t('loading.searching');
 
   return (
     <View
@@ -21,7 +25,7 @@ const Loading = ({ isHeaderVisible, message = 'Searching...' }: LoadingProps) =>
         className="text-base text-center mt-4 font-medium"
         style={{ color: colors.textSecondary }}
       >
-        {message}
+        {displayMessage}
       </Text>
     </View>
   );
