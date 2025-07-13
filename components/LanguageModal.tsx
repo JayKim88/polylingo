@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform as RNPlatform,
+  Animated,
 } from 'react-native';
 import DraggableFlatList, {
   RenderItemParams,
@@ -36,6 +37,8 @@ export default function LanguageModal({
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const [tempSelected, setTempSelected] = useState<string[]>(selectedLanguages);
+  const cancelButtonScale = useRef(new Animated.Value(1)).current;
+  const confirmButtonScale = useRef(new Animated.Value(1)).current;
 
   const maxSelectable = isPaidUser ? 5 : 3;
 
@@ -63,6 +66,15 @@ export default function LanguageModal({
   const handleCancel = () => {
     setTempSelected(selectedLanguages);
     onClose();
+  };
+
+  const animateButton = (scale: Animated.Value, value: number) => {
+    Animated.spring(scale, {
+      toValue: value,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
   };
 
   const renderLanguageItem = ({
@@ -169,10 +181,30 @@ export default function LanguageModal({
               data={getSortedLanguages()}
               renderItem={renderLanguageItem}
               keyExtractor={(item) => item.code}
-              onDragEnd={({ data }) => {
-                // 선택된 언어들만 순서 변경, 선택되지 않은 언어들은 그대로 유지
+              onDragBegin={(index) => {
+                // Only allow dragging selected languages
+                const selectedCount = tempSelected.length;
+                if (index >= selectedCount) {
+                  return false; // Prevent drag from starting
+                }
+              }}
+              onDragEnd={({ data, from, to }) => {
+                // Only allow reordering within selected languages
+                const selectedCount = tempSelected.length;
+                
+                // If trying to move a selected language outside the selected section, cancel the move
+                if (from < selectedCount && to >= selectedCount) {
+                  return; // Cancel the drag operation
+                }
+                
+                // If trying to move an unselected language, cancel the move
+                if (from >= selectedCount) {
+                  return; // Cancel the drag operation
+                }
+                
+                // Only reorder within selected languages
                 const newSelectedOrder = data
-                  .filter((item) => tempSelected.includes(item.code))
+                  .slice(0, selectedCount) // Only take the selected languages portion
                   .map((item) => item.code);
 
                 setTempSelected(newSelectedOrder);
@@ -193,25 +225,35 @@ export default function LanguageModal({
               paddingBottom: Math.max(insets.bottom, 20) + 14 
             }}
           >
-            <TouchableOpacity
-              className="flex-1 py-3 px-4 rounded-xl items-center border"
-              style={{ backgroundColor: colors.surface, borderColor: colors.border }}
-              onPress={handleCancel}
-            >
+            <Animated.View style={{ transform: [{ scale: cancelButtonScale }], flex: 1 }}>
+              <TouchableOpacity
+                className="py-3 px-4 rounded-xl items-center border"
+                style={{ backgroundColor: colors.surface, borderColor: colors.border }}
+                onPress={handleCancel}
+                onPressIn={() => animateButton(cancelButtonScale, 0.95)}
+                onPressOut={() => animateButton(cancelButtonScale, 1)}
+                activeOpacity={1}
+              >
               <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>
                 {t('languageModal.cancel')}
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="flex-1 py-3 px-4 rounded-xl items-center"
-              style={{ backgroundColor: tempSelected.length < 2 ? colors.textTertiary : colors.primary }}
-              onPress={handleConfirm}
-              disabled={tempSelected.length < 2}
-            >
+              </TouchableOpacity>
+            </Animated.View>
+            <Animated.View style={{ transform: [{ scale: confirmButtonScale }], flex: 1 }}>
+              <TouchableOpacity
+                className="py-3 px-4 rounded-xl items-center"
+                style={{ backgroundColor: tempSelected.length < 2 ? colors.textTertiary : colors.primary }}
+                onPress={handleConfirm}
+                disabled={tempSelected.length < 2}
+                onPressIn={() => tempSelected.length >= 2 && animateButton(confirmButtonScale, 0.95)}
+                onPressOut={() => animateButton(confirmButtonScale, 1)}
+                activeOpacity={1}
+              >
               <Text className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>
                 {t('languageModal.confirm')}
               </Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>

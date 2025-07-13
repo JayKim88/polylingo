@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { HistoryItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { Trash2, Clock, RefreshCw } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import Loading from './Loading';
 
 type HistoryListProps = {
   history: HistoryItem[];
   selectedDate: string | null;
   onClearHistory: () => void;
   onRemoveHistoryItem: (id: string) => void;
+  onScrollDirectionChange: () => void;
+  onPullDown: () => void;
+  isLoading?: boolean;
+  isHeaderVisible?: boolean;
 };
 
 export default function HistoryList({
@@ -17,9 +22,33 @@ export default function HistoryList({
   selectedDate,
   onClearHistory,
   onRemoveHistoryItem,
+  onScrollDirectionChange,
+  onPullDown,
+  isLoading = false,
+  isHeaderVisible = true,
 }: HistoryListProps) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
+  const lastScrollY = useRef(0);
+
+  const handleScroll = (event: any) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    const scrollingUp = currentScrollY < lastScrollY.current;
+    const scrollDiff = Math.abs(currentScrollY - lastScrollY.current);
+    lastScrollY.current = currentScrollY;
+
+    const validScrollDiff = scrollDiff > 20;
+    if (!validScrollDiff) return;
+
+    // Show header when scrolling up anywhere in the list
+    if (scrollingUp) {
+      onPullDown();
+    }
+    // Hide header when scrolling down with sufficient movement
+    else if (!scrollingUp && currentScrollY > 50) {
+      onScrollDirectionChange();
+    }
+  };
   const handleClearHistory = () => {
     Alert.alert(t('history.deleteTitle'), t('history.deleteAllMessage'), [
       { text: t('alert.cancel'), style: 'cancel' },
@@ -157,9 +186,12 @@ export default function HistoryList({
   };
 
   return (
-    <View className="flex-1">
+    <View className="flex-1 mt-4 relative">
+      {isLoading && (
+        <Loading isHeaderVisible={isHeaderVisible} message="Loading history..." />
+      )}
       <View
-        className="flex-row justify-between items-center px-5 py-4"
+        className="flex-row justify-between items-center pb-4"
         style={{ backgroundColor: colors.background }}
       >
         <View className="flex-row items-center">
@@ -177,7 +209,7 @@ export default function HistoryList({
           </Text>
         </View>
 
-        {history.length > 0 && (
+        {history.length > 0 && !isLoading && (
           <TouchableOpacity
             className="flex-row items-center px-3 py-2 rounded-lg"
             style={{ backgroundColor: colors.errorContainer }}
@@ -195,8 +227,10 @@ export default function HistoryList({
       </View>
 
       <ScrollView
-        className="flex-1 px-5"
+        className="flex-1"
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={
           history.length === 0
             ? {

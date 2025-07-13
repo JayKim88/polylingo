@@ -1,23 +1,52 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { FavoriteItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { Trash2, Heart } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import Loading from './Loading';
 
 type FavoritesListProps = {
   favorites: FavoriteItem[];
   selectedDate: string | null;
   onRemoveFavorite: (id: string) => void;
+  onScrollDirectionChange?: () => void;
+  onPullDown?: () => void;
+  isLoading?: boolean;
+  isHeaderVisible?: boolean;
 };
 
 export default function FavoritesList({
   favorites,
   selectedDate,
   onRemoveFavorite,
+  onScrollDirectionChange,
+  onPullDown,
+  isLoading = false,
+  isHeaderVisible = true,
 }: FavoritesListProps) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
+  const lastScrollY = useRef(0);
+
+  const handleScroll = (event: any) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    const scrollingUp = currentScrollY < lastScrollY.current;
+    const scrollDiff = Math.abs(currentScrollY - lastScrollY.current);
+    lastScrollY.current = currentScrollY;
+
+    const validScrollDiff = scrollDiff > 20;
+    if (!validScrollDiff) return;
+
+    // Show header when scrolling up anywhere in the list
+    if (scrollingUp && onPullDown) {
+      onPullDown();
+    }
+    // Hide header when scrolling down with sufficient movement
+    else if (!scrollingUp && currentScrollY > 50 && onScrollDirectionChange) {
+      onScrollDirectionChange();
+    }
+  };
 
   const handleRemoveFavorite = (id: string, sourceText: string) => {
     Alert.alert(
@@ -152,9 +181,12 @@ export default function FavoritesList({
   };
 
   return (
-    <View className="flex-1">
+    <View className="flex-1 relative">
+      {isLoading && (
+        <Loading isHeaderVisible={isHeaderVisible} message="Loading favorites..." />
+      )}
       <View
-        className="flex-row justify-between items-center px-5 py-4"
+        className="flex-row justify-between items-center mt-4 pb-4"
         style={{ backgroundColor: colors.background }}
       >
         <Text className="text-lg font-bold" style={{ color: colors.text }}>
@@ -169,8 +201,10 @@ export default function FavoritesList({
       </View>
 
       <ScrollView
-        className="flex-1 px-5"
+        className="flex-1"
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{
           ...(favorites.length === 0
             ? {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Clock, Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import { StorageService } from '../../utils/storage';
 import { HistoryItem } from '../../types/dictionary';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
 import { useTheme } from '../../contexts/ThemeContext';
+import { hideTabBar, showTabBar } from './_layout';
 
 export default function HistoryTab() {
   const { t } = useTranslation();
@@ -18,23 +19,33 @@ export default function HistoryTab() {
   const [filteredHistory, setFilteredHistory] = useState<HistoryItem[]>([]);
   const [historyDates, setHistoryDates] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isScrollingUp, setIsScrollingUp] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const headerAnimValue = useRef(new Animated.Value(1)).current;
+  const searchAnimValue = useRef(new Animated.Value(0)).current;
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
   const loadHistory = useCallback(async () => {
-    const hist = await StorageService.getHistory();
-    setHistory(hist);
+    setIsLoading(true);
+    try {
+      const hist = await StorageService.getHistory();
+      setHistory(hist);
 
-    // Extract unique dates
-    const dates = [
-      ...new Set(
-        hist.map(
-          (item) => new Date(item.searchedAt).toISOString().split('T')[0]
-        )
-      ),
-    ];
-    setHistoryDates(dates);
+      // Extract unique dates
+      const dates = [
+        ...new Set(
+          hist.map(
+            (item) => new Date(item.searchedAt).toISOString().split('T')[0]
+          )
+        ),
+      ];
+      setHistoryDates(dates);
 
-    // Show all history initially
-    setFilteredHistory(hist);
+      // Show all history initially
+      setFilteredHistory(hist);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const { animatedStyle } = useTabSlideAnimation({
@@ -71,57 +82,118 @@ export default function HistoryTab() {
     loadHistory();
   };
 
+  const handleScrollDirectionChange = useCallback(() => {
+    if (!isHeaderVisible) return;
+    setIsHeaderVisible(false);
+    hideTabBar();
+    Animated.parallel([
+      Animated.timing(headerAnimValue, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(searchAnimValue, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [headerAnimValue, searchAnimValue, isHeaderVisible]);
+
+  const handlePullDown = useCallback(() => {
+    // Show header and tab bar when user pulls down
+    if (isHeaderVisible) return;
+    setIsHeaderVisible(true);
+    showTabBar();
+    Animated.parallel([
+      Animated.timing(headerAnimValue, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(searchAnimValue, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [headerAnimValue, searchAnimValue, isHeaderVisible]);
+
   return (
     <Animated.View
       style={{
-        ...animatedStyle,
+        flex: 1,
         backgroundColor: colors.background,
       }}
     >
-      <View
-        className="px-5 py-5 border-b shadow-sm"
+      {/* Modern Header */}
+      <Animated.View
+        className="px-6 pt-4 pb-2 rounded-b-3xl"
         style={{
-          backgroundColor: colors.surface,
-          borderBottomColor: colors.border,
+          backgroundColor: colors.header,
+          transform: [
+            {
+              translateY: headerAnimValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-72, 0],
+              }),
+            },
+          ],
         }}
       >
-        <View className="flex-row justify-between items-center mb-2">
-          <View className="flex-row items-center">
-            <Clock size={32} color="#3B82F6" />
+        <View className="flex-row items-center justify-between mb-6">
+          <View>
             <Text
-              className="text-3xl font-bold ml-3"
-              style={{ color: colors.text }}
+              className="text-sm font-medium opacity-60"
+              style={{ color: colors.headerSubTitle }}
+            >
+              Your translation journey 📚
+            </Text>
+            <Text
+              className="text-2xl font-bold mt-1"
+              style={{ color: colors.headerTitle }}
             >
               {t('history.title')}
             </Text>
           </View>
           <TouchableOpacity
-            className="p-3 rounded-xl"
-            style={{ backgroundColor: colors.infoContainer }}
+            className="w-11 h-11 rounded-full items-center justify-center"
+            style={{ backgroundColor: colors.surface }}
             onPress={() => setShowDatePicker(true)}
           >
-            <Calendar size={24} color="#3B82F6" />
+            <Calendar size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
-        <Text
-          className="text-base font-medium ml-11"
-          style={{ color: colors.textSecondary }}
-        >
-          {selectedDate
-            ? t('history.dateSubtitle', {
-                year: new Date(selectedDate).getFullYear(),
-                month: new Date(selectedDate).getMonth() + 1,
-                day: new Date(selectedDate).getDate(),
-              })
-            : t('history.subtitle')}
-        </Text>
-      </View>
-      <HistoryList
-        history={filteredHistory}
-        selectedDate={selectedDate}
-        onClearHistory={handleClearHistory}
-        onRemoveHistoryItem={handleRemoveHistoryItem}
-      />
+      </Animated.View>
+
+      <Animated.View
+        className="flex-1 px-6"
+        style={{
+          ...animatedStyle,
+          marginBottom: -72, // Extend 72px below normal area (behind tabs)
+          transform: [
+            ...animatedStyle.transform,
+            {
+              translateY: searchAnimValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, -72], // Move up to reveal the hidden part
+              }),
+            },
+          ],
+        }}
+      >
+        <HistoryList
+          history={filteredHistory}
+          selectedDate={selectedDate}
+          onClearHistory={handleClearHistory}
+          onRemoveHistoryItem={handleRemoveHistoryItem}
+          onScrollDirectionChange={handleScrollDirectionChange}
+          onPullDown={handlePullDown}
+          isLoading={isLoading}
+          isHeaderVisible={isHeaderVisible}
+        />
+      </Animated.View>
+
       <DatePickerModal
         visible={showDatePicker}
         selectedDate={selectedDate}

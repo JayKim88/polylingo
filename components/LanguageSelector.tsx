@@ -35,7 +35,10 @@ export default function LanguageSelector({
     <TouchableOpacity
       className="flex-row items-center p-4 rounded-xl mb-2"
       style={{
-        backgroundColor: item.code === selectedLanguage ? colors.primaryContainer : 'transparent'
+        backgroundColor:
+          item.code === selectedLanguage
+            ? colors.primaryContainer
+            : 'transparent',
       }}
       onPress={() => {
         onLanguageSelect(item.code);
@@ -44,13 +47,13 @@ export default function LanguageSelector({
     >
       <Text className="text-2xl">{item.flag}</Text>
       <View className="flex-1 ml-3">
-        <Text 
+        <Text
           className="text-base font-semibold"
           style={{ color: colors.text }}
         >
           {item.name}
         </Text>
-        <Text 
+        <Text
           className="text-sm mt-0.5"
           style={{ color: colors.textSecondary }}
         >
@@ -65,14 +68,14 @@ export default function LanguageSelector({
     .filter(Boolean);
 
   return (
-    <View className="mb-4 flex-1">
+    <View className="flex-1 flex flex-col min-h-[56px]">
       <TouchableOpacity
         className="flex-row items-center p-3 rounded-2xl px-4 py-3 shadow-sm min-h-[56px]"
         style={{ backgroundColor: colors.surface }}
         onPress={() => setIsVisible(true)}
       >
         <Text className="text-2xl mr-3">{selectedLang?.flag}</Text>
-        <Text 
+        <Text
           className="flex-1 text-base font-medium"
           style={{ color: colors.text }}
         >
@@ -80,7 +83,6 @@ export default function LanguageSelector({
         </Text>
         <ChevronDown size={20} color={colors.textSecondary} />
       </TouchableOpacity>
-
       <Modal
         visible={isVisible}
         transparent
@@ -88,11 +90,11 @@ export default function LanguageSelector({
         onRequestClose={() => setIsVisible(false)}
       >
         <View className="flex-1 justify-center items-center bg-black/50">
-          <View 
+          <View
             className="rounded-2xl p-5 w-[90%] max-h-[70%]"
             style={{ backgroundColor: colors.surface }}
           >
-            <Text 
+            <Text
               className="text-lg font-bold text-center mb-5"
               style={{ color: colors.text }}
             >
@@ -109,7 +111,7 @@ export default function LanguageSelector({
               style={{ backgroundColor: colors.borderLight }}
               onPress={() => setIsVisible(false)}
             >
-              <Text 
+              <Text
                 className="text-base font-semibold"
                 style={{ color: colors.text }}
               >

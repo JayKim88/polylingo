@@ -3,8 +3,27 @@ import { Search, Heart, Clock, Settings } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useRef } from 'react';
-import { Animated } from 'react-native';
+import { Animated, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+
+// Global tab bar animation state
+export const globalTabBarAnim = new Animated.Value(1);
+
+export const hideTabBar = () => {
+  Animated.timing(globalTabBarAnim, {
+    toValue: 0,
+    duration: 300,
+    useNativeDriver: true,
+  }).start();
+};
+
+export const showTabBar = () => {
+  Animated.timing(globalTabBarAnim, {
+    toValue: 1,
+    duration: 300,
+    useNativeDriver: true,
+  }).start();
+};
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -48,74 +67,91 @@ export default function TabLayout() {
 
   const animatedTabBarStyle = {
     ...tabBarStyle,
-    transform: [{ translateY: slideAnim }],
+    transform: [
+      { translateY: slideAnim },
+      {
+        translateY: globalTabBarAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [100, 0], // Hide 100px down when scrolling
+        }),
+      },
+    ],
     opacity: fadeAnim,
   };
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      edges={['top', 'left', 'right', 'bottom']}
-    >
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.textTertiary,
-          tabBarStyle: {
-            ...animatedTabBarStyle,
-            backgroundColor: colors.surface,
-            borderTopColor: colors.border,
-          },
-          tabBarLabelStyle: {
-            fontSize: 12,
-            fontFamily: 'Inter-SemiBold',
-            marginTop: 4,
-          },
-          lazy: false,
-        }}
+    <>
+      <SafeAreaView
+        style={{ flex: 0, backgroundColor: colors.header }}
+        edges={['top']}
+      />
+      <SafeAreaView
+        className="flex-1 bg-transparent"
+        style={{ flex: 1, backgroundColor: colors.background }}
+        edges={['left', 'right', 'bottom']}
       >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: t('tabs.search'),
-            lazy: false, // disabl
-            tabBarIcon: ({ size, color }) => (
-              <Search size={size} color={color} />
-            ),
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: colors.primary,
+            tabBarInactiveTintColor: colors.textTertiary,
+            tabBarStyle: {
+              ...animatedTabBarStyle,
+              position: 'absolute',
+              backgroundColor: colors.surface,
+              borderTopColor: colors.border,
+            },
+            tabBarLabelStyle: {
+              fontSize: 12,
+              fontFamily: 'Inter-SemiBold',
+              marginTop: 4,
+            },
+            lazy: false,
+            tabBarBackground: () => <View className="bg-red"></View>,
           }}
-        />
-        <Tabs.Screen
-          name="favorites"
-          options={{
-            title: t('tabs.favorites'),
-            lazy: false, // disabl
-            tabBarIcon: ({ size, color }) => (
-              <Heart size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="history"
-          options={{
-            title: t('tabs.history'),
-            lazy: false, // disabl
-            tabBarIcon: ({ size, color }) => (
-              <Clock size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: t('tabs.settings'),
-            lazy: false, // disabl
-            tabBarIcon: ({ size, color }) => (
-              <Settings size={size} color={color} />
-            ),
-          }}
-        />
-      </Tabs>
-    </SafeAreaView>
+        >
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: t('tabs.search'),
+              lazy: false, // disabl
+              tabBarIcon: ({ size, color }) => (
+                <Search size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="favorites"
+            options={{
+              title: t('tabs.favorites'),
+              lazy: false, // disabl
+              tabBarIcon: ({ size, color }) => (
+                <Heart size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="history"
+            options={{
+              title: t('tabs.history'),
+              lazy: false, // disabl
+              tabBarIcon: ({ size, color }) => (
+                <Clock size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="settings"
+            options={{
+              title: t('tabs.settings'),
+              lazy: false, // disabl
+              tabBarIcon: ({ size, color }) => (
+                <Settings size={size} color={color} />
+              ),
+            }}
+          />
+        </Tabs>
+      </SafeAreaView>
+    </>
   );
 }

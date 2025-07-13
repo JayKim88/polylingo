@@ -2,17 +2,19 @@ import React from 'react';
 import { View, Text, Animated, ActivityIndicator } from 'react-native';
 import { TranslationResult } from '../types/dictionary';
 import TranslationCard from './TranslationCard';
-import { SkeletonTranslationList } from './SkeletonLoader';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
+import Loading from './Loading';
 
 type TranslationListProps = {
   results: TranslationResult[];
   favorites: string[];
   onFavoriteToggle: () => void;
   scrollY?: Animated.Value;
-  onScrollDirectionChange?: (isScrollingUp: boolean) => void;
+  onScrollDirectionChange?: (isScrollingUp: boolean, scrollY: number) => void;
+  onPullDown?: () => void;
   isLoading?: boolean;
+  isHeaderVisible?: boolean;
 };
 
 export default function TranslationList({
@@ -21,7 +23,9 @@ export default function TranslationList({
   onFavoriteToggle,
   scrollY,
   onScrollDirectionChange,
+  onPullDown,
   isLoading = false,
+  isHeaderVisible = true,
 }: TranslationListProps) {
   const lastScrollY = React.useRef(0);
   const lastDirection = React.useRef<boolean | null>(null);
@@ -46,11 +50,41 @@ export default function TranslationList({
     return favorites.includes(id);
   };
 
+  const handleScrollEvent = ({ nativeEvent }: { nativeEvent: any }) => {
+    if (!onScrollDirectionChange) return;
+
+    const currentScrollY = nativeEvent.contentOffset.y;
+    const scrollDiff = Math.abs(currentScrollY - lastScrollY.current);
+
+    // 스크롤 변화량이 작으면 무시
+    if (scrollDiff < 20) {
+      return;
+    }
+
+    const isScrollingUp = currentScrollY < lastScrollY.current;
+
+    // Detect pull-down gesture at the top
+    if (currentScrollY < -50 && onPullDown) {
+      onPullDown();
+      lastDirection.current = null; // Reset direction tracking after pull
+    }
+    // Trigger direction change on scroll down with sufficient movement
+    else if (!isScrollingUp && currentScrollY > 50 && scrollDiff > 20) {
+      onScrollDirectionChange(false, currentScrollY);
+      lastDirection.current = false;
+    }
+    // Reset direction when scrolling back to top
+    else if (currentScrollY <= 10) {
+      lastDirection.current = null;
+    }
+    lastScrollY.current = currentScrollY;
+  };
+
   const resultAvailable = !!results.length;
 
   if (!resultAvailable && !isLoading) {
     return (
-      <View className="flex-1 justify-center items-center py-16">
+      <View className="flex-1 justify-center items-center pb-32">
         <Text
           className="text-base text-center"
           style={{ color: colors.textTertiary }}
@@ -64,18 +98,7 @@ export default function TranslationList({
   return (
     <View className="flex-1 relative">
       {isLoading && (
-        <View
-          className="absolute inset-0 z-10 justify-center items-center backdrop-blur-sm"
-          style={{ backgroundColor: colors.background }}
-        >
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text
-            className="text-base text-center mt-4 font-medium"
-            style={{ color: colors.textSecondary }}
-          >
-            Searching...
-          </Text>
-        </View>
+        <Loading isHeaderVisible={isHeaderVisible} message="Searching..." />
       )}
       <Animated.View style={{ opacity: fadeAnim }}>
         {resultAvailable && (
@@ -98,49 +121,7 @@ export default function TranslationList({
                   [{ nativeEvent: { contentOffset: { y: scrollY } } }],
                   {
                     useNativeDriver: false,
-                    listener: ({ nativeEvent }: { nativeEvent: any }) => {
-                      if (onScrollDirectionChange) {
-                        const currentScrollY = nativeEvent.contentOffset.y;
-                        const scrollDiff = Math.abs(
-                          currentScrollY - lastScrollY.current
-                        );
-                        const { contentSize, layoutMeasurement } = nativeEvent;
-                        const isAtBottom =
-                          currentScrollY >=
-                          contentSize.height - layoutMeasurement.height - 10;
-
-                        // 스크롤 변화량이 작으면 무시
-                        if (scrollDiff < 20) {
-                          return;
-                        }
-
-                        const isScrollingUp =
-                          currentScrollY < lastScrollY.current;
-
-                        // 스크롤 위치가 0에 가까우면 항상 보이도록 설정
-                        if (currentScrollY <= 5) {
-                          if (lastDirection.current !== true) {
-                            lastDirection.current = true;
-                            onScrollDirectionChange(true);
-                          }
-                        }
-                        // 맨 아래에 있으면 숨김 상태 유지
-                        else if (isAtBottom) {
-                          if (lastDirection.current !== false) {
-                            lastDirection.current = false;
-                            onScrollDirectionChange(false);
-                          }
-                        }
-                        // 일반적인 스크롤에서만 방향 감지
-                        else {
-                          if (lastDirection.current !== isScrollingUp) {
-                            lastDirection.current = isScrollingUp;
-                            onScrollDirectionChange(isScrollingUp);
-                          }
-                        }
-                        lastScrollY.current = currentScrollY;
-                      }
-                    },
+                    listener: handleScrollEvent,
                   }
                 )
               : undefined
@@ -150,7 +131,7 @@ export default function TranslationList({
           {results.map((result) => (
             <View
               key={`${result.targetLanguage}-${result.timestamp}`}
-              className="mb-6"
+              className="mb-4"
             >
               <TranslationCard
                 result={result}

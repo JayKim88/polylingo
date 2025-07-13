@@ -110,10 +110,14 @@ export const useTabSlideAnimation = (
     slideAnim,
     scaleAnim,
     animatedStyle: {
-      flex: 1,
       opacity: fadeAnim,
       transform: [
-        { translateX: slideAnim },
+        {
+          translateX: slideAnim.interpolate({
+            inputRange: [-slideDistance, 0, slideDistance],
+            outputRange: [-slideDistance, 0, slideDistance],
+          }),
+        },
         ...(includeScale ? [{ scale: scaleAnim }] : []),
       ],
     },

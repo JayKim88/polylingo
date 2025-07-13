@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Modal,
   View,
@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform as RNPlatform,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
@@ -35,6 +36,8 @@ export default function DatePickerModal({
   const [tempSelectedDate, setTempSelectedDate] = useState<string | null>(
     selectedDate
   );
+  const clearButtonScale = useRef(new Animated.Value(1)).current;
+  const confirmButtonScale = useRef(new Animated.Value(1)).current;
 
   const handleDayPress = (day: any) => {
     if (markedDates.includes(day.dateString)) {
@@ -54,6 +57,15 @@ export default function DatePickerModal({
   const handleCancel = () => {
     setTempSelectedDate(selectedDate);
     onClose();
+  };
+
+  const animateButton = (scale: Animated.Value, value: number) => {
+    Animated.spring(scale, {
+      toValue: value,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
   };
 
   const formatDate = (dateString: string | null) => {
@@ -155,27 +167,37 @@ export default function DatePickerModal({
               paddingBottom: Math.max(insets.bottom, 20) + 14 
             }}
           >
-            <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 border"
-              style={{ backgroundColor: colors.background, borderColor: colors.border }}
-              onPress={handleClear}
-            >
+            <Animated.View style={{ transform: [{ scale: clearButtonScale }], flex: 1 }}>
+              <TouchableOpacity
+                className="flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 border"
+                style={{ backgroundColor: colors.background, borderColor: colors.border }}
+                onPress={handleClear}
+                onPressIn={() => animateButton(clearButtonScale, 0.95)}
+                onPressOut={() => animateButton(clearButtonScale, 1)}
+                activeOpacity={1}
+              >
               <RotateCcw size={18} color={colors.textSecondary} />
               <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>
                 {t('datePicker.all')}
               </Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </Animated.View>
 
-            <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2"
-              style={{ backgroundColor: colors.primary }}
-              onPress={handleConfirm}
-            >
+            <Animated.View style={{ transform: [{ scale: confirmButtonScale }], flex: 1 }}>
+              <TouchableOpacity
+                className="flex-row items-center justify-center py-3 px-4 rounded-xl gap-2"
+                style={{ backgroundColor: colors.primary }}
+                onPress={handleConfirm}
+                onPressIn={() => animateButton(confirmButtonScale, 0.95)}
+                onPressOut={() => animateButton(confirmButtonScale, 1)}
+                activeOpacity={1}
+              >
               <Check size={18} color="#FFFFFF" />
               <Text className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>
                 {t('alert.confirm')}
               </Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>

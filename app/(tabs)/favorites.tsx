@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Heart, Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import DatePickerModal from '../../components/DatePickerModal';
 import { StorageService } from '../../utils/storage';
 import { FavoriteItem } from '../../types/dictionary';
 import { useTheme } from '../../contexts/ThemeContext';
+import { hideTabBar, showTabBar } from './_layout';
 
 export default function FavoritesTab() {
   const { t } = useTranslation();
@@ -21,21 +22,29 @@ export default function FavoritesTab() {
   );
   const [favoriteDates, setFavoriteDates] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isScrollingUp, setIsScrollingUp] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const headerAnimValue = useRef(new Animated.Value(1)).current;
 
   const loadFavorites = useCallback(async () => {
-    const favs = await StorageService.getFavorites();
-    setFavorites(favs);
+    setIsLoading(true);
+    try {
+      const favs = await StorageService.getFavorites();
+      setFavorites(favs);
 
-    // Extract unique dates
-    const dates = [
-      ...new Set(
-        favs.map((fav) => new Date(fav.createdAt).toISOString().split('T')[0])
-      ),
-    ];
-    setFavoriteDates(dates);
+      // Extract unique dates
+      const dates = [
+        ...new Set(
+          favs.map((fav) => new Date(fav.createdAt).toISOString().split('T')[0])
+        ),
+      ];
+      setFavoriteDates(dates);
 
-    // Show all favorites initially
-    setFilteredFavorites(favs);
+      // Show all favorites initially
+      setFilteredFavorites(favs);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const { animatedStyle } = useTabSlideAnimation({
@@ -64,58 +73,119 @@ export default function FavoritesTab() {
     loadFavorites();
   };
 
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const searchAnimValue = useRef(new Animated.Value(0)).current;
+
+  const handleScrollDirectionChange = useCallback(() => {
+    if (!isHeaderVisible) return;
+    setIsHeaderVisible(false);
+    hideTabBar();
+    Animated.parallel([
+      Animated.timing(headerAnimValue, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(searchAnimValue, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [headerAnimValue, searchAnimValue, isHeaderVisible]);
+
+  const handlePullDown = useCallback(() => {
+    if (isHeaderVisible) return;
+    setIsHeaderVisible(true);
+    showTabBar();
+    Animated.parallel([
+      Animated.timing(headerAnimValue, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(searchAnimValue, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [headerAnimValue, searchAnimValue, isHeaderVisible]);
+
   return (
-    <Animated.View 
+    <Animated.View
       style={{
-        ...animatedStyle,
-        backgroundColor: colors.background
+        flex: 1,
+        backgroundColor: colors.background,
       }}
     >
-      <View 
-        className="px-5 py-5 border-b shadow-sm"
+      {/* Modern Header */}
+      <Animated.View
+        className="px-6 pt-4 pb-2 rounded-b-3xl"
         style={{
-          backgroundColor: colors.surface,
-          borderBottomColor: colors.border
+          backgroundColor: colors.header,
+          transform: [
+            {
+              translateY: headerAnimValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-72, 0],
+              }),
+            },
+          ],
         }}
       >
-        <View className="flex-row justify-between items-center mb-2">
-          <View className="flex-row items-center">
-            <Heart size={32} color="#EF4444" fill="#EF4444" />
-            <Text 
-              className="text-3xl font-bold ml-3"
-              style={{ color: colors.text }}
+        <View className="flex-row items-center justify-between mb-6">
+          <View>
+            <Text
+              className="text-sm font-medium opacity-60"
+              style={{ color: colors.headerSubTitle }}
+            >
+              Your saved translations ❤️
+            </Text>
+            <Text
+              className="text-2xl font-bold mt-1"
+              style={{ color: colors.headerTitle }}
             >
               {t('favorites.title')}
             </Text>
           </View>
           <TouchableOpacity
-            className="p-3 rounded-xl"
-            style={{ backgroundColor: colors.errorContainer }}
+            className="w-11 h-11 rounded-full items-center justify-center"
+            style={{ backgroundColor: colors.surface }}
             onPress={() => setShowDatePicker(true)}
           >
-            <Calendar size={24} color="#EF4444" />
+            <Calendar size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
-        <Text 
-          className="text-base font-medium ml-11"
-          style={{ color: colors.textSecondary }}
-        >
-          {selectedDate
-            ? t('favorites.dateSubtitle', {
-                year: new Date(selectedDate).getFullYear(),
-                month: new Date(selectedDate).getMonth() + 1,
-                day: new Date(selectedDate).getDate(),
-              })
-            : t('favorites.subtitle')}
-        </Text>
-      </View>
-      <View className="flex-1">
+      </Animated.View>
+
+      <Animated.View
+        className="flex-1 px-6"
+        style={{
+          ...animatedStyle,
+          marginBottom: -72, // Extend 72px below normal area (behind tabs)
+          transform: [
+            ...animatedStyle.transform,
+            {
+              translateY: searchAnimValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, -72], // Move up to reveal the hidden part
+              }),
+            },
+          ],
+        }}
+      >
         <FavoritesList
           favorites={filteredFavorites}
           selectedDate={selectedDate}
           onRemoveFavorite={handleRemoveFavorite}
+          onScrollDirectionChange={handleScrollDirectionChange}
+          onPullDown={handlePullDown}
+          isLoading={isLoading}
+          isHeaderVisible={isHeaderVisible}
         />
-      </View>
+      </Animated.View>
+
       <DatePickerModal
         visible={showDatePicker}
         selectedDate={selectedDate}

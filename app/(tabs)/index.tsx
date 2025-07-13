@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, Alert, TouchableOpacity, Animated } from 'react-native';
-import { Languages, Globe, Volume2, Mic, Search, X } from 'lucide-react-native';
+import { Languages, Volume2, Mic, Search, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../../components/LanguageSelector';
 import SearchInput from '../../components/SearchInput';
@@ -13,6 +13,7 @@ import { SpeechService } from '../../utils/speechService';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
 import { useTheme } from '../../contexts/ThemeContext';
+import { hideTabBar, showTabBar } from './_layout';
 
 export const isPremiumUser = true; // TODO: 실제 프리미엄 체크로 대체
 
@@ -39,8 +40,12 @@ export default function SearchTab() {
   >('claude');
   const [searchAbortController, setSearchAbortController] =
     useState<AbortController | null>(null);
+  const headerAnimValue = useRef(new Animated.Value(1)).current;
+  const searchAnimValue = useRef(new Animated.Value(0)).current;
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const voiceButtonScale = useRef(new Animated.Value(1)).current;
+  const translateButtonScale = useRef(new Animated.Value(1)).current;
 
-  const isEn = i18n.language === 'en';
   const MAX_LENGTH = isPremiumUser ? 50 : 30;
   const isInputTooLong = searchText.length > MAX_LENGTH;
 
@@ -76,11 +81,54 @@ export default function SearchTab() {
     loadFavorites();
     loadSelectedLanguages();
     checkVoiceAvailability();
+    showTabBar();
   }, [loadFavorites, loadSelectedLanguages, checkVoiceAvailability]);
 
-  const handleScrollDirectionChange = useCallback((scrollingUp: boolean) => {
-    setIsScrollingUp(scrollingUp);
-  }, []);
+  const handleScrollDirectionChange = useCallback(
+    (scrollingUp: boolean, scrollY: number) => {
+      setIsScrollingUp(scrollingUp);
+
+      // Only hide header when scrolling down and header is currently visible
+      if (!scrollingUp && scrollY > 50 && isHeaderVisible) {
+        setIsHeaderVisible(false);
+        // Hide header and tab bar, move search up when scrolling down
+        hideTabBar();
+        Animated.parallel([
+          Animated.timing(headerAnimValue, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(searchAnimValue, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
+    },
+    [headerAnimValue, searchAnimValue, isHeaderVisible]
+  );
+
+  const handlePullDown = useCallback(() => {
+    // Show header and tab bar when user pulls down
+    if (!isHeaderVisible) {
+      setIsHeaderVisible(true);
+      showTabBar();
+      Animated.parallel([
+        Animated.timing(headerAnimValue, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(searchAnimValue, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [headerAnimValue, searchAnimValue, isHeaderVisible]);
 
   const { animatedStyle } = useTabSlideAnimation({
     onFocus: handleFocus,
@@ -233,141 +281,280 @@ export default function SearchTab() {
   const handleVoicePress = () =>
     isVoiceActive ? stopVoiceRecording() : startVoiceRecording();
 
+  // Render Language Selection Section
+  const renderLanguageSection = () => (
+    <View style={{ marginBottom: 32 }}>
+      <Text
+        className="text-sm font-medium mb-4 opacity-70"
+        style={{ color: colors.textSecondary }}
+      >
+        Translate from
+      </Text>
+      <View style={{ marginBottom: 16 }}>
+        <LanguageSelector
+          selectedLanguage={sourceLanguage}
+          onLanguageSelect={setSourceLanguage}
+          selectedLanguages={selectedLanguages}
+          onOpen={async () => {
+            if (isVoiceActive) {
+              await stopVoiceRecording();
+            }
+          }}
+        />
+      </View>
+    </View>
+  );
+
+  // Render Search Input Section
+  const renderSearchInput = () => (
+    <View className="mb-2 mt-4">
+      <SearchInput
+        value={searchText}
+        onChangeText={setSearchText}
+        onClear={handleClear}
+        onSearch={handleSearch}
+        placeholder={isVoiceActive ? 'Listening...' : 'Enter text to translate'}
+        maxLength={MAX_LENGTH}
+        disabled={isVoiceActive}
+      />
+    </View>
+  );
+
+  const animateVoiceButton = (scale: number) => {
+    Animated.spring(voiceButtonScale, {
+      toValue: scale,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  };
+
+  const animateTranslateButton = (scale: number) => {
+    Animated.spring(translateButtonScale, {
+      toValue: scale,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  };
+
+  // Render Voice Button
+  const renderVoiceButton = () => {
+    if (!isVoiceAvailable) return null;
+
+    return (
+      <Animated.View
+        style={{ transform: [{ scale: voiceButtonScale }], flex: 1 }}
+      >
+        <TouchableOpacity
+          className="h-14 rounded-2xl items-center justify-center"
+          style={{
+            backgroundColor: isVoiceActive ? '#FF6B6B' : colors.background,
+            borderWidth: isVoiceActive ? 0 : 1,
+            borderColor: colors.border,
+          }}
+          onPress={handleVoicePress}
+          onPressIn={() => animateVoiceButton(0.95)}
+          onPressOut={() => animateVoiceButton(1)}
+          activeOpacity={1}
+        >
+          <View className="flex-row items-center">
+            <Mic
+              size={16}
+              color={isVoiceActive ? '#fff' : colors.textSecondary}
+            />
+            <Text
+              className="ml-2 font-medium text-sm"
+              style={{
+                color: isVoiceActive ? '#fff' : colors.textSecondary,
+              }}
+            >
+              {isVoiceActive ? 'Stop' : 'Voice'}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
+  // Render Translate Button
+  const renderTranslateButton = () => (
+    <Animated.View
+      style={{ transform: [{ scale: translateButtonScale }], flex: 1 }}
+    >
+      <TouchableOpacity
+        className="h-14 rounded-2xl items-center justify-center"
+        style={{
+          backgroundColor:
+            (!searchText.trim() || isInputTooLong) && !isLoading
+              ? colors.background
+              : isLoading
+              ? '#FF6B6B'
+              : colors.text,
+          borderWidth:
+            (!searchText.trim() || isInputTooLong) && !isLoading ? 1 : 0,
+          borderColor: colors.border,
+          opacity:
+            (!searchText.trim() || isInputTooLong) && !isLoading ? 0.6 : 1,
+        }}
+        onPress={isLoading ? handleCancelSearch : handleSearch}
+        disabled={(!searchText.trim() || isInputTooLong) && !isLoading}
+        onPressIn={() => animateTranslateButton(0.95)}
+        onPressOut={() => animateTranslateButton(1)}
+        activeOpacity={1}
+      >
+        <View className="flex-row items-center">
+          {isLoading ? (
+            <X size={16} color="#fff" />
+          ) : (
+            <Search
+              size={16}
+              color={
+                !searchText.trim() || isInputTooLong
+                  ? colors.textSecondary
+                  : colors.background
+              }
+            />
+          )}
+          <Text
+            className="ml-2 font-medium text-sm"
+            style={{
+              color:
+                (!searchText.trim() || isInputTooLong) && !isLoading
+                  ? colors.textSecondary
+                  : isLoading
+                  ? '#fff'
+                  : colors.background,
+            }}
+          >
+            {isLoading ? 'Cancel' : 'Translate'}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
+  // Render Action Buttons Section
+  const renderActionButtons = () => (
+    <View className="flex-row gap-4">
+      {renderVoiceButton()}
+      {renderTranslateButton()}
+    </View>
+  );
+
+  // Render Complete Search Card
+  const renderSearchCard = () => (
+    <View
+      className="rounded-3xl my-4"
+      style={{ backgroundColor: colors.background }}
+    >
+      {renderLanguageSection()}
+      {renderSearchInput()}
+      {renderActionButtons()}
+    </View>
+  );
+
   return (
     <Animated.View
       style={{
-        ...animatedStyle,
         backgroundColor: colors.background,
+        flex: 1,
       }}
     >
-      <View
-        className="px-5 py-5 border-b"
+      {/* Modern Header */}
+      <Animated.View
+        className="px-6 pt-4 pb-2 rounded-b-3xl"
         style={{
-          backgroundColor: colors.surface,
-          borderBottomColor: colors.border,
+          backgroundColor: colors.header,
+          transform: [
+            {
+              translateY: headerAnimValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-72, 0],
+              }),
+            },
+          ],
+          // opacity: headerAnimValue,
         }}
       >
-        <View className="flex-row justify-between items-center mb-2">
-          <View className="flex-row items-center">
-            <Globe size={32} color="#6366F1" />
+        <View className="flex-row items-center justify-between mb-6">
+          <View>
             <Text
-              className={`${isEn ? 'text-[16px]' : 'text-3xl'} font-bold ml-3`}
-              style={{ color: colors.text }}
+              className="text-sm font-medium opacity-60"
+              style={{ color: colors.headerSubTitle }}
             >
-              {t('main.title')}
+              Good morning 👋
+            </Text>
+            <Text
+              className="text-2xl font-bold mt-1"
+              style={{ color: colors.headerTitle }}
+            >
+              Translate
             </Text>
           </View>
-          <View className="flex-row items-center gap-3">
+          <View className="flex-row gap-3">
             <TouchableOpacity
-              className="p-3 rounded-xl"
-              style={{ backgroundColor: colors.warningContainer }}
+              className="w-11 h-11 rounded-full items-center justify-center"
+              style={{ backgroundColor: colors.surface }}
               onPress={() => setShowVoiceSettingsModal(true)}
             >
-              <Volume2 size={24} color="#6366F1" />
+              <Volume2 size={18} color={colors.textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity
-              className="p-3 rounded-xl"
-              style={{ backgroundColor: colors.primaryContainer }}
+              className="w-11 h-11 rounded-full items-center justify-center"
+              style={{ backgroundColor: colors.surface }}
               onPress={() => setShowLanguageModal(true)}
             >
-              <Languages size={24} color="#6366F1" />
+              <Languages size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
-        <Text
-          className="text-base font-medium ml-11"
-          style={{ color: colors.textSecondary }}
-        >
-          {t('main.subtitle', { count: selectedLanguages.length })}
-        </Text>
-      </View>
-      <View className="flex-1 pt-5 px-5">
-        <View className="flex-row items-center mb-3 gap-3"></View>
-        <Animated.View
-          style={{
-            transform: [
-              {
-                translateY: isScrollingUp ? 0 : -120,
-              },
-            ],
-            opacity: isScrollingUp ? 1 : 0,
-          }}
-        >
-          <Text
-            className="text-sm font-semibold mb-2"
-            style={{ color: colors.text }}
-          >
-            {t('main.sourceLanguageLabel')}
-          </Text>
-          <View className="flex flex-row gap-x-2">
-            <LanguageSelector
-              selectedLanguage={sourceLanguage}
-              onLanguageSelect={setSourceLanguage}
-              selectedLanguages={selectedLanguages}
-              onOpen={async () => {
-                if (isVoiceActive) {
-                  await stopVoiceRecording();
-                }
-              }}
-            />
-            {isVoiceAvailable && (
-              <TouchableOpacity
-                className={`justify-center items-center rounded-2xl shadow-sm w-16 h-16 ${
-                  isVoiceActive ? 'bg-red-500' : 'bg-green-500'
-                }`}
-                onPress={handleVoicePress}
-              >
-                <Mic size={20} color="#fff" />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              className={`justify-center items-center rounded-2xl shadow-sm w-16 h-16 ${
-                isLoading
-                  ? 'bg-red-500'
-                  : !searchText.trim() || isInputTooLong
-                  ? 'bg-gray-400'
-                  : 'bg-blue-500'
-              }`}
-              onPress={isLoading ? handleCancelSearch : handleSearch}
-              disabled={(!searchText.trim() || isInputTooLong) && !isLoading}
-            >
-              {isLoading ? (
-                <X size={20} color="#fff" />
-              ) : (
-                <Search size={20} color="#fff" />
-              )}
-            </TouchableOpacity>
-          </View>
-          <View className="flex-row items-center gap-3 mb-5">
-            <SearchInput
-              value={searchText}
-              onChangeText={setSearchText}
-              onClear={handleClear}
-              onSearch={handleSearch}
-              placeholder={
-                isVoiceActive ? 'Speak now' : t('main.searchPlaceholder')
-              }
-              maxLength={MAX_LENGTH}
-              disabled={isVoiceActive}
-            />
-          </View>
-        </Animated.View>
-        <Animated.View
-          style={{
-            flex: 1,
-            marginTop: isScrollingUp ? 0 : -170,
-          }}
-        >
-          <TranslationList
-            results={results}
-            favorites={favorites}
-            onFavoriteToggle={loadFavorites}
-            scrollY={scrollY}
-            onScrollDirectionChange={handleScrollDirectionChange}
-            isLoading={isLoading}
-          />
-        </Animated.View>
-      </View>
+      </Animated.View>
+      {/* Search Card */}
+      <Animated.View
+        className="px-6"
+        style={{
+          ...animatedStyle,
+          transform: [
+            ...animatedStyle.transform,
+            {
+              translateY: searchAnimValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, -72],
+              }),
+            },
+          ],
+        }}
+      >
+        {renderSearchCard()}
+      </Animated.View>
+      <Animated.View
+        className="flex-1 px-6"
+        style={{
+          ...animatedStyle,
+          marginBottom: -72, // Extend 72px below normal area (behind tabs)
+          transform: [
+            ...animatedStyle.transform,
+            {
+              translateY: searchAnimValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, -72], // Move up to reveal the hidden part
+              }),
+            },
+          ],
+        }}
+      >
+        <TranslationList
+          results={results}
+          favorites={favorites}
+          onFavoriteToggle={loadFavorites}
+          scrollY={scrollY}
+          onScrollDirectionChange={handleScrollDirectionChange}
+          onPullDown={handlePullDown}
+          isLoading={isLoading}
+          isHeaderVisible={isHeaderVisible}
+        />
+      </Animated.View>
       <LanguageModal
         visible={showLanguageModal}
         selectedLanguages={selectedLanguages}

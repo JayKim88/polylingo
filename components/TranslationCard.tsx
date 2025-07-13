@@ -257,7 +257,10 @@ export default function TranslationCard({
             {result.translatedText}
           </Text>
           {result.pronunciation && (
-            <Text className="text-sm text-indigo-600 italic tracking-wide">
+            <Text
+              style={{ color: colors.primary }}
+              className="text-sm italic tracking-wide"
+            >
               {result.pronunciation}
             </Text>
           )}

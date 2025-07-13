@@ -10,6 +10,9 @@ import { StorageService } from '../utils/storage';
 export type Theme = 'light' | 'dark';
 
 interface ThemeColors {
+  header: string;
+  headerTitle: string;
+  headerSubTitle: string;
   background: string;
   surface: string;
   primary: string;
@@ -33,10 +36,13 @@ interface ThemeColors {
 }
 
 const lightTheme: ThemeColors = {
+  header: '#206C43',
+  headerSubTitle: '#EEF2FF',
+  headerTitle: '#FFFFFF',
   background: '#F8FAFC',
   surface: '#FFFFFF',
-  primary: '#6366F1',
-  primaryContainer: '#EEF2FF',
+  primary: '#206C43',
+  primaryContainer: '#effae9',
   secondary: '#64748B',
   secondaryContainer: '#F1F5F9',
   text: '#1F2937',
@@ -56,6 +62,9 @@ const lightTheme: ThemeColors = {
 };
 
 const darkTheme: ThemeColors = {
+  header: '#222123',
+  headerSubTitle: '#FFFFFF',
+  headerTitle: '#FFFFFF',
   background: '#222123',
   surface: '#1E2124',
   primary: '#6366F1',

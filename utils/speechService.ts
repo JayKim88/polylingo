@@ -151,8 +151,8 @@ export class SpeechService {
         console.log('🎤 Speech recognized', JSON.stringify(event));
       };
 
-      Voice.onSpeechEnd = (event: any) => {
-        console.log('🎤 Speech recognition ended', JSON.stringify(event));
+      Voice.onSpeechEnd = () => {
+        console.log('🎤 Speech recognition ended');
         console.log('🎤 Speech ended - did we get any results before this?');
         onEnd();
       };

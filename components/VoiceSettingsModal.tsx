@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -9,6 +9,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform as RNPlatform,
+  Animated,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { X, RotateCcw, TestTube, Save } from 'lucide-react-native';
@@ -37,6 +38,9 @@ export default function VoiceSettingsModal({
   });
 
   const [isTesting, setIsTesting] = useState(false);
+  const resetButtonScale = useRef(new Animated.Value(1)).current;
+  const testButtonScale = useRef(new Animated.Value(1)).current;
+  const saveButtonScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (visible) {
@@ -52,7 +56,7 @@ export default function VoiceSettingsModal({
   const handleReset = () => {
     const defaultSettings = {
       volume: RNPlatform.OS === 'ios' ? settings.volume : 1.0, // iOS에서는 기존 볼륨 유지
-      rate: 1.0,
+      rate: 0.9,
       pitch: 1.0,
     };
     setSettings(defaultSettings);
@@ -111,6 +115,15 @@ export default function VoiceSettingsModal({
     return t('voice.low');
   };
 
+  const animateButton = (scale: Animated.Value, value: number) => {
+    Animated.spring(scale, {
+      toValue: value,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  };
+
   return (
     <Modal
       visible={visible}
@@ -118,13 +131,19 @@ export default function VoiceSettingsModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
+      <SafeAreaView
+        className="flex-1"
+        style={{ backgroundColor: colors.background }}
+      >
         <KeyboardAvoidingView
           className="flex-1"
           style={{ backgroundColor: colors.background }}
           behavior={RNPlatform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b" style={{ borderBottomColor: colors.borderLight }}>
+          <View
+            className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b"
+            style={{ borderBottomColor: colors.borderLight }}
+          >
             <Text className="text-xl font-bold" style={{ color: colors.text }}>
               {t('voice.title')}
             </Text>
@@ -145,10 +164,16 @@ export default function VoiceSettingsModal({
             {RNPlatform.OS !== 'ios' && (
               <View className="mb-8">
                 <View className="flex-row justify-between items-center mb-4">
-                  <Text className="text-base font-semibold" style={{ color: colors.text }}>
+                  <Text
+                    className="text-base font-semibold"
+                    style={{ color: colors.text }}
+                  >
                     {t('voice.volume')}
                   </Text>
-                  <Text className="text-sm font-medium" style={{ color: colors.primary }}>
+                  <Text
+                    className="text-sm font-medium"
+                    style={{ color: colors.primary }}
+                  >
                     {getVolumeText(settings.volume)} (
                     {Math.round(settings.volume * 100)}%)
                   </Text>
@@ -165,18 +190,34 @@ export default function VoiceSettingsModal({
                   maximumTrackTintColor="#E5E7EB"
                 />
                 <View className="flex-row justify-between mt-2">
-                  <Text className="text-xs" style={{ color: colors.textTertiary }}>조용함</Text>
-                  <Text className="text-xs" style={{ color: colors.textTertiary }}>큼</Text>
+                  <Text
+                    className="text-xs"
+                    style={{ color: colors.textTertiary }}
+                  >
+                    조용함
+                  </Text>
+                  <Text
+                    className="text-xs"
+                    style={{ color: colors.textTertiary }}
+                  >
+                    큼
+                  </Text>
                 </View>
               </View>
             )}
 
             <View className="mb-8">
               <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-base font-semibold" style={{ color: colors.text }}>
+                <Text
+                  className="text-base font-semibold"
+                  style={{ color: colors.text }}
+                >
                   {t('voice.speed')}
                 </Text>
-                <Text className="text-sm font-medium" style={{ color: colors.primary }}>
+                <Text
+                  className="text-sm font-medium"
+                  style={{ color: colors.primary }}
+                >
                   {getRateText(settings.rate)} ({settings.rate.toFixed(1)}x)
                 </Text>
               </View>
@@ -192,17 +233,33 @@ export default function VoiceSettingsModal({
                 maximumTrackTintColor={colors.borderLight}
               />
               <View className="flex-row justify-between mt-2">
-                <Text className="text-xs" style={{ color: colors.textTertiary }}>{t('voice.slow')}</Text>
-                <Text className="text-xs" style={{ color: colors.textTertiary }}>{t('voice.fast')}</Text>
+                <Text
+                  className="text-xs"
+                  style={{ color: colors.textTertiary }}
+                >
+                  {t('voice.slow')}
+                </Text>
+                <Text
+                  className="text-xs"
+                  style={{ color: colors.textTertiary }}
+                >
+                  {t('voice.fast')}
+                </Text>
               </View>
             </View>
 
             <View className="mb-8">
               <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-base font-semibold" style={{ color: colors.text }}>
+                <Text
+                  className="text-base font-semibold"
+                  style={{ color: colors.text }}
+                >
                   {t('voice.pitch')}
                 </Text>
-                <Text className="text-sm font-medium" style={{ color: colors.primary }}>
+                <Text
+                  className="text-sm font-medium"
+                  style={{ color: colors.primary }}
+                >
                   {getPitchText(settings.pitch)} ({settings.pitch.toFixed(1)})
                 </Text>
               </View>
@@ -218,52 +275,92 @@ export default function VoiceSettingsModal({
                 maximumTrackTintColor={colors.borderLight}
               />
               <View className="flex-row justify-between mt-2">
-                <Text className="text-xs" style={{ color: colors.textTertiary }}>{t('voice.low')}</Text>
-                <Text className="text-xs" style={{ color: colors.textTertiary }}>{t('voice.high')}</Text>
+                <Text
+                  className="text-xs"
+                  style={{ color: colors.textTertiary }}
+                >
+                  {t('voice.low')}
+                </Text>
+                <Text
+                  className="text-xs"
+                  style={{ color: colors.textTertiary }}
+                >
+                  {t('voice.high')}
+                </Text>
               </View>
             </View>
           </ScrollView>
           <View
             className="flex-row px-5 py-6 border-t gap-3"
-            style={{ 
-              borderTopColor: colors.borderLight, 
+            style={{
+              borderTopColor: colors.borderLight,
               backgroundColor: colors.surface,
-              paddingBottom: Math.max(insets.bottom, 20) + 14 
+              paddingBottom: Math.max(insets.bottom, 20) + 14,
             }}
           >
-            <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 border"
-              style={{ backgroundColor: colors.background, borderColor: colors.border }}
-              onPress={handleReset}
-            >
+            <Animated.View style={{ transform: [{ scale: resetButtonScale }], flex: 1 }}>
+              <TouchableOpacity
+                className="flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 border"
+                style={{
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                }}
+                onPress={handleReset}
+                onPressIn={() => animateButton(resetButtonScale, 0.95)}
+                onPressOut={() => animateButton(resetButtonScale, 1)}
+                activeOpacity={1}
+              >
               <RotateCcw size={18} color={colors.textSecondary} />
-              <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>
+              <Text
+                className="text-sm font-semibold"
+                style={{ color: colors.textSecondary }}
+              >
                 {t('voice.reset')}
               </Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </Animated.View>
 
-            <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 border"
-              style={{ backgroundColor: colors.warningContainer, borderColor: colors.warning }}
-              onPress={handleTest}
-              disabled={isTesting}
-            >
+            <Animated.View style={{ transform: [{ scale: testButtonScale }], flex: 1 }}>
+              <TouchableOpacity
+                className="flex-row items-center justify-center py-3 px-4 rounded-xl gap-2 border"
+                style={{
+                  backgroundColor: colors.warningContainer,
+                  borderColor: colors.warning,
+                }}
+                onPress={handleTest}
+                disabled={isTesting}
+                onPressIn={() => !isTesting && animateButton(testButtonScale, 0.95)}
+                onPressOut={() => animateButton(testButtonScale, 1)}
+                activeOpacity={1}
+              >
               <TestTube size={18} color={colors.warning} />
-              <Text className="text-sm font-semibold" style={{ color: colors.warning }}>
+              <Text
+                className="text-sm font-semibold"
+                style={{ color: colors.warning }}
+              >
                 {isTesting ? t('voice.inTesting') : t('voice.test')}
               </Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </Animated.View>
 
-            <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center py-3 px-4 rounded-xl gap-2"
-              style={{ backgroundColor: colors.primary }}
-              onPress={handleSave}
-            >
+            <Animated.View style={{ transform: [{ scale: saveButtonScale }], flex: 1 }}>
+              <TouchableOpacity
+                className="flex-row items-center justify-center py-3 px-4 rounded-xl gap-2"
+                style={{ backgroundColor: colors.primary }}
+                onPress={handleSave}
+                onPressIn={() => animateButton(saveButtonScale, 0.95)}
+                onPressOut={() => animateButton(saveButtonScale, 1)}
+                activeOpacity={1}
+              >
               <Save size={18} color="#FFFFFF" />
-              <Text className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>
+              <Text
+                className="text-sm font-semibold"
+                style={{ color: '#FFFFFF' }}
+              >
                 {t('voice.save')}
               </Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
