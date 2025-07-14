@@ -21,7 +21,15 @@ import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
 
-export const isPremiumUser = true; // TODO: 실제 프리미엄 체크로 대체
+// AdMob import - 에러 방지를 위해 조건부 로드
+let AdMobBanner: any = null;
+try {
+  AdMobBanner = require('expo-ads-admob').AdMobBanner;
+} catch (error) {
+  console.log('AdMob not available:', error);
+}
+
+export const isPremiumUser = false; // TODO: 실제 프리미엄 체크로 대체
 
 export default function SearchTab() {
   const { t, i18n } = useTranslation();
@@ -541,6 +549,14 @@ export default function SearchTab() {
       >
         {renderSearchCard()}
       </Animated.View>
+      {!isPremiumUser && AdMobBanner && (
+        <AdMobBanner
+          bannerSize="smartBannerPortrait"
+          adUnitID="ca-app-pub-3940256099942544/6300978111" // 테스트용 ID
+          servePersonalizedAds={true}
+          onDidFailToReceiveAdWithError={(err) => console.log('Banner ad failed to load:', err)}
+        />
+      )}
       <Animated.View
         className="flex-1 px-6"
         style={{

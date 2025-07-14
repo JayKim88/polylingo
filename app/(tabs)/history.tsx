@@ -2,6 +2,13 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Clock, Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+// AdMob import - 에러 방지를 위해 조건부 로드
+let AdMobBanner: any = null;
+try {
+  AdMobBanner = require('expo-ads-admob').AdMobBanner;
+} catch (error) {
+  console.log('AdMob not available in history:', error);
+}
 
 import HistoryList from '../../components/HistoryList';
 import DatePickerModal from '../../components/DatePickerModal';
@@ -10,6 +17,7 @@ import { HistoryItem } from '../../types/dictionary';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
+import { isPremiumUser } from './index';
 
 export default function HistoryTab() {
   const { t } = useTranslation();
@@ -148,7 +156,6 @@ export default function HistoryTab() {
               style={{ color: colors.headerSubTitle }}
             >
               {t('history.subtitle')}
-              
             </Text>
             <Text
               className="text-2xl font-bold mt-1"
@@ -194,6 +201,15 @@ export default function HistoryTab() {
           isHeaderVisible={isHeaderVisible}
         />
       </Animated.View>
+
+      {!isPremiumUser && AdMobBanner && (
+        <AdMobBanner
+          bannerSize="smartBannerPortrait"
+          adUnitID="ca-app-pub-3940256099942544/6300978111" // 테스트용 ID
+          servePersonalizedAds={true}
+          onDidFailToReceiveAdWithError={(err) => console.log('History banner ad failed to load:', err)}
+        />
+      )}
 
       <DatePickerModal
         visible={showDatePicker}

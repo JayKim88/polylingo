@@ -2,6 +2,13 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Heart, Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+// AdMob import - 에러 방지를 위해 조건부 로드
+let AdMobBanner: any = null;
+try {
+  AdMobBanner = require('expo-ads-admob').AdMobBanner;
+} catch (error) {
+  console.log('AdMob not available in favorites:', error);
+}
 
 import { useTabSlideAnimation } from '../../hooks/useTabSlideAnimation';
 import FavoritesList from '../../components/FavoritesList';
@@ -10,6 +17,7 @@ import { StorageService } from '../../utils/storage';
 import { FavoriteItem } from '../../types/dictionary';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
+import { isPremiumUser } from './index';
 
 export default function FavoritesTab() {
   const { t } = useTranslation();
@@ -185,6 +193,16 @@ export default function FavoritesTab() {
           isHeaderVisible={isHeaderVisible}
         />
       </Animated.View>
+      {!isPremiumUser && AdMobBanner && (
+        <AdMobBanner
+          bannerSize="smartBannerPortrait"
+          adUnitID="ca-app-pub-3940256099942544/6300978111" // 테스트용 ID
+          servePersonalizedAds={true}
+          onDidFailToReceiveAdWithError={(err) =>
+            console.log('Favorites banner ad failed to load:', err)
+          }
+        />
+      )}
 
       <DatePickerModal
         visible={showDatePicker}
