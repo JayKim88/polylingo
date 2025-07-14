@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -6,6 +7,8 @@ import {
   TouchableOpacity,
   Alert,
   Animated,
+  Linking,
+  Clipboard,
 } from 'react-native';
 import {
   Settings,
@@ -23,8 +26,16 @@ import { useTranslation } from 'react-i18next';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
+import {
+  BannerAd,
+  BannerAdSize,
+  TestIds,
+} from 'react-native-google-mobile-ads';
+import { isPremiumUser } from './index';
 
 import AppLanguageModal from '../../components/AppLanguageModal';
+import SubscriptionModal from '../../components/SubscriptionModal';
+import { SubscriptionService } from '../../utils/subscriptionService';
 
 type SettingItemProps = {
   icon: React.ReactNode;
@@ -39,8 +50,23 @@ type SettingItemProps = {
 export default function SettingsTab() {
   const { t } = useTranslation();
   const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const { theme, colors, toggleTheme } = useTheme();
+  const [adKey, setAdKey] = useState(0);
+  const [lastAdRefresh, setLastAdRefresh] = useState(0);
   const { animatedStyle } = useTabSlideAnimation();
+
+  useFocusEffect(
+    useCallback(() => {
+      // Generate new ad only if 30 seconds have passed
+      const now = Date.now();
+      if (now - lastAdRefresh > 30000) {
+        // 30 seconds interval
+        setAdKey((prev) => prev + 1);
+        setLastAdRefresh(now);
+      }
+    }, [lastAdRefresh])
+  );
 
   const headerAnimValue = useRef(new Animated.Value(1)).current;
   const contentAnimValue = useRef(new Animated.Value(0)).current;
@@ -58,49 +84,55 @@ export default function SettingsTab() {
   };
 
   const handleFeedback = () => {
-    Alert.alert(
-      'Send Feedback',
-      `We'd love to hear from you! 💬\n\nHelp us improve Polyglot Dictionary by sharing:\n\n• Feature requests\n• Bug reports\n• Language accuracy feedback\n• UI/UX suggestions\n• General thoughts\n\nYour feedback helps us make the app better for everyone!\n\nContact: feedback@polyglot-dictionary.com`,
-      [
-        { text: 'Maybe Later', style: 'cancel' },
-        { text: 'Send Feedback', onPress: () => {} },
-      ]
-    );
+    Alert.alert(t('feedbackModal.title'), t('feedbackModal.message'), [
+      { text: t('alert.later'), style: 'cancel' },
+      {
+        text: t('settings.feedback'),
+        onPress: () => {
+          const email = 'yongjae.kim.dev@gmail.com';
+          const subject = encodeURIComponent(t('feedbackModal.emailSubject'));
+          const body = encodeURIComponent(t('feedbackModal.emailBody'));
+          const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
+
+          Linking.openURL(mailtoUrl).catch((err) => {
+            // Copy email to clipboard as fallback
+            Clipboard.setString(email);
+            Alert.alert(
+              t('feedbackModal.emailFallbackTitle'),
+              t('feedbackModal.emailFallbackMessage'),
+              [{ text: t('alert.confirm') }]
+            );
+          });
+        },
+      },
+    ]);
   };
 
   const handleRate = () => {
-    Alert.alert(
-      'Rate Our App ⭐',
-      `Enjoying Polyglot Dictionary?\n\nYour rating helps others discover our app and motivates us to keep improving!\n\n⭐⭐⭐⭐⭐\n\n• Quick & accurate translations\n• Beautiful, intuitive interface\n• Regular updates & new features\n• Free with premium features\n\nIt only takes 30 seconds and means the world to us! 🙏`,
-      [
-        { text: 'Not Now', style: 'cancel' },
-        { text: 'Rate 5 Stars ⭐', onPress: () => {} },
-      ]
-    );
+    Alert.alert(t('rateModal.title'), t('rateModal.message'), [
+      { text: t('alert.later'), style: 'cancel' },
+      { text: t('rateModal.rate'), onPress: () => {} },
+    ]);
   };
 
   const handlePrivacy = () => {
-    Alert.alert(
-      'Privacy Policy 🔒',
-      `Your Privacy Matters\n\nWe are committed to protecting your privacy:\n\n✅ No personal data collection\n✅ Translations processed securely\n✅ No tracking or analytics\n✅ Local storage only for your convenience\n✅ No ads or data selling\n\nYour translation data stays on your device and is only sent to our secure servers for processing.\n\nLast updated: December 2024\n\nFor full details, visit: polyglot-dictionary.com/privacy`,
-      [{ text: 'Understood' }]
-    );
+    Alert.alert(t('privacyModal.title'), t('privacyModal.message'), [
+      { text: t('alert.confirm') },
+    ]);
   };
 
   const handleLanguageSupport = () => {
     Alert.alert(
-      'Supported Languages 🌍',
-      `14 Languages Available:\n\n🌏 Asian: Chinese, Japanese, Korean, Thai, Hindi, Arabic, Indonesian\n\n🌍 European: English, Spanish, French, German, Italian, Portuguese, Russian\n\nNew languages added regularly!\n\nLanguage not available? Let us know:\nlanguages@polyglot-dictionary.com`,
-      [{ text: 'Great!' }]
+      t('languageSupportModal.title'),
+      t('languageSupportModal.message'),
+      [{ text: t('alert.confirm') }]
     );
   };
 
   const handleFeatures = () => {
-    Alert.alert(
-      'App Features 🚀',
-      `Powerful Translation Tools:\n\n🗣️ Voice Input: Speak to translate\n🔊 Text-to-Speech: Hear pronunciations\n❤️ Favorites: Save important translations\n📚 History: Access past translations\n📅 Date Filtering: Find translations by date\n🌙 Dark Mode: Easy on the eyes\n⚡ Instant Results: Lightning-fast translations\n🎯 Accurate: AI-powered precision\n🎨 Beautiful UI: Clean, modern design\n📱 Cross-platform: Works on iOS & Android\n\nMore features coming soon!`,
-      [{ text: 'Awesome!' }]
-    );
+    Alert.alert(t('featuresModal.title'), t('featuresModal.message'), [
+      { text: t('alert.confirm') },
+    ]);
   };
 
   const handleThemeToggle = () => {
@@ -109,6 +141,94 @@ export default function SettingsTab() {
 
   const handleAppLanguage = () => {
     setShowLanguageModal(true);
+  };
+
+  const handleDevSubscriptionTest = () => {
+    Alert.alert(
+      '개발 모드 구독 테스트',
+      '테스트할 구독 플랜을 선택하세요',
+      [
+        { text: '취소', style: 'cancel' },
+        { text: 'Free', onPress: () => testSubscription('free') },
+        { text: 'Pro Monthly', onPress: () => testSubscription('pro_monthly') },
+        { text: 'Pro Max Monthly', onPress: () => testSubscription('pro_max_monthly') },
+        { text: 'Premium Yearly', onPress: () => testSubscription('premium_yearly') },
+        { text: '일일 사용량 테스트', onPress: () => handleDailyUsageTest() },
+      ]
+    );
+  };
+
+  const handleDailyUsageTest = () => {
+    Alert.alert(
+      '일일 사용량 테스트',
+      '테스트할 옵션을 선택하세요',
+      [
+        { text: '취소', style: 'cancel' },
+        { text: '사용량 리셋 (0으로)', onPress: () => resetDailyUsage() },
+        { text: '사용량 95로 설정', onPress: () => setDailyUsage(95) },
+        { text: '사용량 99로 설정', onPress: () => setDailyUsage(99) },
+        { text: '사용량 100으로 설정', onPress: () => setDailyUsage(100) },
+        { text: '테스트용 낮은 한도 (3회)', onPress: () => setTestLowLimit() },
+      ]
+    );
+  };
+
+  const resetDailyUsage = async () => {
+    try {
+      await SubscriptionService.resetDailyUsage();
+      const usage = await SubscriptionService.getDailyUsage();
+      Alert.alert(
+        '사용량 리셋 완료',
+        `현재 사용량: ${usage.used}/${usage.limit}`
+      );
+    } catch (error) {
+      Alert.alert('오류', '사용량 리셋 중 오류가 발생했습니다.');
+    }
+  };
+
+  const setDailyUsage = async (count: number) => {
+    try {
+      await SubscriptionService.setDailyUsage(count);
+      const usage = await SubscriptionService.getDailyUsage();
+      Alert.alert(
+        '사용량 설정 완료',
+        `현재 사용량: ${usage.used}/${usage.limit}\n남은 사용량: ${usage.remaining}`
+      );
+    } catch (error) {
+      Alert.alert('오류', '사용량 설정 중 오류가 발생했습니다.');
+    }
+  };
+
+  const setTestLowLimit = async () => {
+    try {
+      await SubscriptionService.setTestLowLimit();
+      const usage = await SubscriptionService.getDailyUsage();
+      Alert.alert(
+        '테스트 모드 활성화',
+        `일일 한도가 3회로 설정되었습니다.\n현재 사용량: ${usage.used}/${usage.limit}\n\n이제 번역을 3번 하면 한도 제한을 테스트할 수 있습니다.`
+      );
+    } catch (error) {
+      Alert.alert('오류', '테스트 모드 설정 중 오류가 발생했습니다.');
+    }
+  };
+
+  const testSubscription = async (planId: string) => {
+    try {
+      console.log('🔍 Settings: Setting subscription to:', planId);
+      await SubscriptionService.setSubscription(planId, true);
+      
+      // Verify the subscription was set correctly
+      const newSub = await SubscriptionService.getCurrentSubscription();
+      console.log('🔍 Settings: Verification - new subscription:', newSub);
+      
+      Alert.alert(
+        '테스트 완료',
+        `${planId} 구독이 설정되었습니다.\n\n현재 planId: ${newSub?.planId}\n\n화면을 새로고침하여 변경사항을 확인하세요.`
+      );
+    } catch (error) {
+      console.error('🔍 Settings: Error setting subscription:', error);
+      Alert.alert('오류', '구독 설정 중 오류가 발생했습니다.');
+    }
   };
 
   const handleScrollDirectionChange = useCallback(() => {
@@ -267,7 +387,41 @@ export default function SettingsTab() {
           </View>
         </View>
       </Animated.View>
-
+      {!isPremiumUser && (
+        <Animated.View
+          className="my-2 flex justify-center items-center h-[50px]"
+          style={{
+            transform: [
+              {
+                translateY: contentAnimValue.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, -72],
+                }),
+              },
+            ],
+          }}
+        >
+          <BannerAd
+            key={adKey}
+            unitId={TestIds.BANNER}
+            size={BannerAdSize.BANNER}
+            requestOptions={{
+              requestNonPersonalizedAdsOnly: false,
+            }}
+            onAdFailedToLoad={(error) => {
+              console.log(
+                `Settings banner ad failed to load (key: ${adKey}):`,
+                error
+              );
+            }}
+            onAdLoaded={() => {
+              console.log(
+                `🎯 NEW Settings banner ad loaded successfully (key: ${adKey})`
+              );
+            }}
+          />
+        </Animated.View>
+      )}
       <Animated.View
         className="flex-1"
         style={{
@@ -328,6 +482,24 @@ export default function SettingsTab() {
               backgroundColor={theme === 'dark' ? '#FEF3C7' : '#E0E7FF'}
             />
             <SettingItem
+              icon={<Settings size={20} color="#8B5CF6" />}
+              title={t('subscription.title')}
+              subtitle={t('subscription.manage')}
+              onPress={() => setShowSubscriptionModal(true)}
+              iconColor="#8B5CF6"
+              backgroundColor="#F3E8FF"
+            />
+            {__DEV__ && (
+              <SettingItem
+                icon={<Settings size={20} color="#F59E0B" />}
+                title="구독 테스트 (개발 모드)"
+                subtitle="개발 모드에서 구독 상태 테스트"
+                onPress={handleDevSubscriptionTest}
+                iconColor="#F59E0B"
+                backgroundColor="#FEF3C7"
+              />
+            )}
+            <SettingItem
               icon={<Info size={20} color="#6366F1" />}
               title={t('settings.about')}
               subtitle={t('settings.aboutSubtitle')}
@@ -369,14 +541,14 @@ export default function SettingsTab() {
               iconColor="#F59E0B"
               backgroundColor="#FFFBEB"
             />
-            <SettingItem
+            {/* <SettingItem
               icon={<Star size={20} color="#EF4444" />}
               title={t('settings.rate')}
               subtitle={t('settings.rateSubtitle')}
               onPress={handleRate}
               iconColor="#EF4444"
               backgroundColor="#FEF2F2"
-            />
+            /> */}
           </View>
 
           {/* Privacy Card */}
@@ -415,6 +587,13 @@ export default function SettingsTab() {
       <AppLanguageModal
         visible={showLanguageModal}
         onClose={() => setShowLanguageModal(false)}
+      />
+      <SubscriptionModal
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        onSubscriptionChange={() => {
+          // Refresh any subscription-related UI if needed
+        }}
       />
     </Animated.View>
   );

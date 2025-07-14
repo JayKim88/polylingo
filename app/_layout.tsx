@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import '../i18n';
 import { useEffect } from 'react';
+import mobileAds from 'react-native-google-mobile-ads';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,6 +32,19 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
+    // Initialize Google Mobile Ads
+    mobileAds()
+      .initialize()
+      .then(adapterStatuses => {
+        console.log('Google Mobile Ads initialized');
+        console.log('Adapter statuses:', adapterStatuses);
+      })
+      .catch(error => {
+        console.error('Failed to initialize Google Mobile Ads:', error);
+      });
+  }, []);
 
 
   if (!fontsLoaded && !fontError) {

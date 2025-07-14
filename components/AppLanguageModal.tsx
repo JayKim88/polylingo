@@ -42,8 +42,13 @@ export default function AppLanguageModal({
   };
 
   const handleLanguageSelect = async (selectedLanguage: string) => {
-    await i18n.changeLanguage(selectedLanguage);
-    onClose();
+    try {
+      await i18n.changeLanguage(selectedLanguage);
+      console.log(`🌍 Language changed to: ${selectedLanguage}`);
+      onClose();
+    } catch (error) {
+      console.error('Failed to change language:', error);
+    }
   };
 
   return (

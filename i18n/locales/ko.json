@@ -62,8 +62,14 @@
     "darkMode": "다크 모드",
     "switchToLightTheme": "라이트 테마로 전환",
     "switchToDarkTheme": "다크 테마로 전환",
-    "about": "앱 정보",
-    "aboutSubtitle": "버전 및 개발자 정보",
+    "about": "앱 상세 정보",
+    "aboutSubtitle": "AI 기반 다국어 번역기",
+    "aboutTitle": "Polyglot Translator 정보",
+    "aboutVersion": "버전 1.0.0",
+    "aboutFeatures": "기능:\n• 14개 언어의 즉시 번역\n• 음성 입력 및 텍스트 음성 변환\n• 빠른 액세스를 위한 즐겨찾기 번역\n• 날짜 필터링이 있는 번역 기록\n• 다크/라이트 테마 지원\n• 아름답고 직관적인 인터페이스",
+    "aboutBuiltWith": "React Native 및 Claude AI로 제작",
+    "aboutCopyright": "© 2025 Polyglot Translator 팀",
+    "aboutButton": "확인",
     "features": "주요 기능",
     "featuresSubtitle": "앱의 핵심 기능 소개",
     "supportedLanguages": "지원 언어",
@@ -85,7 +91,8 @@
   },
   "language": {
     "korean": "한국어",
-    "english": "English"
+    "english": "English",
+    "chinese": "中文"
   },
   "languageModal": {
     "title": "언어 선택",
@@ -131,31 +138,37 @@
     "selectedDate": "선택된 날짜"
   },
   "aboutModal": {
-    "title": "다국어 번역앱",
+    "title": "Polyglot Translator",
     "version": "버전 1.0.0",
     "description": "여러 언어를 동시에 학습하는 사람들을 위한 번역앱입니다.",
-    "features": "• 6개 언어 지원\n• 단어/문장 번역\n• 중의적 의미 표시\n• 드래그앤드롭 정렬\n• 달력 기반 히스토리"
+    "features": "• 14개 언어 지원\n• 단어/문장 번역\n• 중의적 의미 표시\n• 드래그앤드롭 정렬\n• 달력 기반 히스토리"
   },
   "feedbackModal": {
-    "title": "피드백",
-    "message": "앱에 대한 의견이나 개선사항이 있으시면 언제든 알려주세요!\n\n더 나은 다국어 학습 경험을 제공하겠습니다."
+    "title": "피드백 보내기",
+    "message": "의견을 듣고 싶습니다! 💬\n\n다음과 같은 피드백으로 Polyglot Translator를 개선하는 데 도움을 주세요:\n\n• 기능 요청\n• 버그 신고\n• 언어 정확도 피드백\n• UI/UX 제안\n• 일반적인 의견\n\n여러분의 피드백은 모든 사용자를 위해 앱을 더 좋게 만드는 데 도움이 됩니다!",
+    "emailSubject": "Polyglot Translator 피드백",
+    "emailBody": "안녕하세요,\n\nPolyglot Translator에 대한 피드백을 공유하고 싶습니다:\n\n",
+    "emailError": "메일 앱을 열 수 없습니다",
+    "emailFallbackTitle": "피드백 보내기",
+    "emailFallbackMessage": "메일 앱을 사용할 수 없습니다. 피드백 이메일 주소가 클립보드에 복사되었습니다:\n\nyongjae.kim.dev@gmail.com\n\n선호하는 메일 앱이나 브라우저에서 붙여넣어 주세요.",
+    "emailCopied": "이메일 복사됨!"
   },
   "rateModal": {
-    "title": "앱 평가",
-    "message": "앱이 도움이 되셨나요? 평가해주시면 더 나은 서비스를 제공하는데 큰 도움이 됩니다.",
-    "rate": "평가하기"
+    "title": "앱 평가하기 ⭐",
+    "message": "Polyglot Translator를 즐겁게 사용하고 계신가요?\n\n여러분의 평가는 다른 사람들이 저희 앱을 발견하는 데 도움이 되고 저희가 계속 개선할 수 있는 동기를 줍니다!\n\n⭐⭐⭐⭐⭐\n\n• 빠르고 정확한 번역\n• 아름답고 직관적인 인터페이스\n• 정기적인 업데이트 및 새로운 기능\n• 프리미엄 기능이 포함된 무료 앱\n\n30초밖에 안 걸리며 저희에게는 큰 의미가 있습니다! 🙏",
+    "rate": "별 5개 평가하기 ⭐"
   },
   "privacyModal": {
-    "title": "개인정보 보호",
-    "message": "본 앱은 사용자의 개인정보를 수집하지 않습니다.\n\n• 검색 기록은 기기에만 저장됩니다\n• 네트워크 연결은 번역을 위해서만 사용됩니다\n• 사용자 데이터를 외부로 전송하지 않습니다\n• 모든 데이터는 로컬에서 관리됩니다"
+    "title": "개인정보 보호정책 🔒",
+    "message": "시행일: 2025년 7월\n\nPolyglot Translator 개인정보 보호정책\n\n저희는 귀하의 개인정보를 존중하고 보호하기 위해 최선을 다하고 있습니다.\n\n📱 수집하는 정보:\n• 번역 텍스트 (임시적으로만 처리)\n• 앱 사용 기본 설정 (로컬 저장)\n• 개인 식별 정보는 수집하지 않음\n\n🔒 데이터 사용 방법:\n• 보안 API를 통한 번역 처리\n• 앱 기능 개선\n• 즐겨찾기/히스토리를 기기에 로컬 저장\n\n🤝 제3자 서비스:\n• Claude AI: 번역 처리 전용\n• Google AdMob: 익명 광고 (해당시)\n• 다른 목적으로는 데이터 공유 안함\n\n👤 귀하의 권리:\n• 데이터 접근권\n• 언제든지 데이터 삭제 가능\n• 광고 거부 선택\n\n📧 연락처:\nyongjae.kim.dev@gmail.com\n\n본 정책에 대한 문의사항은 이메일로 연락해 주세요."
   },
   "featuresModal": {
     "title": "주요 기능",
-    "message": "• 다국어 동시 번역\n• 단어/문장 검색 타입 선택\n• 중의적 의미 상세 표시\n• 드래그앤드롭으로 언어 순서 변경\n• 달력 기반 좋아요/히스토리 관리\n• 음성 재생 및 복사 기능\n• 오프라인 저장 기능"
+    "message": "• 다국어 동시 번역\n• 중의적 의미 상세 표시\n• 드래그앤드롭으로 언어 순서 변경\n• 달력 기반 좋아요/히스토리 관리\n• 음성 재생 및 복사 기능"
   },
   "languageSupportModal": {
     "title": "지원 언어",
-    "message": "현재 지원하는 언어:\n\n🇰🇷 한국어 (Korean)\n🇺🇸 영어 (English)\n🇯🇵 일본어 (Japanese)\n🇫🇷 프랑스어 (French)\n🇩🇪 독일어 (German)\n🇪🇸 스페인어 (Spanish)\n\n더 많은 언어 지원을 준비 중입니다!"
+    "message": "현재 지원하는 언어:\n\n🇺🇸 영어 (English)\n🇨🇳 중국어 번체 (中文(繁體))\n🇪🇸 스페인어 (Español)\n🇮🇳 힌디어 (हिन्दी)\n🇸🇦 아랍어 (العربية)\n🇫🇷 프랑스어 (Français)\n🇵🇹 포르투갈어 (Português)\n🇷🇺 러시아어 (Русский)\n🇯🇵 일본어 (日本語)\n🇰🇷 한국어 (한국어)\n🇮🇩 인도네시아어 (Bahasa Indonesia)\n🇩🇪 독일어 (Deutsch)\n🇮🇹 이탈리아어 (Italiano)\n🇹🇭 태국어 (ไทย)\n\n모든 언어에서 원활한 번역을 즐기세요!"
   },
   "search": {
     "translateFrom": "번역할 언어",
@@ -174,7 +187,9 @@
     "searching": "검색 중..."
   },
   "loading": {
-    "searching": "검색 중..."
+    "searching": "검색 중...",
+    "loadingHistory": "히스토리 로딩 중...",
+    "loadingFavorites": "즐겨찾기 로딩 중..."
   },
   "calendar": {
     "weekDays": ["일", "월", "화", "수", "목", "금", "토"],
@@ -214,5 +229,47 @@
     "speechNotSupported": "이 기기에서는 음성 기능을 지원하지 않습니다.",
     "googleSearchError": "Google 검색을 열 수 없습니다",
     "googleSearchFailed": "Google 검색 실행에 실패했습니다"
+  },
+  "translation": {
+    "timeout": "번역 시간 초과",
+    "error": "번역 실패",
+    "retrying": "재시도 중...",
+    "retry": "재시도",
+    "cancel": "취소",
+    "maxRetriesReached": "최대 재시도 횟수에 도달했습니다"
+  },
+  "subscription": {
+    "title": "구독 플랜",
+    "currentPlan": "현재 플랜",
+    "upgrade": "업그레이드",
+    "manage": "관리",
+    "restore": "구매 복원",
+    "free": "무료",
+    "pro": "프로",
+    "proMax": "프로 맥스",
+    "premium": "프리미엄",
+    "monthly": "월간",
+    "yearly": "연간",
+    "save": "{{percentage}}% 할인",
+    "dailyUsage": "일일 사용량: {{used}}/{{limit}}",
+    "usageExceeded": "일일 한도 초과",
+    "upgradeRequired": "더 많은 번역을 위해 업그레이드가 필요합니다",
+    "remaining": "남음",
+    "features": {
+      "basicTranslation": "기본 번역",
+      "advancedTranslation": "고급 번역",
+      "premiumTranslation": "프리미엄 번역",
+      "twoLanguages": "최대 3개 언어 선택",
+      "fiveLanguages": "최대 6개 언어 선택",
+      "noAds": "광고 없음",
+      "adSupported": "광고 지원",
+      "dailyLimit100": "일일 100회 번역",
+      "dailyLimit200": "일일 200회 번역",
+      "dailyLimit500": "일일 500회 번역",
+      "prioritySupport": "우선 지원",
+      "yearlyDiscount": "최고가치 - 연간 할인",
+      "freeUsageDescription": "1개 언어 = 0.5 사용량, 2개 언어 = 1 사용량",
+      "premiumUsageDescription": "1개 언어 = 0.2 사용량, 5개 언어 = 1 사용량"
+    }
   }
 }

@@ -1,5 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, Linking } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  Linking,
+  Animated,
+} from 'react-native';
 import { Heart, Copy, Volume2, VolumeX } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 
@@ -10,10 +17,179 @@ import { GoogleIcon } from './GoogleIcon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
+type TranslationState = {
+  status: 'loading' | 'timeout' | 'retrying' | 'success' | 'error';
+  result?: TranslationResult;
+  error?: string;
+  retryCount: number;
+};
+
 type TranslationCardProps = {
-  result: TranslationResult;
+  result: TranslationResult | null; // null인 경우 skeleton 표시
   onFavoriteToggle?: () => void;
   isFavorite?: boolean;
+  translationState?: TranslationState;
+  targetLanguage?: string;
+  onRetry?: (targetLang: string) => void;
+  onCancel?: (targetLang: string) => void;
+};
+
+const SkeletonTranslationCard = ({ 
+  translationState, 
+  targetLanguage, 
+  onRetry, 
+  onCancel 
+}: { 
+  translationState?: TranslationState; 
+  targetLanguage?: string;
+  onRetry?: (targetLang: string) => void;
+  onCancel?: (targetLang: string) => void;
+}) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const skeletonOpacity = useRef(new Animated.Value(0.3)).current;
+  
+  useEffect(() => {
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(skeletonOpacity, {
+          toValue: 0.7,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(skeletonOpacity, {
+          toValue: 0.3,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulseAnimation.start();
+    return () => pulseAnimation.stop();
+  }, [skeletonOpacity]);
+
+  // translationState가 없으면 기본 로딩 스켈레톤만 표시
+  const showRetryControls = translationState?.status === 'timeout' || translationState?.status === 'error';
+  const isRetrying = translationState?.status === 'retrying';
+  const canRetry = translationState && translationState.retryCount < 2;
+  const shouldShowLoadingAnimation = !translationState || translationState?.status === 'loading' || translationState?.status === 'retrying';
+
+  return (
+    <View
+      className="rounded-2xl p-5 border"
+      style={{
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+      }}
+    >
+      {/* Header section */}
+      <View className="flex-row justify-between items-start mb-2">
+        <View className="flex-row items-center flex-1">
+          {/* Flag placeholder */}
+          <Animated.View
+            className="w-8 h-6 rounded mr-3"
+            style={{
+              backgroundColor: colors.border,
+              opacity: shouldShowLoadingAnimation ? skeletonOpacity : 0.3,
+            }}
+          />
+          {/* Language name placeholder */}
+          <Animated.View
+            className="h-5 w-20 rounded"
+            style={{
+              backgroundColor: colors.border,
+              opacity: shouldShowLoadingAnimation ? skeletonOpacity : 0.3,
+            }}
+          />
+        </View>
+
+        {/* Action buttons placeholder */}
+        <View className="flex-row items-center">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Animated.View
+              key={i}
+              className="w-6 h-6 rounded p-2 ml-1"
+              style={{
+                backgroundColor: colors.border,
+                opacity: shouldShowLoadingAnimation ? skeletonOpacity : 0.3,
+              }}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Main content section */}
+      <View>
+        {/* Translation text placeholder */}
+        <Animated.View
+          className="h-8 w-full rounded mb-1"
+          style={{ backgroundColor: colors.border, opacity: shouldShowLoadingAnimation ? skeletonOpacity : 0.3 }}
+        />
+        {/* Pronunciation placeholder */}
+        <Animated.View
+          className="h-4 w-2/3 rounded mb-2"
+          style={{ backgroundColor: colors.border, opacity: shouldShowLoadingAnimation ? skeletonOpacity : 0.3 }}
+        />
+        
+        {/* Status and retry controls */}
+        {showRetryControls && targetLanguage && translationState && (
+          <View className="mt-4 pt-4 border-t" style={{ borderTopColor: colors.borderLight }}>
+            <Text className="text-sm mb-3" style={{ color: colors.textSecondary }}>
+              {translationState?.status === 'timeout' 
+                ? t('translation.timeout') || 'Translation timed out'
+                : t('translation.error') || 'Translation failed'
+              }
+              {translationState?.error && `: ${translationState.error}`}
+            </Text>
+            
+            <View className="flex-row gap-2">
+              {canRetry && onRetry && (
+                <TouchableOpacity
+                  className="flex-1 py-2 px-4 rounded-lg"
+                  style={{ backgroundColor: colors.primary }}
+                  onPress={() => onRetry(targetLanguage)}
+                  disabled={isRetrying}
+                >
+                  <Text className="text-center text-white font-medium">
+                    {isRetrying 
+                      ? t('translation.retrying') || 'Retrying...'
+                      : `${t('translation.retry') || 'Retry'} (${translationState.retryCount + 1}/2)`
+                    }
+                  </Text>
+                </TouchableOpacity>
+              )}
+              
+              {onCancel && (
+                <TouchableOpacity
+                  className="py-2 px-4 rounded-lg"
+                  style={{ backgroundColor: colors.border }}
+                  onPress={() => onCancel(targetLanguage)}
+                >
+                  <Text className="text-center font-medium" style={{ color: colors.text }}>
+                    {t('translation.cancel') || 'Cancel'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {!canRetry && (
+              <Text className="text-xs mt-2 text-center" style={{ color: colors.textTertiary }}>
+                {t('translation.maxRetriesReached') || 'Maximum retries reached'}
+              </Text>
+            )}
+          </View>
+        )}
+        
+        {isRetrying && (
+          <View className="mt-4 pt-4 border-t" style={{ borderTopColor: colors.borderLight }}>
+            <Text className="text-sm text-center" style={{ color: colors.primary }}>
+              {t('translation.retrying') || 'Retrying translation...'}
+            </Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
 };
 
 // Google Icon SVG Component
@@ -21,11 +197,28 @@ export default function TranslationCard({
   result,
   onFavoriteToggle,
   isFavorite,
+  translationState,
+  targetLanguage,
+  onRetry,
+  onCancel,
 }: TranslationCardProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const targetLanguage = SUPPORTED_LANGUAGES.find(
+
+  // Skeleton 상태인 경우
+  if (!result) {
+    return (
+      <SkeletonTranslationCard 
+        translationState={translationState}
+        targetLanguage={targetLanguage}
+        onRetry={onRetry}
+        onCancel={onCancel}
+      />
+    );
+  }
+
+  const targetLanguageInfo = SUPPORTED_LANGUAGES.find(
     (lang) => lang.code === result.targetLanguage
   );
 
@@ -76,7 +269,9 @@ export default function TranslationCard({
     if (!SpeechService.isAvailable()) {
       Alert.alert(
         t('alert.info'),
-        `${t('message.speechNotSupported')}\n\n${SpeechService.getPlatformInfo()}`
+        `${t(
+          'message.speechNotSupported'
+        )}\n\n${SpeechService.getPlatformInfo()}`
       );
       return;
     }
@@ -111,12 +306,6 @@ export default function TranslationCard({
     }
   };
 
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return '#10B981';
-    if (confidence >= 0.5) return '#F59E0B';
-    return '#EF4444';
-  };
-
   return (
     <View
       className="rounded-2xl p-5 border"
@@ -127,14 +316,14 @@ export default function TranslationCard({
     >
       <View className="flex-row justify-between items-start mb-2">
         <View className="flex-row items-center flex-1">
-          <Text className="text-2xl mr-3">{targetLanguage?.flag}</Text>
+          <Text className="text-2xl mr-3">{targetLanguageInfo?.flag}</Text>
           <Text
             className="text-base font-semibold"
             style={{
               color: colors.text,
             }}
           >
-            {targetLanguage?.nativeName}
+            {targetLanguageInfo?.nativeName}
           </Text>
         </View>
 

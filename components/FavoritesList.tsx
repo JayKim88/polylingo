@@ -97,7 +97,11 @@ export default function FavoritesList({
               style={{ color: colors.textTertiary }}
             >
               {new Date(item.createdAt).toLocaleString(
-                i18n.language === 'en' ? 'en-US' : 'ko-KR',
+                i18n.language === 'en'
+                  ? 'en-US'
+                  : i18n.language === 'zh'
+                  ? 'zh-CN'
+                  : 'ko-KR',
                 {
                   year: 'numeric',
                   month: 'long',
@@ -183,7 +187,10 @@ export default function FavoritesList({
   return (
     <View className="flex-1 relative">
       {isLoading && (
-        <Loading isHeaderVisible={isHeaderVisible} message="Loading favorites..." />
+        <Loading
+          isHeaderVisible={isHeaderVisible}
+          message={t('loading.loadingFavorites')}
+        />
       )}
       <View
         className="flex-row justify-between items-center mt-4 pb-4"
@@ -217,7 +224,12 @@ export default function FavoritesList({
         }}
       >
         {favorites.length === 0 ? (
-          <View className="items-center">
+          <View
+            className="items-center"
+            style={{
+              marginBottom: isHeaderVisible ? 120 : 0,
+            }}
+          >
             <Heart size={64} color={colors.borderLight} />
             <Text
               className="text-lg font-semibold mt-4 mb-2 text-center"

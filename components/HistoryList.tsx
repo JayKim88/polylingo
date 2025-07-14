@@ -82,7 +82,11 @@ export default function HistoryList({
     if (hours < 24) return t('history.hourAgo', { hours });
 
     return new Date(timestamp).toLocaleString(
-      i18n.language === 'en' ? 'en-US' : 'ko-KR',
+      i18n.language === 'en'
+        ? 'en-US'
+        : i18n.language === 'zh'
+        ? 'zh-CN'
+        : 'ko-KR',
       {
         year: 'numeric',
         month: 'long',
@@ -188,7 +192,10 @@ export default function HistoryList({
   return (
     <View className="flex-1 mt-4 relative">
       {isLoading && (
-        <Loading isHeaderVisible={isHeaderVisible} message="Loading history..." />
+        <Loading
+          isHeaderVisible={isHeaderVisible}
+          message={t('loading.loadingHistory')}
+        />
       )}
       <View
         className="flex-row justify-between items-center pb-4"
@@ -243,7 +250,12 @@ export default function HistoryList({
         }
       >
         {history.length === 0 ? (
-          <View className="items-center">
+          <View
+            className="items-center"
+            style={{
+              marginBottom: isHeaderVisible ? 120 : 0,
+            }}
+          >
             <Clock size={64} color={colors.borderLight} />
             <Text
               className="text-lg font-semibold mt-4 mb-2 text-center"

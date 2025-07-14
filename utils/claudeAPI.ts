@@ -1,6 +1,6 @@
 // Claude 3 Haiku API translation utility
 
-export async function translateWithClaude(
+export async function translateWithClaudeAPI(
   text: string,
   sourceLang: string,
   targetLang: string

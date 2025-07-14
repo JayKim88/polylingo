@@ -4,7 +4,7 @@ import {
   SUPPORTED_LANGUAGES,
 } from '../types/dictionary';
 import { PronunciationService } from './pronunciationService';
-import { translateWithClaude } from './claudeAPI';
+import { translateWithClaudeAPI } from './claudeAPI';
 
 const MYMEMORY_BASE_URL = 'https://mymemory.translated.net/api/get';
 const LIBRETRANSLATE_BASE_URL =
@@ -267,7 +267,7 @@ export class TranslationAPI {
         SUPPORTED_LANGUAGES.find((v) => v.code === targetLanguage)?.name ||
         targetLanguage;
 
-      const result = await translateWithClaude(
+      const result = await translateWithClaudeAPI(
         text,
         sourceLangName,
         targetLangName

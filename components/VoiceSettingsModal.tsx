@@ -32,7 +32,7 @@ export default function VoiceSettingsModal({
   onClose,
 }: VoiceSettingsModalProps) {
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const [settings, setSettings] = useState<VoiceSettings>({
     volume: 0.9,
@@ -82,7 +82,7 @@ export default function VoiceSettingsModal({
         );
       }
 
-      await SpeechService.speak(t('voice.testText'), 'en', settings);
+      await SpeechService.speak(t('voice.testText'), i18n.language, settings);
     } catch (error) {
       console.error('🔊 TTS Test Error:', error);
       Alert.alert(t('alert.error'), t('voice.testError'));
@@ -200,13 +200,13 @@ export default function VoiceSettingsModal({
                         className="text-xs"
                         style={{ color: colors.textTertiary }}
                       >
-                        조용함
+                        {t('voice.quiet')}
                       </Text>
                       <Text
                         className="text-xs"
                         style={{ color: colors.textTertiary }}
                       >
-                        큼
+                        {t('voice.loud')}
                       </Text>
                     </View>
                   </View>

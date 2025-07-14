@@ -62,7 +62,7 @@
     "darkMode": "Dark Mode",
     "switchToLightTheme": "Switch to light theme",
     "switchToDarkTheme": "Switch to dark theme",
-    "about": "About",
+    "about": "App Details",
     "features": "Features",
     "featuresSubtitle": "Core app features overview",
     "supportedLanguages": "Supported Languages",
@@ -73,12 +73,12 @@
     "rateSubtitle": "Rate us on the App Store",
     "privacyPolicy": "Privacy Policy",
     "privacyPolicySubtitle": "Data handling and security policy",
-    "aboutTitle": "About Polyglot Dictionary",
+    "aboutTitle": "About Polyglot Translator",
     "aboutVersion": "Version 1.0.0",
     "aboutSubtitle": "Your AI-powered multilingual translator",
     "aboutFeatures": "Features:\n• Instant translation across 14 languages\n• Voice input and text-to-speech\n• Favorite translations for quick access\n• Translation history with date filtering\n• Dark/Light theme support\n• Beautiful, intuitive interface",
     "aboutBuiltWith": "Built with React Native & Claude AI",
-    "aboutCopyright": "© 2024 Polyglot Dictionary Team",
+    "aboutCopyright": "© 2025 Polyglot Translator Team",
     "aboutButton": "Got it"
   },
   "alert": {
@@ -91,7 +91,8 @@
   },
   "language": {
     "korean": "한국어",
-    "english": "English"
+    "english": "English",
+    "chinese": "中文"
   },
   "languageModal": {
     "title": "Language Selection",
@@ -143,25 +144,31 @@
     "features": "• 6 language support\n• Word/sentence translation\n• Ambiguous meaning display\n• Drag-and-drop sorting\n• Calendar-based history"
   },
   "feedbackModal": {
-    "title": "Feedback",
-    "message": "If you have any opinions or suggestions for improvement, please let us know anytime!\n\nWe will provide a better multilingual learning experience."
+    "title": "Send Feedback",
+    "message": "We'd love to hear from you! 💬\n\nHelp us improve Polyglot Translator by sharing:\n\n• Feature requests\n• Bug reports\n• Language accuracy feedback\n• UI/UX suggestions\n• General thoughts\n\nYour feedback helps us make the app better for everyone!",
+    "emailSubject": "Polyglot Translator Feedback",
+    "emailBody": "Hello,\n\nI would like to share feedback about Polyglot Translator:\n\n",
+    "emailError": "Unable to open mail app",
+    "emailFallbackTitle": "Send Feedback",
+    "emailFallbackMessage": "Email app is not available. The feedback email address has been copied to your clipboard:\n\nyongjae.kim.dev@gmail.com\n\nYou can paste it in your preferred email app or browser.",
+    "emailCopied": "Email copied!"
   },
   "rateModal": {
-    "title": "Rate App",
-    "message": "Has the app been helpful? Your rating would be a great help in providing better service.",
-    "rate": "Rate Now"
+    "title": "Rate Our App ⭐",
+    "message": "Enjoying Polyglot Translator?\n\nYour rating helps others discover our app and motivates us to keep improving!\n\n⭐⭐⭐⭐⭐\n\n• Quick & accurate translations\n• Beautiful, intuitive interface\n• Regular updates & new features\n• Free with premium features\n\nIt only takes 30 seconds and means the world to us! 🙏",
+    "rate": "Rate 5 Stars ⭐"
   },
   "privacyModal": {
-    "title": "Privacy Policy",
-    "message": "This app does not collect user personal information.\n\n• Search history is stored only on your device\n• Network connection is used only for translation\n• User data is not transmitted externally\n• All data is managed locally"
+    "title": "Privacy Policy 🔒",
+    "message": "Effective Date: July 2025\n\nPolyglot Translator Privacy Policy\n\nWe respect your privacy and are committed to protecting your personal data.\n\n📱 INFORMATION WE COLLECT:\n• Translation text (processed temporarily)\n• App usage preferences (stored locally)\n• No personal identifying information\n\n🔒 HOW WE USE YOUR DATA:\n• Process translations via secure API\n• Improve app functionality\n• Store favorites/history locally on your device\n\n🤝 THIRD-PARTY SERVICES:\n• Claude AI: Translation processing only\n• Google AdMob: Anonymous advertising (if applicable)\n• No data shared for other purposes\n\n👤 YOUR RIGHTS:\n• Access your data\n• Delete your data anytime\n• Opt-out of ads\n\n📧 CONTACT:\nyongjae.kim.dev@gmail.com\n\nFor questions about this policy, please contact us via email."
   },
   "featuresModal": {
     "title": "Key Features",
-    "message": "• Simultaneous multi-language translation\n• Word/sentence search type selection\n• Detailed ambiguous meaning display\n• Drag-and-drop language order change\n• Calendar-based favorites/history management\n• Voice playback and copy function\n• Offline storage function"
+    "message": "• Simultaneous multi-language translation\n• Detailed ambiguous meaning display\n• Drag-and-drop language order change\n• Calendar-based favorites/history management\n• Voice playback and copy function"
   },
   "languageSupportModal": {
     "title": "Supported Languages",
-    "message": "Currently supported languages:\n\n🇰🇷 Korean (한국어)\n🇺🇸 English (English)\n🇯🇵 Japanese (日本語)\n🇫🇷 French (Français)\n🇩🇪 German (Deutsch)\n🇪🇸 Spanish (Español)\n\nMore language support is coming!"
+    "message": "Currently supported languages:\n\n🇺🇸 English (English)\n🇨🇳 Chinese Traditional (中文(繁體))\n🇪🇸 Spanish (Español)\n🇮🇳 Hindi (हिन्दी)\n🇸🇦 Arabic (العربية)\n🇫🇷 French (Français)\n🇵🇹 Portuguese (Português)\n🇷🇺 Russian (Русский)\n🇯🇵 Japanese (日本語)\n🇰🇷 Korean (한국어)\n🇮🇩 Indonesian (Bahasa Indonesia)\n🇩🇪 German (Deutsch)\n🇮🇹 Italian (Italiano)\n🇹🇭 Thai (ไทย)\n\nEnjoy seamless translation across all these languages!"
   },
   "search": {
     "translateFrom": "Translate from",
@@ -174,13 +181,15 @@
     "goodMorning": "Good morning ☀️",
     "goodAfternoon": "Good afternoon 🌤️",
     "goodEvening": "Good evening 🌙",
-    "translateTitle": "Polyglot translation",
+    "translateTitle": "Polyglot translator",
     "speechNotAvailable": "Speech recognition is not available on this device",
     "voiceStartError": "Failed to start voice recognition",
     "searching": "Searching..."
   },
   "loading": {
-    "searching": "Searching..."
+    "searching": "Searching...",
+    "loadingHistory": "Loading history...",
+    "loadingFavorites": "Loading favorites..."
   },
   "calendar": {
     "weekDays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
@@ -220,5 +229,47 @@
     "speechNotSupported": "Voice function is not supported on this device.",
     "googleSearchError": "Unable to open Google search",
     "googleSearchFailed": "Failed to open Google search"
+  },
+  "translation": {
+    "timeout": "Translation timeout",
+    "error": "Translation failed",
+    "retrying": "Retrying...",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "maxRetriesReached": "Maximum retries reached"
+  },
+  "subscription": {
+    "title": "Subscription Plans",
+    "currentPlan": "Current Plan",
+    "upgrade": "Upgrade",
+    "manage": "Manage",
+    "restore": "Restore Purchases",
+    "free": "Free",
+    "pro": "Pro",
+    "proMax": "Pro Max",
+    "premium": "Premium",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "save": "Save {{percentage}}%",
+    "dailyUsage": "Daily Usage: {{used}}/{{limit}}",
+    "usageExceeded": "Daily limit exceeded",
+    "upgradeRequired": "Upgrade required for more translations",
+    "remaining": "remaining",
+    "features": {
+      "basicTranslation": "Basic translation",
+      "advancedTranslation": "Advanced translation",
+      "premiumTranslation": "Premium translation",
+      "twoLanguages": "Up to 3 languages",
+      "fiveLanguages": "Up to 6 languages",
+      "noAds": "No advertisements",
+      "adSupported": "Ad-supported",
+      "dailyLimit100": "100 daily translations",
+      "dailyLimit200": "200 daily translations",
+      "dailyLimit500": "500 daily translations",
+      "prioritySupport": "Priority support",
+      "yearlyDiscount": "Best value - yearly discount",
+      "freeUsageDescription": "1 language = 0.5 usage, 2 languages = 1 usage", 
+      "premiumUsageDescription": "1 language = 0.2 usage, 5 languages = 1 usage"
+    }
   }
 }

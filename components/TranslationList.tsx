@@ -6,8 +6,15 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
 import Loading from './Loading';
 
+type TranslationState = {
+  status: 'loading' | 'timeout' | 'retrying' | 'success' | 'error';
+  result?: TranslationResult;
+  error?: string;
+  retryCount: number;
+};
+
 type TranslationListProps = {
-  results: TranslationResult[];
+  results: (TranslationResult | null)[];
   favorites: string[];
   onFavoriteToggle: () => void;
   scrollY?: Animated.Value;
@@ -15,6 +22,12 @@ type TranslationListProps = {
   onPullDown?: () => void;
   isLoading?: boolean;
   isHeaderVisible?: boolean;
+  translationStates?: Map<string, TranslationState>;
+  targetLanguages?: string[];
+  searchText?: string;
+  sourceLanguage?: string;
+  onRetry?: (targetLang: string) => void;
+  onCancel?: (targetLang: string) => void;
 };
 
 export default function TranslationList({
@@ -26,6 +39,12 @@ export default function TranslationList({
   onPullDown,
   isLoading = false,
   isHeaderVisible = true,
+  translationStates,
+  targetLanguages,
+  searchText,
+  sourceLanguage,
+  onRetry,
+  onCancel,
 }: TranslationListProps) {
   const lastScrollY = React.useRef(0);
   const lastDirection = React.useRef<boolean | null>(null);
@@ -98,16 +117,21 @@ export default function TranslationList({
   return (
     <View className="flex-1 relative">
       {isLoading && (
-        <Loading isHeaderVisible={isHeaderVisible} />
+        <Loading
+          isHeaderVisible={isHeaderVisible}
+          message={t('loading.searching')}
+        />
       )}
       <Animated.View style={{ opacity: fadeAnim }}>
-        {resultAvailable && (
+        {resultAvailable && !isLoading && (
           <View className="flex-row justify-start items-center mb-4 px-1">
             <Text
               className="text-base font-semibold"
               style={{ color: colors.text }}
             >
-              {t('main.resultsCount', { count: results.length })}
+              {t('main.resultsCount', {
+                count: results.filter((r) => r !== null).length,
+              })}
             </Text>
           </View>
         )}
@@ -128,18 +152,37 @@ export default function TranslationList({
           }
           scrollEventThrottle={100}
         >
-          {results.map((result) => (
-            <View
-              key={`${result.targetLanguage}-${result.timestamp}`}
-              className="mb-4"
-            >
-              <TranslationCard
-                result={result}
-                isFavorite={isFavorite(result)}
-                onFavoriteToggle={onFavoriteToggle}
-              />
-            </View>
-          ))}
+          {results.map((result, index) => {
+            const targetLang = targetLanguages?.[index];
+            const stateKey =
+              targetLang && searchText && sourceLanguage
+                ? `${searchText}-${sourceLanguage}-${targetLang}`
+                : '';
+            const translationState = stateKey
+              ? translationStates?.get(stateKey)
+              : undefined;
+
+            return (
+              <View
+                key={
+                  result
+                    ? `${result.targetLanguage}-${result.timestamp}`
+                    : `skeleton-${index}`
+                }
+                className="mb-4"
+              >
+                <TranslationCard
+                  result={result}
+                  isFavorite={result ? isFavorite(result) : false}
+                  onFavoriteToggle={onFavoriteToggle}
+                  translationState={translationState}
+                  targetLanguage={targetLang}
+                  onRetry={onRetry}
+                  onCancel={onCancel}
+                />
+              </View>
+            );
+          })}
         </Animated.ScrollView>
       </Animated.View>
     </View>

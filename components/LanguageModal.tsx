@@ -17,6 +17,7 @@ import { X, Check, GripVertical } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import { SubscriptionService } from '../utils/subscriptionService';
 
 type LanguageModalProps = {
   visible: boolean;
@@ -36,11 +37,28 @@ export default function LanguageModal({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+
   const [tempSelected, setTempSelected] = useState<string[]>(selectedLanguages);
+  const [maxSelectable, setMaxSelectable] = useState<number>(3);
   const cancelButtonScale = useRef(new Animated.Value(1)).current;
   const confirmButtonScale = useRef(new Animated.Value(1)).current;
 
-  const maxSelectable = isPaidUser ? 5 : 3;
+  useEffect(() => {
+    const loadMaxLanguages = async () => {
+      const maxLangs = await SubscriptionService.getMaxLanguages();
+      const currentSub = await SubscriptionService.getCurrentSubscription();
+      
+      console.log('🔍 Current subscription:', currentSub);
+      console.log('🔍 Max languages allowed:', maxLangs);
+      console.log('🔍 Setting maxSelectable to:', maxLangs);
+      
+      setMaxSelectable(maxLangs);
+    };
+
+    if (visible) {
+      loadMaxLanguages();
+    }
+  }, [visible]);
 
   const toggleLanguage = (languageCode: string) => {
     if (tempSelected.includes(languageCode)) {
@@ -83,7 +101,7 @@ export default function LanguageModal({
     isActive,
   }: RenderItemParams<Language>) => {
     const isSelected = tempSelected.includes(item.code);
-    const isDisabled = tempSelected.length >= maxSelectable && !isSelected;
+    const isDisabled = !isSelected && tempSelected.length >= maxSelectable;
 
     return (
       <View className={`mb-2 ${isActive ? 'opacity-80' : ''}`}>
@@ -92,12 +110,12 @@ export default function LanguageModal({
           style={{
             backgroundColor: isSelected
               ? colors.primaryContainer
-              : tempSelected.length >= maxSelectable
+              : isDisabled
               ? colors.borderLight
               : colors.surface,
             borderColor: isSelected
               ? colors.primary
-              : tempSelected.length >= maxSelectable
+              : isDisabled
               ? colors.border
               : colors.surface,
           }}
@@ -185,7 +203,9 @@ export default function LanguageModal({
               </Text>
               <Text className="text-xs" style={{ color: colors.textTertiary }}>
                 {isPaidUser
-                  ? t('languageModal.selectUpToPremium', { count: maxSelectable })
+                  ? t('languageModal.selectUpToPremium', {
+                      count: maxSelectable,
+                    })
                   : t('languageModal.selectUpToFree', { count: maxSelectable })}
               </Text>
             </View>

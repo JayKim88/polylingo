@@ -1,14 +1,13 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Clock, Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-// AdMob import - 에러 방지를 위해 조건부 로드
-let AdMobBanner: any = null;
-try {
-  AdMobBanner = require('expo-ads-admob').AdMobBanner;
-} catch (error) {
-  console.log('AdMob not available in history:', error);
-}
+import {
+  BannerAd,
+  BannerAdSize,
+  TestIds,
+} from 'react-native-google-mobile-ads';
 
 import HistoryList from '../../components/HistoryList';
 import DatePickerModal from '../../components/DatePickerModal';
@@ -30,8 +29,10 @@ export default function HistoryTab() {
   const [isScrollingUp, setIsScrollingUp] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const headerAnimValue = useRef(new Animated.Value(1)).current;
-  const searchAnimValue = useRef(new Animated.Value(0)).current;
+  const contentAnimValue = useRef(new Animated.Value(0)).current;
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [adKey, setAdKey] = useState(0);
+  const [lastAdRefresh, setLastAdRefresh] = useState(0);
 
   const loadHistory = useCallback(async () => {
     setIsLoading(true);
@@ -56,9 +57,21 @@ export default function HistoryTab() {
     }
   }, []);
 
-  const { animatedStyle } = useTabSlideAnimation({
-    onFocus: loadHistory,
-  });
+  const { animatedStyle } = useTabSlideAnimation();
+
+  useFocusEffect(
+    useCallback(() => {
+      loadHistory();
+
+      // Generate new ad only if 30 seconds have passed
+      const now = Date.now();
+      if (now - lastAdRefresh > 30000) {
+        // 30 seconds interval
+        setAdKey((prev) => prev + 1);
+        setLastAdRefresh(now);
+      }
+    }, [loadHistory, lastAdRefresh])
+  );
 
   const handleDateSelect = (date: string | null) => {
     setSelectedDate(date);
@@ -100,13 +113,13 @@ export default function HistoryTab() {
         duration: 300,
         useNativeDriver: true,
       }),
-      Animated.timing(searchAnimValue, {
+      Animated.timing(contentAnimValue, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
       }),
     ]).start();
-  }, [headerAnimValue, searchAnimValue, isHeaderVisible]);
+  }, [headerAnimValue, contentAnimValue, isHeaderVisible]);
 
   const handlePullDown = useCallback(() => {
     // Show header and tab bar when user pulls down
@@ -119,13 +132,13 @@ export default function HistoryTab() {
         duration: 300,
         useNativeDriver: true,
       }),
-      Animated.timing(searchAnimValue, {
+      Animated.timing(contentAnimValue, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }),
     ]).start();
-  }, [headerAnimValue, searchAnimValue, isHeaderVisible]);
+  }, [headerAnimValue, contentAnimValue, isHeaderVisible]);
 
   return (
     <Animated.View
@@ -174,6 +187,41 @@ export default function HistoryTab() {
         </View>
       </Animated.View>
 
+      {!isPremiumUser && (
+        <Animated.View
+          className="my-2 flex justify-center items-center h-[50px]"
+          style={{
+            transform: [
+              {
+                translateY: contentAnimValue.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, -72],
+                }),
+              },
+            ],
+          }}
+        >
+          <BannerAd
+            key={adKey}
+            unitId={TestIds.BANNER}
+            size={BannerAdSize.BANNER}
+            requestOptions={{
+              requestNonPersonalizedAdsOnly: false,
+            }}
+            onAdFailedToLoad={(error) => {
+              console.log(
+                `History banner ad failed to load (key: ${adKey}):`,
+                error
+              );
+            }}
+            onAdLoaded={() => {
+              console.log(
+                `🎯 NEW History banner ad loaded successfully (key: ${adKey})`
+              );
+            }}
+          />
+        </Animated.View>
+      )}
       <Animated.View
         className="flex-1 px-6"
         style={{
@@ -182,7 +230,7 @@ export default function HistoryTab() {
           transform: [
             ...animatedStyle.transform,
             {
-              translateY: searchAnimValue.interpolate({
+              translateY: contentAnimValue.interpolate({
                 inputRange: [0, 1],
                 outputRange: [0, -72], // Move up to reveal the hidden part
               }),
@@ -201,15 +249,6 @@ export default function HistoryTab() {
           isHeaderVisible={isHeaderVisible}
         />
       </Animated.View>
-
-      {!isPremiumUser && AdMobBanner && (
-        <AdMobBanner
-          bannerSize="smartBannerPortrait"
-          adUnitID="ca-app-pub-3940256099942544/6300978111" // 테스트용 ID
-          servePersonalizedAds={true}
-          onDidFailToReceiveAdWithError={(err) => console.log('History banner ad failed to load:', err)}
-        />
-      )}
 
       <DatePickerModal
         visible={showDatePicker}

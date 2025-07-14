@@ -1,14 +1,13 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Heart, Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-// AdMob import - 에러 방지를 위해 조건부 로드
-let AdMobBanner: any = null;
-try {
-  AdMobBanner = require('expo-ads-admob').AdMobBanner;
-} catch (error) {
-  console.log('AdMob not available in favorites:', error);
-}
+import {
+  BannerAd,
+  BannerAdSize,
+  TestIds,
+} from 'react-native-google-mobile-ads';
 
 import { useTabSlideAnimation } from '../../hooks/useTabSlideAnimation';
 import FavoritesList from '../../components/FavoritesList';
@@ -30,8 +29,11 @@ export default function FavoritesTab() {
   );
   const [favoriteDates, setFavoriteDates] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [isScrollingUp, setIsScrollingUp] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const contentAnimValue = useRef(new Animated.Value(0)).current;
+  const [adKey, setAdKey] = useState(0);
+  const [lastAdRefresh, setLastAdRefresh] = useState(0);
   const headerAnimValue = useRef(new Animated.Value(1)).current;
 
   const loadFavorites = useCallback(async () => {
@@ -55,9 +57,21 @@ export default function FavoritesTab() {
     }
   }, []);
 
-  const { animatedStyle } = useTabSlideAnimation({
-    onFocus: loadFavorites,
-  });
+  const { animatedStyle } = useTabSlideAnimation();
+
+  useFocusEffect(
+    useCallback(() => {
+      loadFavorites();
+
+      // Generate new ad only if 30 seconds have passed
+      const now = Date.now();
+      if (now - lastAdRefresh > 30000) {
+        // 30 seconds interval
+        setAdKey((prev) => prev + 1);
+        setLastAdRefresh(now);
+      }
+    }, [loadFavorites, lastAdRefresh])
+  );
 
   const handleDateSelect = (date: string | null) => {
     setSelectedDate(date);
@@ -81,9 +95,6 @@ export default function FavoritesTab() {
     loadFavorites();
   };
 
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const searchAnimValue = useRef(new Animated.Value(0)).current;
-
   const handleScrollDirectionChange = useCallback(() => {
     if (!isHeaderVisible) return;
     setIsHeaderVisible(false);
@@ -94,13 +105,13 @@ export default function FavoritesTab() {
         duration: 300,
         useNativeDriver: true,
       }),
-      Animated.timing(searchAnimValue, {
+      Animated.timing(contentAnimValue, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
       }),
     ]).start();
-  }, [headerAnimValue, searchAnimValue, isHeaderVisible]);
+  }, [headerAnimValue, contentAnimValue, isHeaderVisible]);
 
   const handlePullDown = useCallback(() => {
     if (isHeaderVisible) return;
@@ -112,13 +123,13 @@ export default function FavoritesTab() {
         duration: 300,
         useNativeDriver: true,
       }),
-      Animated.timing(searchAnimValue, {
+      Animated.timing(contentAnimValue, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }),
     ]).start();
-  }, [headerAnimValue, searchAnimValue, isHeaderVisible]);
+  }, [headerAnimValue, contentAnimValue, isHeaderVisible]);
 
   return (
     <Animated.View
@@ -167,6 +178,41 @@ export default function FavoritesTab() {
         </View>
       </Animated.View>
 
+      {!isPremiumUser && (
+        <Animated.View
+          className="my-2 flex justify-center items-center h-[50px]"
+          style={{
+            transform: [
+              {
+                translateY: contentAnimValue.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, -72],
+                }),
+              },
+            ],
+          }}
+        >
+          <BannerAd
+            key={adKey}
+            unitId={TestIds.BANNER}
+            size={BannerAdSize.BANNER}
+            requestOptions={{
+              requestNonPersonalizedAdsOnly: false,
+            }}
+            onAdFailedToLoad={(error) => {
+              console.log(
+                `Favorites banner ad failed to load (key: ${adKey}):`,
+                error
+              );
+            }}
+            onAdLoaded={() => {
+              console.log(
+                `🎯 NEW Favorites banner ad loaded successfully (key: ${adKey})`
+              );
+            }}
+          />
+        </Animated.View>
+      )}
       <Animated.View
         className="flex-1 px-6"
         style={{
@@ -175,7 +221,7 @@ export default function FavoritesTab() {
           transform: [
             ...animatedStyle.transform,
             {
-              translateY: searchAnimValue.interpolate({
+              translateY: contentAnimValue.interpolate({
                 inputRange: [0, 1],
                 outputRange: [0, -72], // Move up to reveal the hidden part
               }),
@@ -193,16 +239,6 @@ export default function FavoritesTab() {
           isHeaderVisible={isHeaderVisible}
         />
       </Animated.View>
-      {!isPremiumUser && AdMobBanner && (
-        <AdMobBanner
-          bannerSize="smartBannerPortrait"
-          adUnitID="ca-app-pub-3940256099942544/6300978111" // 테스트용 ID
-          servePersonalizedAds={true}
-          onDidFailToReceiveAdWithError={(err) =>
-            console.log('Favorites banner ad failed to load:', err)
-          }
-        />
-      )}
 
       <DatePickerModal
         visible={showDatePicker}
