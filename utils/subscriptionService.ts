@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserSubscription, SUBSCRIPTION_PLANS } from '../types/subscription';
+import { SUPPORTED_LANGUAGES } from '../types/dictionary';
 
 const SUBSCRIPTION_KEY = 'user_subscription';
 const DAILY_USAGE_KEY = 'daily_usage';
@@ -289,6 +290,49 @@ export class SubscriptionService {
       console.log('Test mode: Daily limit set to 3 for easy testing');
     } catch (error) {
       console.error('Error setting test low limit:', error);
+    }
+  }
+
+  // 플랜에 맞는 기본 언어 선택 반환 (Free: 3개, 유료: 6개)
+  static async getDefaultLanguageSelection(): Promise<string[]> {
+    try {
+      const subscription = await this.getCurrentSubscription();
+      if (!subscription) return SUPPORTED_LANGUAGES.slice(0, 3).map(lang => lang.code);
+
+      const plan = SUBSCRIPTION_PLANS.find((p) => p.id === subscription.planId);
+      const maxLanguages = plan?.maxLanguages || 2;
+      
+      // 소스 언어 1개 + 타겟 언어들
+      return SUPPORTED_LANGUAGES.slice(0, maxLanguages + 1).map(lang => lang.code);
+    } catch (error) {
+      console.error('Error getting default language selection:', error);
+      return SUPPORTED_LANGUAGES.slice(0, 3).map(lang => lang.code);
+    }
+  }
+
+  // 구독 설정과 함께 언어 설정 초기화
+  static async setSubscriptionWithLanguageReset(
+    planId: string,
+    isActive: boolean = true
+  ): Promise<void> {
+    try {
+      // 먼저 구독 설정
+      await this.setSubscription(planId, isActive);
+
+      // 플랜에 맞는 기본 언어 선택 가져오기
+      const defaultLanguages = await this.getDefaultLanguageSelection();
+
+      // 언어 설정 초기화
+      const { StorageService } = await import('./storage');
+      await StorageService.saveSelectedLanguages(defaultLanguages);
+
+      console.log(
+        `🔄 Language selection reset for plan ${planId}:`,
+        defaultLanguages
+      );
+    } catch (error) {
+      console.error('Error setting subscription with language reset:', error);
+      throw error;
     }
   }
 }

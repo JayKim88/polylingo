@@ -11,6 +11,7 @@
     "sourceLanguageLabel": "源语言",
     "searchPlaceholder": "输入要翻译的文本...",
     "resultsCount": "已翻译为{{count}}种语言",
+    "resultsCountProgress": "已翻译为({{completed}}/{{total}})种语言",
     "searchPrompt": "请输入搜索词"
   },
   "sourceLanguage": {
@@ -76,7 +77,7 @@
     "aboutTitle": "关于Polyglot Translator",
     "aboutVersion": "版本 1.0.0",
     "aboutSubtitle": "您的AI驱动的多语言翻译器",
-    "aboutFeatures": "功能:\n• 14种语言即时翻译\n• 语音输入和文字转语音\n• 收藏翻译以便快速访问\n• 带日期筛选的翻译历史\n• 深色/浅色主题支持\n• 美观、直观的界面",
+    "aboutFeatures": "功能:\n• 最多5种语言同时翻译\n• 语音输入和文字转语音\n• 收藏翻译以便快速访问\n• 带日期筛选的翻译历史\n• 深色/浅色主题支持\n• 美观、直观的界面",
     "aboutBuiltWith": "使用React Native和Claude AI构建",
     "aboutCopyright": "© 2025 Polyglot Translator团队",
     "aboutButton": "知道了"
@@ -141,7 +142,7 @@
     "title": "Polyglot Translator",
     "version": "版本 1.0.0",
     "description": "为同时学习多种语言的人们设计的翻译应用。",
-    "features": "• 支持14种语言\n• 单词/句子翻译\n• 歧义意思显示\n• 拖拽排序\n• 基于日历的历史记录"
+    "features": "• 最多5种语言同时支持\n• 单词/句子翻译\n• 歧义意思显示\n• 拖拽排序\n• 基于日历的历史记录"
   },
   "feedbackModal": {
     "title": "发送反馈",

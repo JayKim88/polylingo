@@ -12,13 +12,16 @@ import { SplashScreen } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import '../i18n';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import mobileAds from 'react-native-google-mobile-ads';
+import CustomSplashScreen from '../components/SplashScreen';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   useFrameworkReady();
+
+  const [showCustomSplash, setShowCustomSplash] = useState(true);
 
   const [fontsLoaded, fontError] = useFonts({
     'Inter-Regular': Inter_400Regular,
@@ -33,19 +36,22 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
+  const handleSplashComplete = () => {
+    setShowCustomSplash(false);
+  };
+
   useEffect(() => {
     // Initialize Google Mobile Ads
     mobileAds()
       .initialize()
-      .then(adapterStatuses => {
+      .then((adapterStatuses) => {
         console.log('Google Mobile Ads initialized');
         console.log('Adapter statuses:', adapterStatuses);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Failed to initialize Google Mobile Ads:', error);
       });
   }, []);
-
 
   if (!fontsLoaded && !fontError) {
     return null;
@@ -54,11 +60,17 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
+        {showCustomSplash ? (
+          <CustomSplashScreen onAnimationComplete={handleSplashComplete} />
+        ) : (
+          <>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+            <StatusBar style="auto" />
+          </>
+        )}
       </GestureHandlerRootView>
     </ThemeProvider>
   );

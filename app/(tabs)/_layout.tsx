@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Search, Heart, Clock, Settings } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -29,25 +29,31 @@ export default function TabLayout() {
   const { t } = useTranslation();
   const slideAnim = useRef(new Animated.Value(100)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const topSafeareaSlideAnim = useRef(new Animated.Value(0)).current;
   const { colors } = useTheme();
 
   useEffect(() => {
-    // Delay tab bar animation slightly to let page content load first
     setTimeout(() => {
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      Animated.timing(topSafeareaSlideAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        Animated.parallel([
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
     }, 100);
-  }, [slideAnim, fadeAnim]);
+  }, [slideAnim, fadeAnim, topSafeareaSlideAnim]);
 
   const tabBarStyle = {
     backgroundColor: colors.surface,
@@ -81,10 +87,41 @@ export default function TabLayout() {
 
   return (
     <>
-      <SafeAreaView
-        style={{ flex: 0, backgroundColor: colors.header }}
-        edges={['top']}
+      {/* Background for the entire screen */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: colors.background,
+          zIndex: -1,
+        }}
       />
+
+      <Animated.View
+        style={{
+          flex: 0,
+          backgroundColor: colors.header,
+          transform: [
+            {
+              translateY: topSafeareaSlideAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-100, 0], // Start from above (-100px) and slide down to 0
+              }),
+            },
+          ],
+        }}
+      >
+        <SafeAreaView
+          style={{
+            flex: 0,
+            backgroundColor: 'transparent', // Make SafeAreaView transparent
+          }}
+          edges={['top']}
+        />
+      </Animated.View>
       <SafeAreaView
         className="flex-1 bg-transparent"
         style={{ flex: 1, backgroundColor: colors.background }}
@@ -106,7 +143,6 @@ export default function TabLayout() {
               fontFamily: 'Inter-SemiBold',
               marginTop: 4,
             },
-            lazy: false,
             tabBarBackground: () => <View className="bg-red"></View>,
           }}
         >
@@ -114,7 +150,6 @@ export default function TabLayout() {
             name="index"
             options={{
               title: t('tabs.search'),
-              lazy: false, // disabl
               tabBarIcon: ({ size, color }) => (
                 <Search size={size} color={color} />
               ),
@@ -124,7 +159,6 @@ export default function TabLayout() {
             name="favorites"
             options={{
               title: t('tabs.favorites'),
-              lazy: false, // disabl
               tabBarIcon: ({ size, color }) => (
                 <Heart size={size} color={color} />
               ),
@@ -134,7 +168,6 @@ export default function TabLayout() {
             name="history"
             options={{
               title: t('tabs.history'),
-              lazy: false, // disabl
               tabBarIcon: ({ size, color }) => (
                 <Clock size={size} color={color} />
               ),
@@ -144,7 +177,6 @@ export default function TabLayout() {
             name="settings"
             options={{
               title: t('tabs.settings'),
-              lazy: false, // disabl
               tabBarIcon: ({ size, color }) => (
                 <Settings size={size} color={color} />
               ),

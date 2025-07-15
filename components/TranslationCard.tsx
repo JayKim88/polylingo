@@ -34,13 +34,13 @@ type TranslationCardProps = {
   onCancel?: (targetLang: string) => void;
 };
 
-const SkeletonTranslationCard = ({ 
-  translationState, 
-  targetLanguage, 
-  onRetry, 
-  onCancel 
-}: { 
-  translationState?: TranslationState; 
+const SkeletonTranslationCard = ({
+  translationState,
+  targetLanguage,
+  onRetry,
+  onCancel,
+}: {
+  translationState?: TranslationState;
   targetLanguage?: string;
   onRetry?: (targetLang: string) => void;
   onCancel?: (targetLang: string) => void;
@@ -48,7 +48,7 @@ const SkeletonTranslationCard = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const skeletonOpacity = useRef(new Animated.Value(0.3)).current;
-  
+
   useEffect(() => {
     const pulseAnimation = Animated.loop(
       Animated.sequence([
@@ -69,10 +69,15 @@ const SkeletonTranslationCard = ({
   }, [skeletonOpacity]);
 
   // translationState가 없으면 기본 로딩 스켈레톤만 표시
-  const showRetryControls = translationState?.status === 'timeout' || translationState?.status === 'error';
+  const showRetryControls =
+    translationState?.status === 'timeout' ||
+    translationState?.status === 'error';
   const isRetrying = translationState?.status === 'retrying';
   const canRetry = translationState && translationState.retryCount < 2;
-  const shouldShowLoadingAnimation = !translationState || translationState?.status === 'loading' || translationState?.status === 'retrying';
+  const shouldShowLoadingAnimation =
+    !translationState ||
+    translationState?.status === 'loading' ||
+    translationState?.status === 'retrying';
 
   return (
     <View
@@ -123,25 +128,36 @@ const SkeletonTranslationCard = ({
         {/* Translation text placeholder */}
         <Animated.View
           className="h-8 w-full rounded mb-1"
-          style={{ backgroundColor: colors.border, opacity: shouldShowLoadingAnimation ? skeletonOpacity : 0.3 }}
+          style={{
+            backgroundColor: colors.border,
+            opacity: shouldShowLoadingAnimation ? skeletonOpacity : 0.3,
+          }}
         />
         {/* Pronunciation placeholder */}
         <Animated.View
           className="h-4 w-2/3 rounded mb-2"
-          style={{ backgroundColor: colors.border, opacity: shouldShowLoadingAnimation ? skeletonOpacity : 0.3 }}
+          style={{
+            backgroundColor: colors.border,
+            opacity: shouldShowLoadingAnimation ? skeletonOpacity : 0.3,
+          }}
         />
-        
+
         {/* Status and retry controls */}
         {showRetryControls && targetLanguage && translationState && (
-          <View className="mt-4 pt-4 border-t" style={{ borderTopColor: colors.borderLight }}>
-            <Text className="text-sm mb-3" style={{ color: colors.textSecondary }}>
-              {translationState?.status === 'timeout' 
+          <View
+            className="mt-4 pt-4 border-t"
+            style={{ borderTopColor: colors.borderLight }}
+          >
+            <Text
+              className="text-sm mb-3"
+              style={{ color: colors.textSecondary }}
+            >
+              {translationState?.status === 'timeout'
                 ? t('translation.timeout') || 'Translation timed out'
-                : t('translation.error') || 'Translation failed'
-              }
+                : t('translation.error') || 'Translation failed'}
               {translationState?.error && `: ${translationState.error}`}
             </Text>
-            
+
             <View className="flex-row gap-2">
               {canRetry && onRetry && (
                 <TouchableOpacity
@@ -151,38 +167,52 @@ const SkeletonTranslationCard = ({
                   disabled={isRetrying}
                 >
                   <Text className="text-center text-white font-medium">
-                    {isRetrying 
+                    {isRetrying
                       ? t('translation.retrying') || 'Retrying...'
-                      : `${t('translation.retry') || 'Retry'} (${translationState.retryCount + 1}/2)`
-                    }
+                      : `${t('translation.retry') || 'Retry'} (${
+                          translationState.retryCount + 1
+                        }/2)`}
                   </Text>
                 </TouchableOpacity>
               )}
-              
+
               {onCancel && (
                 <TouchableOpacity
                   className="py-2 px-4 rounded-lg"
                   style={{ backgroundColor: colors.border }}
                   onPress={() => onCancel(targetLanguage)}
                 >
-                  <Text className="text-center font-medium" style={{ color: colors.text }}>
+                  <Text
+                    className="text-center font-medium"
+                    style={{ color: colors.text }}
+                  >
                     {t('translation.cancel') || 'Cancel'}
                   </Text>
                 </TouchableOpacity>
               )}
             </View>
-            
+
             {!canRetry && (
-              <Text className="text-xs mt-2 text-center" style={{ color: colors.textTertiary }}>
-                {t('translation.maxRetriesReached') || 'Maximum retries reached'}
+              <Text
+                className="text-xs mt-2 text-center"
+                style={{ color: colors.textTertiary }}
+              >
+                {t('translation.maxRetriesReached') ||
+                  'Maximum retries reached'}
               </Text>
             )}
           </View>
         )}
-        
+
         {isRetrying && (
-          <View className="mt-4 pt-4 border-t" style={{ borderTopColor: colors.borderLight }}>
-            <Text className="text-sm text-center" style={{ color: colors.primary }}>
+          <View
+            className="mt-4 pt-4 border-t"
+            style={{ borderTopColor: colors.borderLight }}
+          >
+            <Text
+              className="text-sm text-center"
+              style={{ color: colors.primary }}
+            >
               {t('translation.retrying') || 'Retrying translation...'}
             </Text>
           </View>
@@ -209,7 +239,7 @@ export default function TranslationCard({
   // Skeleton 상태인 경우
   if (!result) {
     return (
-      <SkeletonTranslationCard 
+      <SkeletonTranslationCard
         translationState={translationState}
         targetLanguage={targetLanguage}
         onRetry={onRetry}

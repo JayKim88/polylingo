@@ -11,6 +11,7 @@
     "sourceLanguageLabel": "번역할 언어",
     "searchPlaceholder": "번역할 텍스트를 입력하세요...",
     "resultsCount": "{{count}}개 언어로 번역됨",
+    "resultsCountProgress": "({{completed}}/{{total}})개 언어로 번역됨",
     "searchPrompt": "검색어를 입력해주세요"
   },
   "sourceLanguage": {
@@ -66,7 +67,7 @@
     "aboutSubtitle": "AI 기반 다국어 번역기",
     "aboutTitle": "Polyglot Translator 정보",
     "aboutVersion": "버전 1.0.0",
-    "aboutFeatures": "기능:\n• 14개 언어의 즉시 번역\n• 음성 입력 및 텍스트 음성 변환\n• 빠른 액세스를 위한 즐겨찾기 번역\n• 날짜 필터링이 있는 번역 기록\n• 다크/라이트 테마 지원\n• 아름답고 직관적인 인터페이스",
+    "aboutFeatures": "기능:\n• 최대 5개 언어 동시 번역\n• 음성 입력 및 텍스트 음성 변환\n• 빠른 액세스를 위한 즐겨찾기 번역\n• 날짜 필터링이 있는 번역 기록\n• 다크/라이트 테마 지원\n• 아름답고 직관적인 인터페이스",
     "aboutBuiltWith": "React Native 및 Claude AI로 제작",
     "aboutCopyright": "© 2025 Polyglot Translator 팀",
     "aboutButton": "확인",
@@ -141,7 +142,7 @@
     "title": "Polyglot Translator",
     "version": "버전 1.0.0",
     "description": "여러 언어를 동시에 학습하는 사람들을 위한 번역앱입니다.",
-    "features": "• 14개 언어 지원\n• 단어/문장 번역\n• 중의적 의미 표시\n• 드래그앤드롭 정렬\n• 달력 기반 히스토리"
+    "features": "• 최대 5개 언어 동시 지원\n• 단어/문장 번역\n• 중의적 의미 표시\n• 드래그앤드롭 정렬\n• 달력 기반 히스토리"
   },
   "feedbackModal": {
     "title": "피드백 보내기",

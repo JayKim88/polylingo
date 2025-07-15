@@ -24,7 +24,6 @@ type LanguageModalProps = {
   selectedLanguages: string[];
   onLanguageSelection: (languages: string[]) => void;
   onClose: () => void;
-  isPaidUser?: boolean;
 };
 
 export default function LanguageModal({
@@ -32,7 +31,6 @@ export default function LanguageModal({
   selectedLanguages,
   onLanguageSelection,
   onClose,
-  isPaidUser = false,
 }: LanguageModalProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -40,19 +38,17 @@ export default function LanguageModal({
 
   const [tempSelected, setTempSelected] = useState<string[]>(selectedLanguages);
   const [maxSelectable, setMaxSelectable] = useState<number>(3);
+  const [isPaidUser, setIsPaidUser] = useState<boolean>(false);
   const cancelButtonScale = useRef(new Animated.Value(1)).current;
   const confirmButtonScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const loadMaxLanguages = async () => {
       const maxLangs = await SubscriptionService.getMaxLanguages();
-      const currentSub = await SubscriptionService.getCurrentSubscription();
-      
-      console.log('🔍 Current subscription:', currentSub);
-      console.log('🔍 Max languages allowed:', maxLangs);
-      console.log('🔍 Setting maxSelectable to:', maxLangs);
-      
+      const isPremium = await SubscriptionService.isPremiumUser();
+
       setMaxSelectable(maxLangs);
+      setIsPaidUser(isPremium);
     };
 
     if (visible) {

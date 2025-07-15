@@ -16,7 +16,7 @@ import { StorageService } from '../../utils/storage';
 import { FavoriteItem } from '../../types/dictionary';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
-import { isPremiumUser } from './index';
+import { SubscriptionService } from '@/utils/subscriptionService';
 
 export default function FavoritesTab() {
   const { t } = useTranslation();
@@ -35,6 +35,7 @@ export default function FavoritesTab() {
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
   const headerAnimValue = useRef(new Animated.Value(1)).current;
+  const [showAd, setShowAd] = useState(false);
 
   const loadFavorites = useCallback(async () => {
     setIsLoading(true);
@@ -70,6 +71,8 @@ export default function FavoritesTab() {
         setAdKey((prev) => prev + 1);
         setLastAdRefresh(now);
       }
+
+      SubscriptionService.shouldShowAds().then((result) => setShowAd(result));
     }, [loadFavorites, lastAdRefresh])
   );
 
@@ -178,7 +181,7 @@ export default function FavoritesTab() {
         </View>
       </Animated.View>
 
-      {!isPremiumUser && (
+      {showAd && (
         <Animated.View
           className="my-2 flex justify-center items-center h-[50px]"
           style={{

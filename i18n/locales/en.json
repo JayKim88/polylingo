@@ -11,6 +11,7 @@
     "sourceLanguageLabel": "Source Language",
     "searchPlaceholder": "Enter text to translate...",
     "resultsCount": "Translated to {{count}} languages",
+    "resultsCountProgress": "Translated to ({{completed}}/{{total}}) languages",
     "searchPrompt": "Please enter search term"
   },
   "sourceLanguage": {
@@ -76,7 +77,7 @@
     "aboutTitle": "About Polyglot Translator",
     "aboutVersion": "Version 1.0.0",
     "aboutSubtitle": "Your AI-powered multilingual translator",
-    "aboutFeatures": "Features:\n• Instant translation across 14 languages\n• Voice input and text-to-speech\n• Favorite translations for quick access\n• Translation history with date filtering\n• Dark/Light theme support\n• Beautiful, intuitive interface",
+    "aboutFeatures": "Features:\n• Up to 5 languages simultaneously\n• Voice input and text-to-speech\n• Favorite translations for quick access\n• Translation history with date filtering\n• Dark/Light theme support\n• Beautiful, intuitive interface",
     "aboutBuiltWith": "Built with React Native & Claude AI",
     "aboutCopyright": "© 2025 Polyglot Translator Team",
     "aboutButton": "Got it"

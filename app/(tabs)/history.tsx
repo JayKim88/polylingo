@@ -16,7 +16,7 @@ import { HistoryItem } from '../../types/dictionary';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
-import { isPremiumUser } from './index';
+import { SubscriptionService } from '@/utils/subscriptionService';
 
 export default function HistoryTab() {
   const { t } = useTranslation();
@@ -26,13 +26,13 @@ export default function HistoryTab() {
   const [filteredHistory, setFilteredHistory] = useState<HistoryItem[]>([]);
   const [historyDates, setHistoryDates] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [isScrollingUp, setIsScrollingUp] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const headerAnimValue = useRef(new Animated.Value(1)).current;
   const contentAnimValue = useRef(new Animated.Value(0)).current;
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
+  const [showAd, setShowAd] = useState(false);
 
   const loadHistory = useCallback(async () => {
     setIsLoading(true);
@@ -70,6 +70,7 @@ export default function HistoryTab() {
         setAdKey((prev) => prev + 1);
         setLastAdRefresh(now);
       }
+      SubscriptionService.shouldShowAds().then((result) => setShowAd(result));
     }, [loadHistory, lastAdRefresh])
   );
 
@@ -187,7 +188,7 @@ export default function HistoryTab() {
         </View>
       </Animated.View>
 
-      {!isPremiumUser && (
+      {showAd && (
         <Animated.View
           className="my-2 flex justify-center items-center h-[50px]"
           style={{

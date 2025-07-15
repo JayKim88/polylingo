@@ -41,16 +41,12 @@ export default function UsageDetailModal({
         SubscriptionService.getCurrentSubscription(),
       ]);
 
-      console.log('🔍 Usage Detail Modal - Subscription:', subscription);
-      console.log('🔍 Usage Detail Modal - Usage Data:', usageData);
-
       setUsage(usageData);
       setPlanId(subscription?.planId || 'free');
 
       const plan = SUBSCRIPTION_PLANS.find(
         (p) => p.id === (subscription?.planId || 'free')
       );
-      console.log('🔍 Usage Detail Modal - Found Plan:', plan);
       setCurrentPlan(plan);
     } catch (error) {
       console.error('Error loading usage data:', error);

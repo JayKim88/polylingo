@@ -26,7 +26,9 @@ import { TranslationAPI } from '../../utils/translationAPI';
 import { StorageService } from '../../utils/storage';
 import { SpeechService } from '../../utils/speechService';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
+import { SUBSCRIPTION_PLANS } from '../../types/subscription';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '../../utils/subscriptionService';
@@ -38,13 +40,11 @@ import {
   TestIds,
 } from 'react-native-google-mobile-ads';
 
-export const isPremiumUser = true; // TODO: 실제 프리미엄 체크로 대체
-
 export default function SearchTab() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors } = useTheme();
+  const { refreshSubscription } = useSubscription();
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [isScrollingUp, setIsScrollingUp] = useState(true);
   const [searchText, setSearchText] = useState('');
   // 개별 번역 상태 관리
   type TranslationState = {
@@ -81,11 +81,14 @@ export default function SearchTab() {
   const [showBannerAd, setShowBannerAd] = useState(false);
   const [shouldShowAds, setShouldShowAds] = useState(true);
   const [adKey, setAdKey] = useState(0); // 새로운 광고를 위한 키
-  const headerAnimValue = useRef(new Animated.Value(1)).current;
   const searchAnimValue = useRef(new Animated.Value(0)).current;
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(false);
+  const isInitialFocus = useRef(true);
   const voiceButtonScale = useRef(new Animated.Value(1)).current;
   const translateButtonScale = useRef(new Animated.Value(1)).current;
+  const headerAnimValue = useRef(
+    new Animated.Value(isInitialFocus.current ? -1 : 0)
+  ).current;
 
   const MAX_LENGTH = 50;
   const isInputTooLong = searchText.length > MAX_LENGTH;
@@ -109,12 +112,35 @@ export default function SearchTab() {
   const loadSelectedLanguages = useCallback(async () => {
     const cachedlangs = await StorageService.getSelectedLanguages();
 
+    // 현재 구독 정보에 맞는 최대 언어 수 확인
+    const subscription = await SubscriptionService.getCurrentSubscription();
+    const plan = SUBSCRIPTION_PLANS.find(
+      (p) => p.id === (subscription?.planId || 'free')
+    );
+    const maxLanguages =
+      subscription?.planId === 'free'
+        ? 3
+        : Math.min((plan?.maxLanguages || 2) + 1, 6);
+
     if (cachedlangs.length > 0) {
+      // 캐시된 언어가 현재 플랜 제한을 초과하는 경우 조정
+      if (cachedlangs.length > maxLanguages) {
+        const adjustedLanguages = cachedlangs.slice(0, maxLanguages);
+
+        setSelectedLanguages(adjustedLanguages);
+        setSourceLanguage(adjustedLanguages[0]);
+        await StorageService.saveSelectedLanguages(adjustedLanguages);
+        return;
+      }
       setSelectedLanguages(cachedlangs);
       setSourceLanguage(cachedlangs[0]);
       return;
     }
-    const defaultLanguages = SUPPORTED_LANGUAGES.map((v) => v.code).slice(0, 2);
+
+    const defaultLanguages = SUPPORTED_LANGUAGES.map((v) => v.code).slice(
+      0,
+      maxLanguages
+    );
 
     setSelectedLanguages(defaultLanguages);
     setSourceLanguage(defaultLanguages[0]);
@@ -128,41 +154,62 @@ export default function SearchTab() {
 
   const handleFocus = useCallback(async () => {
     loadFavorites();
-    loadSelectedLanguages();
+    // 탭 포커스 시 언어 설정을 다시 로드하여 구독 변경 사항 반영
+    await loadSelectedLanguages();
     checkVoiceAvailability();
     showTabBar();
+
+    // Animate header in sync with tab slide animation
+    if (isInitialFocus.current) {
+      isInitialFocus.current = false;
+      setIsHeaderVisible(true);
+
+      // Animate header after safe area animation completes
+      setTimeout(() => {
+        Animated.timing(headerAnimValue, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }).start();
+      }, 80); // Delay to wait for safe area animation (300ms) + small buffer
+      return;
+    }
+
     setIsHeaderVisible(true);
 
+    /**
+     * @todo revert this when ready for test by device.
+     */
     // Initialize IAP service with timeout
-    try {
-      const initPromise = IAPService.initialize();
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('IAP initialization timeout')), 5000)
-      );
+    // try {
+    //   const initPromise = IAPService.initialize();
+    //   const timeoutPromise = new Promise((_, reject) =>
+    //     setTimeout(() => reject(new Error('IAP initialization timeout')), 5000)
+    //   );
 
-      const initialized = await Promise.race([initPromise, timeoutPromise]);
+    //   const initialized = await Promise.race([initPromise, timeoutPromise]);
 
-      if (initialized) {
-        // Only check subscription status if initialization succeeded
-        setTimeout(async () => {
-          try {
-            await IAPService.checkSubscriptionStatus();
-          } catch (statusError) {
-            console.warn('Subscription status check failed:', statusError);
-            // Ensure we have a fallback to free plan
-            await SubscriptionService.setSubscription('free', true);
-          }
-        }, 1000); // Delay to avoid blocking UI
-      }
-    } catch (error) {
-      console.error('Failed to initialize IAP service:', error);
-      // Ensure we have a fallback subscription
-      try {
-        await SubscriptionService.setSubscription('free', true);
-      } catch (fallbackError) {
-        console.error('Failed to set fallback subscription:', fallbackError);
-      }
-    }
+    //   if (initialized) {
+    //     // Only check subscription status if initialization succeeded
+    //     setTimeout(async () => {
+    //       try {
+    //         await IAPService.checkSubscriptionStatus();
+    //       } catch (statusError) {
+    //         console.warn('Subscription status check failed:', statusError);
+    //         // Ensure we have a fallback to free plan
+    //         await SubscriptionService.setSubscription('free', true);
+    //       }
+    //     }, 1000); // Delay to avoid blocking UI
+    //   }
+    // } catch (error) {
+    //   console.error('Failed to initialize IAP service:', error);
+    //   // Ensure we have a fallback subscription
+    //   try {
+    //     await SubscriptionService.setSubscription('free', true);
+    //   } catch (fallbackError) {
+    //     console.error('Failed to set fallback subscription:', fallbackError);
+    //   }
+    // }
 
     // Check if ads should be shown
     const shouldShow = await SubscriptionService.shouldShowAds();
@@ -171,8 +218,6 @@ export default function SearchTab() {
 
   const handleScrollDirectionChange = useCallback(
     (scrollingUp: boolean, scrollY: number) => {
-      setIsScrollingUp(scrollingUp);
-
       // Only hide header when scrolling down and header is currently visible
       if (!scrollingUp && scrollY > 50 && isHeaderVisible) {
         setIsHeaderVisible(false);
@@ -274,7 +319,6 @@ export default function SearchTab() {
     const abortController = new AbortController();
     setSearchAbortController(abortController);
 
-    // UI 업데이트를 먼저 반영
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
     try {
@@ -298,7 +342,6 @@ export default function SearchTab() {
               return newResults;
             });
 
-            // 첫 번째 결과가 나오면 로딩 상태 해제
             setIsLoading(false);
           }
         }
@@ -559,12 +602,11 @@ export default function SearchTab() {
   };
 
   const handleLanguageSelection = async (languages: string[]) => {
-    console.log('📱 Language selection changed:', languages);
     setSourceLanguage(languages[0]);
     setSelectedLanguages(languages);
     await StorageService.saveSelectedLanguages(languages);
-    console.log('📱 Languages saved to storage:', languages);
     setShowLanguageModal(false);
+    refreshSubscription();
   };
 
   const startVoiceRecording = async () => {
@@ -808,6 +850,8 @@ export default function SearchTab() {
 
   useEffect(() => {
     if (results.length > 0) return;
+    // Skip animation on initial render to prevent jarring transition from splash
+    if (isInitialFocus.current) return;
     if (!isHeaderVisible) {
       setIsHeaderVisible(true);
       showTabBar();
@@ -866,7 +910,7 @@ export default function SearchTab() {
           <View className="flex-row gap-3">
             <CircularUsageButton
               onPress={() => setShowUsageDetailModal(true)}
-              size={44}
+              size={40}
               refreshTrigger={usageRefreshTrigger}
             />
             <TouchableOpacity
@@ -953,7 +997,6 @@ export default function SearchTab() {
         selectedLanguages={selectedLanguages}
         onLanguageSelection={handleLanguageSelection}
         onClose={() => setShowLanguageModal(false)}
-        isPaidUser={isPremiumUser}
       />
       <VoiceSettingsModal
         visible={showVoiceSettingsModal}

@@ -31,11 +31,11 @@ import {
   BannerAdSize,
   TestIds,
 } from 'react-native-google-mobile-ads';
-import { isPremiumUser } from './index';
 
 import AppLanguageModal from '../../components/AppLanguageModal';
 import SubscriptionModal from '../../components/SubscriptionModal';
 import { SubscriptionService } from '../../utils/subscriptionService';
+import { VersionService } from '../../utils/version';
 
 type SettingItemProps = {
   icon: React.ReactNode;
@@ -55,6 +55,7 @@ export default function SettingsTab() {
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
   const { animatedStyle } = useTabSlideAnimation();
+  const [showAd, setShowAd] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -65,6 +66,7 @@ export default function SettingsTab() {
         setAdKey((prev) => prev + 1);
         setLastAdRefresh(now);
       }
+      SubscriptionService.shouldShowAds().then((result) => setShowAd(result));
     }, [lastAdRefresh])
   );
 
@@ -76,9 +78,11 @@ export default function SettingsTab() {
   const handleAbout = () => {
     Alert.alert(
       t('settings.aboutTitle'),
-      `${t('settings.aboutVersion')}\n\n${t('settings.aboutSubtitle')}\n\n${t(
-        'settings.aboutFeatures'
-      )}\n\n${t('settings.aboutBuiltWith')}\n\n${t('settings.aboutCopyright')}`,
+      `${VersionService.getFormattedVersion()}\n\n${t(
+        'settings.aboutSubtitle'
+      )}\n\n${t('settings.aboutFeatures')}\n\n${t(
+        'settings.aboutBuiltWith'
+      )}\n\n${t('settings.aboutCopyright')}`,
       [{ text: t('settings.aboutButton') }]
     );
   };
@@ -144,33 +148,31 @@ export default function SettingsTab() {
   };
 
   const handleDevSubscriptionTest = () => {
-    Alert.alert(
-      '개발 모드 구독 테스트',
-      '테스트할 구독 플랜을 선택하세요',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: 'Free', onPress: () => testSubscription('free') },
-        { text: 'Pro Monthly', onPress: () => testSubscription('pro_monthly') },
-        { text: 'Pro Max Monthly', onPress: () => testSubscription('pro_max_monthly') },
-        { text: 'Premium Yearly', onPress: () => testSubscription('premium_yearly') },
-        { text: '일일 사용량 테스트', onPress: () => handleDailyUsageTest() },
-      ]
-    );
+    Alert.alert('개발 모드 구독 테스트', '테스트할 구독 플랜을 선택하세요', [
+      { text: '취소', style: 'cancel' },
+      { text: 'Free', onPress: () => testSubscription('free') },
+      { text: 'Pro Monthly', onPress: () => testSubscription('pro_monthly') },
+      {
+        text: 'Pro Max Monthly',
+        onPress: () => testSubscription('pro_max_monthly'),
+      },
+      {
+        text: 'Premium Yearly',
+        onPress: () => testSubscription('premium_yearly'),
+      },
+      { text: '일일 사용량 테스트', onPress: () => handleDailyUsageTest() },
+    ]);
   };
 
   const handleDailyUsageTest = () => {
-    Alert.alert(
-      '일일 사용량 테스트',
-      '테스트할 옵션을 선택하세요',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '사용량 리셋 (0으로)', onPress: () => resetDailyUsage() },
-        { text: '사용량 95로 설정', onPress: () => setDailyUsage(95) },
-        { text: '사용량 99로 설정', onPress: () => setDailyUsage(99) },
-        { text: '사용량 100으로 설정', onPress: () => setDailyUsage(100) },
-        { text: '테스트용 낮은 한도 (3회)', onPress: () => setTestLowLimit() },
-      ]
-    );
+    Alert.alert('일일 사용량 테스트', '테스트할 옵션을 선택하세요', [
+      { text: '취소', style: 'cancel' },
+      { text: '사용량 리셋 (0으로)', onPress: () => resetDailyUsage() },
+      { text: '사용량 95로 설정', onPress: () => setDailyUsage(95) },
+      { text: '사용량 99로 설정', onPress: () => setDailyUsage(99) },
+      { text: '사용량 100으로 설정', onPress: () => setDailyUsage(100) },
+      { text: '테스트용 낮은 한도 (3회)', onPress: () => setTestLowLimit() },
+    ]);
   };
 
   const resetDailyUsage = async () => {
@@ -215,15 +217,20 @@ export default function SettingsTab() {
   const testSubscription = async (planId: string) => {
     try {
       console.log('🔍 Settings: Setting subscription to:', planId);
-      await SubscriptionService.setSubscription(planId, true);
-      
+      await SubscriptionService.setSubscriptionWithLanguageReset(planId, true);
+
       // Verify the subscription was set correctly
       const newSub = await SubscriptionService.getCurrentSubscription();
-      console.log('🔍 Settings: Verification - new subscription:', newSub);
-      
+      console.log(
+        '🔍 Settings: Verification - new subscription:',
+        newSub?.planId
+      );
+
+      setShowAd(newSub?.planId === 'free');
+
       Alert.alert(
         '테스트 완료',
-        `${planId} 구독이 설정되었습니다.\n\n현재 planId: ${newSub?.planId}\n\n화면을 새로고침하여 변경사항을 확인하세요.`
+        `${planId} 구독이 설정되었습니다.\n\n현재 planId: ${newSub?.planId}\n\n언어 선택이 플랜에 맞게 초기화되었습니다.\n화면을 새로고침하여 변경사항을 확인하세요.`
       );
     } catch (error) {
       console.error('🔍 Settings: Error setting subscription:', error);
@@ -387,7 +394,7 @@ export default function SettingsTab() {
           </View>
         </View>
       </Animated.View>
-      {!isPremiumUser && (
+      {showAd && (
         <Animated.View
           className="my-2 flex justify-center items-center h-[50px]"
           style={{
@@ -578,7 +585,7 @@ export default function SettingsTab() {
               Made with ❤️ for multilingual learners
             </Text>
             <Text className="text-sm" style={{ color: colors.textTertiary }}>
-              Version 1.0.0
+              {VersionService.getFormattedVersion()}
             </Text>
           </View>
         </ScrollView>
