@@ -142,6 +142,7 @@ export default function TabLayout() {
             tabBarStyle: {
               ...tabBarStyle,
               ...animatedTabBarStyle,
+              position: 'absolute',
               backgroundColor: colors.surface,
               borderTopColor: colors.border,
             },

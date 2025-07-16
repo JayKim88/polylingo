@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Languages, Volume2, Mic, Search, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import NetInfo from '@react-native-community/netinfo';
 import {
   BannerAd,
   BannerAdSize,
@@ -274,6 +275,17 @@ export default function SearchTab() {
 
     Keyboard.dismiss();
 
+    // 네트워크 연결 상태 확인
+    const netInfo = await NetInfo.fetch();
+
+    if (!netInfo.isConnected) {
+      Alert.alert(
+        t('alert.networkRequired'),
+        t('alert.networkRequiredMessage')
+      );
+      return;
+    }
+
     // 선택된 언어들 중 소스 언어 제외
     const targetLanguages = selectedLanguages.filter(
       (lang) => lang !== sourceLanguage
@@ -513,7 +525,7 @@ export default function SearchTab() {
     if (result) {
       // 재시도 성공 시 사용량 증가 (1개 언어)
       await SubscriptionService.incrementDailyUsage(1);
-      
+
       // Trigger usage refresh after successful retry
       setUsageRefreshTrigger((prev) => prev + 1);
 
@@ -871,6 +883,10 @@ export default function SearchTab() {
 
   return (
     <Animated.View
+      onStartShouldSetResponder={() => {
+        Keyboard.dismiss();
+        return false;
+      }}
       style={{
         backgroundColor: colors.background,
         flex: 1,

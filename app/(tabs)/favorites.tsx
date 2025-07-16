@@ -8,6 +8,7 @@ import {
   BannerAdSize,
   TestIds,
 } from 'react-native-google-mobile-ads';
+import NetInfo from '@react-native-community/netinfo';
 
 import { useTabSlideAnimation } from '../../hooks/useTabSlideAnimation';
 import FavoritesList from '../../components/FavoritesList';
@@ -17,6 +18,7 @@ import { FavoriteItem } from '../../types/dictionary';
 import { useTheme } from '../../contexts/ThemeContext';
 import { ANIMATION_DURATION, hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '@/utils/subscriptionService';
+import { useNetInfo } from '@/contexts/NetInfoContext';
 
 /**
  * 3s
@@ -119,6 +121,13 @@ export default function FavoritesTab() {
       }),
     ]).start();
   }, [headerAnimValue, contentAnimValue, isHeaderVisible]);
+
+  const hasInternet = async () => {
+    // 네트워크 연결 상태 확인
+    const netInfo = await NetInfo.fetch();
+
+    return netInfo.isConnected;
+  };
 
   useFocusEffect(
     useCallback(() => {

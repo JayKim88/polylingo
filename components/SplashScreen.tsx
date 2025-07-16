@@ -140,7 +140,7 @@ export default function SplashScreen({
             letterSpacing: 0.5,
           }}
         >
-          Polyglot Translator
+          PolyLingo
         </Text>
 
         {/* Accent line under title */}

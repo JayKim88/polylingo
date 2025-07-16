@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
-
 import { TranslationResult } from '../types/dictionary';
 import TranslationCard from './TranslationCard';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -123,7 +122,7 @@ export default function TranslationList({
           message={t('loading.searching')}
         />
       )}
-      <Animated.View style={{ opacity: fadeAnim }}>
+      <Animated.View style={{ opacity: fadeAnim, marginBottom: 40 }}>
         {resultAvailable && !isLoading && (
           <View className="flex-row justify-start items-center mb-4 px-1">
             <Text
@@ -139,7 +138,6 @@ export default function TranslationList({
 
         <Animated.ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}
           onScroll={
             scrollY
               ? Animated.event(

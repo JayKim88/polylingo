@@ -164,7 +164,7 @@ export default function LanguageModal({
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
-      onRequestClose={onClose}
+      onRequestClose={handleCancel}
     >
       <SafeAreaView
         className="flex-1"

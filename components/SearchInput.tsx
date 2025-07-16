@@ -25,18 +25,18 @@ export default function SearchInput({
   disabled = false,
 }: SearchInputProps) {
   const { colors } = useTheme();
-  
+
   return (
     <View className="flex-row mb-5">
-      <View 
+      <View
         className="flex-1 flex-row items-center rounded-2xl px-4 py-323 shadow-sm min-h-[56px] relative"
         style={{ backgroundColor: colors.surface }}
       >
         <Search size={20} color={colors.textTertiary} className="mr-3" />
         <TextInput
           className="flex-1 text-lg leading-[18px] pl-2 pr-20"
-          style={{ 
-            color: disabled ? colors.textTertiary : colors.text 
+          style={{
+            color: disabled ? colors.textTertiary : colors.text,
           }}
           value={value}
           onChangeText={onChangeText}

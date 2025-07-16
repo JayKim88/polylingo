@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FavoriteItem, HistoryItem } from '../types/dictionary';
+import { SUBSCRIPTION_KEY } from './subscriptionService';
 
 const FAVORITES_KEY = 'dictionary_favorites';
 const HISTORY_KEY = 'dictionary_history';
@@ -233,6 +234,24 @@ export class StorageService {
       await AsyncStorage.setItem(THEME_KEY, theme);
     } catch (error) {
       console.error('Error saving theme:', error);
+    }
+  }
+
+  static async clearAllData(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove([
+        HISTORY_KEY,
+        FAVORITES_KEY,
+        SELECTED_LANGUAGES_KEY,
+        SUBSCRIPTION_KEY,
+        VOICE_SETTINGS_KEY,
+        // Note: We don't clear APP_LANGUAGE_KEY and THEME_KEY
+        // as these are user preference settings
+      ]);
+      console.log('All user data cleared successfully');
+    } catch (error) {
+      console.error('Error clearing all data:', error);
+      throw error;
     }
   }
 }

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserSubscription, SUBSCRIPTION_PLANS } from '../types/subscription';
 import { SUPPORTED_LANGUAGES } from '../types/dictionary';
 
-const SUBSCRIPTION_KEY = 'user_subscription';
+export const SUBSCRIPTION_KEY = 'user_subscription';
 const DAILY_USAGE_KEY = 'daily_usage';
 
 export class SubscriptionService {

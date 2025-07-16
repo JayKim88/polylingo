@@ -65,11 +65,11 @@
     "switchToDarkTheme": "다크 테마로 전환",
     "about": "앱 상세 정보",
     "aboutSubtitle": "AI 기반 다국어 번역기",
-    "aboutTitle": "Polyglot Translator 정보",
+    "aboutTitle": "PolyLingo 정보",
     "aboutVersion": "버전 1.0.0",
     "aboutFeatures": "기능:\n• 최대 5개 언어 동시 번역\n• 음성 입력 및 텍스트 음성 변환\n• 빠른 액세스를 위한 즐겨찾기 번역\n• 날짜 필터링이 있는 번역 기록\n• 다크/라이트 테마 지원\n• 아름답고 직관적인 인터페이스",
     "aboutBuiltWith": "React Native 및 Claude AI로 제작",
-    "aboutCopyright": "© 2025 Polyglot Translator 팀",
+    "aboutCopyright": "© 2025 PolyLingo 팀",
     "aboutButton": "확인",
     "features": "주요 기능",
     "featuresSubtitle": "앱의 핵심 기능 소개",
@@ -80,7 +80,25 @@
     "rate": "앱 평가하기",
     "rateSubtitle": "앱스토어에서 평가해주세요",
     "privacyPolicy": "개인정보 보호정책",
-    "privacyPolicySubtitle": "데이터 처리 및 보안 정책"
+    "privacyPolicySubtitle": "데이터 처리 및 보안 정책",
+    "termsOfService": "서비스 약관",
+    "termsOfServiceSubtitle": "앱 사용 약관 및 조건",
+    "dataManagement": "데이터 관리",
+    "exportData": "데이터 내보내기",
+    "exportDataSubtitle": "즐겨찾기와 히스토리 내보내기",
+    "exportDataTitle": "데이터 내보내기",
+    "exportDataSuccess": "데이터 내보내기 성공",
+    "exportDataSuccessMessage": "데이터가 {{fileName}}로 클립보드에 복사되었습니다. 텍스트 에디터나 이메일에 붙여넣기 할 수 있습니다.",
+    "exportDataError": "데이터 내보내기에 실패했습니다. 다시 시도해주세요.",
+    "noDataToExport": "내보낼 데이터가 없습니다. 즐겨찾기와 히스토리가 비어있습니다.",
+    "deleteAllData": "모든 데이터 삭제",
+    "deleteAllDataSubtitle": "모든 데이터를 영구적으로 삭제",
+    "deleteAllDataTitle": "모든 데이터 삭제",
+    "deleteAllDataMessage": "즐겨찾기, 히스토리, 설정을 포함한 모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+    "deleteAllDataConfirm": "모두 삭제",
+    "deleteAllDataSuccess": "데이터 삭제 성공",
+    "deleteAllDataSuccessMessage": "모든 데이터가 영구적으로 삭제되었습니다.",
+    "deleteAllDataError": "데이터 삭제에 실패했습니다. 다시 시도해주세요."
   },
   "alert": {
     "error": "오류",
@@ -88,7 +106,9 @@
     "confirm": "확인",
     "cancel": "취소",
     "later": "나중에",
-    "translationError": "번역 중 오류가 발생했습니다. 다시 시도해주세요."
+    "translationError": "번역 중 오류가 발생했습니다. 다시 시도해주세요.",
+    "networkRequired": "인터넷 연결이 필요합니다",
+    "networkRequiredMessage": "인터넷 연결을 확인하고 다시 시도해주세요. 번역을 위해서는 인터넷 연결이 필요합니다."
   },
   "language": {
     "korean": "한국어",
@@ -139,16 +159,16 @@
     "selectedDate": "선택된 날짜"
   },
   "aboutModal": {
-    "title": "Polyglot Translator",
+    "title": "PolyLingo",
     "version": "버전 1.0.0",
     "description": "여러 언어를 동시에 학습하는 사람들을 위한 번역앱입니다.",
     "features": "• 최대 5개 언어 동시 지원\n• 단어/문장 번역\n• 중의적 의미 표시\n• 드래그앤드롭 정렬\n• 달력 기반 히스토리"
   },
   "feedbackModal": {
     "title": "피드백 보내기",
-    "message": "의견을 듣고 싶습니다! 💬\n\n다음과 같은 피드백으로 Polyglot Translator를 개선하는 데 도움을 주세요:\n\n• 기능 요청\n• 버그 신고\n• 언어 정확도 피드백\n• UI/UX 제안\n• 일반적인 의견\n\n여러분의 피드백은 모든 사용자를 위해 앱을 더 좋게 만드는 데 도움이 됩니다!",
-    "emailSubject": "Polyglot Translator 피드백",
-    "emailBody": "안녕하세요,\n\nPolyglot Translator에 대한 피드백을 공유하고 싶습니다:\n\n",
+    "message": "의견을 듣고 싶습니다! 💬\n\n다음과 같은 피드백으로 PolyLingo를 개선하는 데 도움을 주세요:\n\n• 기능 요청\n• 버그 신고\n• 언어 정확도 피드백\n• UI/UX 제안\n• 일반적인 의견\n\n여러분의 피드백은 모든 사용자를 위해 앱을 더 좋게 만드는 데 도움이 됩니다!",
+    "emailSubject": "PolyLingo 피드백",
+    "emailBody": "안녕하세요,\n\nPolyLingo에 대한 피드백을 공유하고 싶습니다:\n\n",
     "emailError": "메일 앱을 열 수 없습니다",
     "emailFallbackTitle": "피드백 보내기",
     "emailFallbackMessage": "메일 앱을 사용할 수 없습니다. 피드백 이메일 주소가 클립보드에 복사되었습니다:\n\nyongjae.kim.dev@gmail.com\n\n선호하는 메일 앱이나 브라우저에서 붙여넣어 주세요.",
@@ -156,12 +176,12 @@
   },
   "rateModal": {
     "title": "앱 평가하기 ⭐",
-    "message": "Polyglot Translator를 즐겁게 사용하고 계신가요?\n\n여러분의 평가는 다른 사람들이 저희 앱을 발견하는 데 도움이 되고 저희가 계속 개선할 수 있는 동기를 줍니다!\n\n⭐⭐⭐⭐⭐\n\n• 빠르고 정확한 번역\n• 아름답고 직관적인 인터페이스\n• 정기적인 업데이트 및 새로운 기능\n• 프리미엄 기능이 포함된 무료 앱\n\n30초밖에 안 걸리며 저희에게는 큰 의미가 있습니다! 🙏",
+    "message": "PolyLingo를 즐겁게 사용하고 계신가요?\n\n여러분의 평가는 다른 사람들이 저희 앱을 발견하는 데 도움이 되고 저희가 계속 개선할 수 있는 동기를 줍니다!\n\n⭐⭐⭐⭐⭐\n\n• 빠르고 정확한 번역\n• 아름답고 직관적인 인터페이스\n• 정기적인 업데이트 및 새로운 기능\n• 프리미엄 기능이 포함된 무료 앱\n\n30초밖에 안 걸리며 저희에게는 큰 의미가 있습니다! 🙏",
     "rate": "별 5개 평가하기 ⭐"
   },
   "privacyModal": {
     "title": "개인정보 보호정책 🔒",
-    "message": "시행일: 2025년 7월\n\nPolyglot Translator 개인정보 보호정책\n\n저희는 귀하의 개인정보를 존중하고 보호하기 위해 최선을 다하고 있습니다.\n\n📱 수집하는 정보:\n• 번역 텍스트 (임시적으로만 처리)\n• 앱 사용 기본 설정 (로컬 저장)\n• 개인 식별 정보는 수집하지 않음\n\n🔒 데이터 사용 방법:\n• 보안 API를 통한 번역 처리\n• 앱 기능 개선\n• 즐겨찾기/히스토리를 기기에 로컬 저장\n\n🤝 제3자 서비스:\n• Claude AI: 번역 처리 전용\n• Google AdMob: 익명 광고 (해당시)\n• 다른 목적으로는 데이터 공유 안함\n\n👤 귀하의 권리:\n• 데이터 접근권\n• 언제든지 데이터 삭제 가능\n• 광고 거부 선택\n\n📧 연락처:\nyongjae.kim.dev@gmail.com\n\n본 정책에 대한 문의사항은 이메일로 연락해 주세요."
+    "message": "시행일: 2025년 7월\n\nPolyLingo 개인정보 보호정책\n\n저희는 귀하의 개인정보를 존중하고 보호하기 위해 최선을 다하고 있습니다.\n\n📱 수집하는 정보:\n• 번역 텍스트 (임시적으로만 처리)\n• 앱 사용 기본 설정 (로컬 저장)\n• 개인 식별 정보는 수집하지 않음\n\n🔒 데이터 사용 방법:\n• 보안 API를 통한 번역 처리\n• 앱 기능 개선\n• 즐겨찾기/히스토리를 기기에 로컬 저장\n\n🤝 제3자 서비스:\n• Claude AI: 번역 처리 전용\n• Google AdMob: 익명 광고 (해당시)\n• 다른 목적으로는 데이터 공유 안함\n\n👤 귀하의 권리:\n• 데이터 접근권\n• 언제든지 데이터 삭제 가능\n• 광고 거부 선택\n\n📧 연락처:\nyongjae.kim.dev@gmail.com\n\n본 정책에 대한 문의사항은 이메일로 연락해 주세요."
   },
   "featuresModal": {
     "title": "주요 기능",
@@ -182,10 +202,18 @@
     "goodMorning": "좋은 아침입니다 ☀️",
     "goodAfternoon": "좋은 오후입니다 🌤️",
     "goodEvening": "좋은 저녁입니다 🌙",
-    "translateTitle": "다국어 번역하기",
+    "translateTitle": "PolyLingo",
     "speechNotAvailable": "이 기기에서는 음성 인식을 지원하지 않습니다",
     "voiceStartError": "음성 인식을 시작할 수 없습니다",
-    "searching": "검색 중..."
+    "searching": "검색 중...",
+    "micPermissionTitle": "마이크 권한 필요",
+    "micPermissionMessage": "PolyLingo에서 음성 입력을 사용하려면 마이크 접근 권한이 필요합니다. 기기 설정에서 권한을 허용해주세요.",
+    "openSettings": "설정 열기",
+    "tryAgain": "다시 시도",
+    "micPermissionRequired": "음성 입력을 위해 마이크 권한이 필요합니다",
+    "micPermissionDenied": "마이크 권한이 여전히 거부되었습니다. 설정에서 활성화해주세요.",
+    "micPermissionFailed": "마이크 권한 확인에 실패했습니다. 다시 시도해주세요.",
+    "settingsOpenFailed": "설정을 열 수 없습니다. PolyLingo의 마이크 권한을 수동으로 활성화해주세요."
   },
   "loading": {
     "searching": "검색 중...",
@@ -272,5 +300,31 @@
       "freeUsageDescription": "1개 언어 = 0.5 사용량, 2개 언어 = 1 사용량",
       "premiumUsageDescription": "1개 언어 = 0.2 사용량, 5개 언어 = 1 사용량"
     }
+  },
+  "consent": {
+    "title": "PolyLingo에 오신 것을 환영합니다",
+    "subtitle": "여러분의 개인정보가 중요합니다",
+    "welcomeTitle": "PolyLingo에 오신 것을 환영합니다!",
+    "welcomeMessage": "PolyLingo를 다운로드해 주셔서 감사합니다. AI 기반 번역 앱으로 언어 장벽을 허물어 드릴 수 있어 기쁩니다.",
+    "dataCollectionTitle": "데이터 수집 및 개인정보 보호",
+    "dataCollectionMessage": "데이터 처리 방식에 대한 투명성을 믿습니다. 다음 사항을 알아주세요:",
+    "dataWeCollect": "수집하는 정보:",
+    "translationText": "번역 텍스트 (임시로 처리되며 저장되지 않음)",
+    "languagePreferences": "언어 설정 및 앱 설정",
+    "usageStatistics": "앱 개선을 위한 익명 사용 통계",
+    "crashReports": "버그 수정과 안정성 개선을 위한 오류 보고서",
+    "dataWeDontCollect": "수집하지 않는 정보:",
+    "personalIdentity": "개인정보 (이름, 이메일, 전화번호)",
+    "locationData": "위치 데이터나 GPS 정보",
+    "contactInfo": "연락처 목록이나 개인 파일",
+    "agreementTitle": "사용자 동의",
+    "termsAgreement": "서비스 약관을 읽고 동의합니다",
+    "termsDescription": "앱 사용 약관 및 조건",
+    "privacyAgreement": "개인정보 보호정책을 읽고 동의합니다",
+    "privacyDescription": "데이터 처리 및 보안 정책",
+    "finalMessage": "계속 진행하면 데이터 처리 방식에 동의하며 13세 이상임을 확인하는 것입니다.",
+    "accept": "동의 및 계속",
+    "decline": "거부",
+    "footerMessage": "설정에서 언제든지 기본 설정을 변경할 수 있습니다"
   }
 }

@@ -16,7 +16,7 @@ export class VersionService {
 
     // Try to get version from expoConfig, fallback to default
     const version = expoConfig?.version || '1.0.0';
-    const appName = expoConfig?.name || 'Polyglot Dictionary';
+    const appName = expoConfig?.name || 'PolyLingo';
 
     // Build number (iOS) or version code (Android)
     const buildNumber =

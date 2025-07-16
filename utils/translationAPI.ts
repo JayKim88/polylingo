@@ -5,6 +5,7 @@ import {
 } from '../types/dictionary';
 import { PronunciationService } from './pronunciationService';
 import { translateWithClaudeAPI } from './claudeAPI';
+import NetInfo from '@react-native-community/netinfo';
 
 const MYMEMORY_BASE_URL = 'https://mymemory.translated.net/api/get';
 const LIBRETRANSLATE_BASE_URL =
@@ -69,15 +70,22 @@ export class TranslationAPI {
     return null;
   }
 
-  // Save to cache
-  private static saveToCache(
+  // Save to cache (only when online)
+  private static async saveToCache(
     text: string,
     sourceLanguage: string,
     targetLanguage: string,
     translation: string,
     meanings?: TranslationMeaning[],
     pronunciation?: string
-  ): void {
+  ): Promise<void> {
+    // Check network connectivity before caching
+    const netInfo = await NetInfo.fetch();
+    if (!netInfo.isConnected) {
+      console.log('🚫 Skipping cache save - offline mode');
+      return;
+    }
+
     const key = this.getCacheKey(text, sourceLanguage, targetLanguage);
     this.translationCache.set(key, {
       translation,
@@ -308,7 +316,7 @@ export class TranslationAPI {
           const decoded = decodeURIComponent(translation);
 
           // Update cache with fixed version
-          this.saveToCache(
+          await this.saveToCache(
             text,
             sourceLanguage,
             targetLanguage,
@@ -391,7 +399,7 @@ export class TranslationAPI {
     }
 
     // 성공한 번역을 캐시에 저장
-    this.saveToCache(
+    await this.saveToCache(
       text,
       sourceLanguage,
       targetLanguage,

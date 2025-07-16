@@ -155,7 +155,7 @@ export default function HistoryList({
             {item.searchedData.map((v, index) => (
               <Text
                 key={`${v.lng}-${v.text}-${index}`}
-                className="rounded-3xl py-0.5 px-1 mr-2 text-xs"
+                className="rounded-3xl py-0.5 px-1 mr-2 text-sm"
                 style={{
                   backgroundColor: colors.primaryContainer,
                   color: colors.text,

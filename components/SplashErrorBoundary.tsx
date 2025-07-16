@@ -39,7 +39,7 @@ function DefaultFallback({ onRetry, error }: { onRetry: () => void; error?: Erro
         textAlign: 'center',
         marginBottom: 16,
       }}>
-        Polyglot Translator
+        PolyLingo
       </Text>
       
       <Text style={{ 

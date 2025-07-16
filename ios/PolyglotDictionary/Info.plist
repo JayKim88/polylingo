@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>Polyglot Dictionary</string>
+    <string>PolyLingo</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,14 +27,14 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>polyglot-dictionary</string>
-          <string>com.polyglot.dictionary</string>
+          <string>polylingo</string>
+          <string>com.polylingo.app</string>
         </array>
       </dict>
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+polyglot-dictionary</string>
+          <string>exp+polylingo</string>
         </array>
       </dict>
     </array>

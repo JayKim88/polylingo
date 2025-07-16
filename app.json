@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Polyglot Dictionary",
-    "slug": "polyglot-dictionary",
+    "name": "PolyLingo",
+    "slug": "polylingo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "polyglot-dictionary",
+    "icon": "./assets/images/polylingo.png",
+    "scheme": "polylingo",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -17,6 +17,7 @@
     },
     "ios": {
       "backgroundColor": "#000000",
+      "icon": "./assets/images/polylingo.png",
       "infoPlist": {
         "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
         "SKAdNetworkItems": [
@@ -25,14 +26,15 @@
           }
         ]
       },
-      "bundleIdentifier": "com.polyglot.dictionary"
+      "bundleIdentifier": "com.polylingo.app"
     },
     "android": {
+      "icon": "./assets/images/polylingo.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
+        "foregroundImage": "./assets/images/polylingo.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.polyglot.dictionary",
+      "package": "com.polylingo.app",
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.RECORD_AUDIO"

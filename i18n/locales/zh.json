@@ -74,12 +74,30 @@
     "rateSubtitle": "在App Store中给我们评分",
     "privacyPolicy": "隐私政策",
     "privacyPolicySubtitle": "数据处理和安全政策",
-    "aboutTitle": "关于Polyglot Translator",
+    "termsOfService": "服务条款",
+    "termsOfServiceSubtitle": "应用使用条款和条件",
+    "dataManagement": "数据管理",
+    "exportData": "导出数据",
+    "exportDataSubtitle": "导出您的收藏和历史记录",
+    "exportDataTitle": "导出数据",
+    "exportDataSuccess": "数据导出成功",
+    "exportDataSuccessMessage": "您的数据已作为{{fileName}}复制到剪贴板。您可以将其粘贴到文本编辑器或电子邮件中。",
+    "exportDataError": "数据导出失败。请重试。",
+    "noDataToExport": "没有数据可导出。您的收藏和历史记录为空。",
+    "deleteAllData": "删除所有数据",
+    "deleteAllDataSubtitle": "永久删除所有数据",
+    "deleteAllDataTitle": "删除所有数据",
+    "deleteAllDataMessage": "这将永久删除您的所有收藏、历史记录和设置。此操作无法撤消。",
+    "deleteAllDataConfirm": "删除所有",
+    "deleteAllDataSuccess": "数据删除成功",
+    "deleteAllDataSuccessMessage": "您的所有数据已被永久删除。",
+    "deleteAllDataError": "数据删除失败。请重试。",
+    "aboutTitle": "关于PolyLingo",
     "aboutVersion": "版本 1.0.0",
     "aboutSubtitle": "您的AI驱动的多语言翻译器",
     "aboutFeatures": "功能:\n• 最多5种语言同时翻译\n• 语音输入和文字转语音\n• 收藏翻译以便快速访问\n• 带日期筛选的翻译历史\n• 深色/浅色主题支持\n• 美观、直观的界面",
     "aboutBuiltWith": "使用React Native和Claude AI构建",
-    "aboutCopyright": "© 2025 Polyglot Translator团队",
+    "aboutCopyright": "© 2025 PolyLingo团队",
     "aboutButton": "知道了"
   },
   "alert": {
@@ -88,7 +106,9 @@
     "confirm": "确定",
     "cancel": "取消",
     "later": "稍后",
-    "translationError": "翻译过程中发生错误。请重试。"
+    "translationError": "翻译过程中发生错误。请重试。",
+    "networkRequired": "需要网络连接",
+    "networkRequiredMessage": "请检查您的网络连接并重试。翻译需要有效的网络连接。"
   },
   "language": {
     "korean": "한국어",
@@ -139,16 +159,16 @@
     "selectedDate": "选定日期"
   },
   "aboutModal": {
-    "title": "Polyglot Translator",
+    "title": "PolyLingo",
     "version": "版本 1.0.0",
     "description": "为同时学习多种语言的人们设计的翻译应用。",
     "features": "• 最多5种语言同时支持\n• 单词/句子翻译\n• 歧义意思显示\n• 拖拽排序\n• 基于日历的历史记录"
   },
   "feedbackModal": {
     "title": "发送反馈",
-    "message": "我们很想听到您的意见！💬\n\n请分享以下内容来帮助我们改进 Polyglot Translator：\n\n• 功能请求\n• 错误报告\n• 语言准确性反馈\n• UI/UX 建议\n• 一般意见\n\n您的反馈帮助我们为所有人将应用做得更好！",
-    "emailSubject": "Polyglot Translator 反馈",
-    "emailBody": "您好，\n\n我想分享关于 Polyglot Translator 的反馈：\n\n",
+    "message": "我们很想听到您的意见！💬\n\n请分享以下内容来帮助我们改进 PolyLingo：\n\n• 功能请求\n• 错误报告\n• 语言准确性反馈\n• UI/UX 建议\n• 一般意见\n\n您的反馈帮助我们为所有人将应用做得更好！",
+    "emailSubject": "PolyLingo 反馈",
+    "emailBody": "您好，\n\n我想分享关于 PolyLingo 的反馈：\n\n",
     "emailError": "无法打开邮件应用",
     "emailFallbackTitle": "发送反馈",
     "emailFallbackMessage": "邮件应用不可用。反馈邮箱地址已复制到剪贴板：\n\nyongjae.kim.dev@gmail.com\n\n您可以在您喜欢的邮件应用或浏览器中粘贴使用。",
@@ -156,12 +176,12 @@
   },
   "rateModal": {
     "title": "给我们评分 ⭐",
-    "message": "喜欢 Polyglot Translator 吗？\n\n您的评分帮助其他人发现我们的应用，并激励我们继续改进！\n\n⭐⭐⭐⭐⭐\n\n• 快速准确的翻译\n• 美观、直观的界面\n• 定期更新和新功能\n• 免费但具有高级功能\n\n只需 30 秒，但对我们意义重大！🙏",
+    "message": "喜欢 PolyLingo 吗？\n\n您的评分帮助其他人发现我们的应用，并激励我们继续改进！\n\n⭐⭐⭐⭐⭐\n\n• 快速准确的翻译\n• 美观、直观的界面\n• 定期更新和新功能\n• 免费但具有高级功能\n\n只需 30 秒，但对我们意义重大！🙏",
     "rate": "给 5 星评分 ⭐"
   },
   "privacyModal": {
     "title": "隐私政策 🔒",
-    "message": "生效日期：2025年7月\n\nPolyglot Translator 隐私政策\n\n我们尊重您的隐私并致力于保护您的个人数据。\n\n📱 我们收集的信息：\n• 翻译文本（仅临时处理）\n• 应用使用偏好（本地存储）\n• 不收集个人身份信息\n\n🔒 数据使用方式：\n• 通过安全API处理翻译\n• 改进应用功能\n• 在您的设备上本地存储收藏/历史\n\n🤝 第三方服务：\n• Claude AI：仅用于翻译处理\n• Google AdMob：匿名广告（如适用）\n• 不与其他目的共享数据\n\n👤 您的权利：\n• 访问您的数据\n• 随时删除您的数据\n• 选择退出广告\n\n📧 联系方式：\nyongjae.kim.dev@gmail.com\n\n如对本政策有疑问，请通过邮件联系我们。"
+    "message": "生效日期：2025年7月\n\nPolyLingo 隐私政策\n\n我们尊重您的隐私并致力于保护您的个人数据。\n\n📱 我们收集的信息：\n• 翻译文本（仅临时处理）\n• 应用使用偏好（本地存储）\n• 不收集个人身份信息\n\n🔒 数据使用方式：\n• 通过安全API处理翻译\n• 改进应用功能\n• 在您的设备上本地存储收藏/历史\n\n🤝 第三方服务：\n• Claude AI：仅用于翻译处理\n• Google AdMob：匿名广告（如适用）\n• 不与其他目的共享数据\n\n👤 您的权利：\n• 访问您的数据\n• 随时删除您的数据\n• 选择退出广告\n\n📧 联系方式：\nyongjae.kim.dev@gmail.com\n\n如对本政策有疑问，请通过邮件联系我们。"
   },
   "featuresModal": {
     "title": "主要功能",
@@ -182,10 +202,18 @@
     "goodMorning": "早上好 ☀️",
     "goodAfternoon": "下午好 🌤️",
     "goodEvening": "晚上好 🌙",
-    "translateTitle": "多语言翻译",
+    "translateTitle": "PolyLingo",
     "speechNotAvailable": "此设备不支持语音识别",
     "voiceStartError": "无法启动语音识别",
-    "searching": "搜索中..."
+    "searching": "搜索中...",
+    "micPermissionTitle": "需要麦克风权限",
+    "micPermissionMessage": "PolyLingo需要麦克风访问权限来使用语音输入功能。请在设备设置中授权。",
+    "openSettings": "打开设置",
+    "tryAgain": "重试",
+    "micPermissionRequired": "语音输入需要麦克风权限",
+    "micPermissionDenied": "麦克风权限仍被拒绝。请在设置中启用。",
+    "micPermissionFailed": "检查麦克风权限失败。请重试。",
+    "settingsOpenFailed": "无法打开设置。请手动为PolyLingo启用麦克风权限。"
   },
   "loading": {
     "searching": "搜索中...",
@@ -272,5 +300,31 @@
       "freeUsageDescription": "1种语言 = 0.5次使用量，2种语言 = 1次使用量",
       "premiumUsageDescription": "1种语言 = 0.2次使用量，5种语言 = 1次使用量"
     }
+  },
+  "consent": {
+    "title": "欢迎使用PolyLingo",
+    "subtitle": "您的隐私对我们很重要",
+    "welcomeTitle": "欢迎使用PolyLingo！",
+    "welcomeMessage": "感谢您下载PolyLingo。我们很高兴能通过AI驱动的翻译应用帮助您打破语言障碍。",
+    "dataCollectionTitle": "数据收集和隐私",
+    "dataCollectionMessage": "我们相信数据处理的透明度。以下是您需要了解的内容：",
+    "dataWeCollect": "我们收集的信息：",
+    "translationText": "翻译文本（临时处理，不存储）",
+    "languagePreferences": "语言偏好和应用设置",
+    "usageStatistics": "匿名使用统计以改进应用",
+    "crashReports": "崩溃报告以修复错误和提高稳定性",
+    "dataWeDontCollect": "我们不收集的信息：",
+    "personalIdentity": "个人信息（姓名、电子邮件、电话）",
+    "locationData": "位置数据或GPS信息",
+    "contactInfo": "联系人列表或个人文件",
+    "agreementTitle": "您的同意",
+    "termsAgreement": "我已阅读并同意服务条款",
+    "termsDescription": "应用使用条款和条件",
+    "privacyAgreement": "我已阅读并同意隐私政策",
+    "privacyDescription": "数据处理和安全政策",
+    "finalMessage": "继续使用即表示您同意我们的数据处理方式，并确认您年满13岁。",
+    "accept": "同意并继续",
+    "decline": "拒绝",
+    "footerMessage": "您可以随时在设置中更改您的偏好"
   }
 }

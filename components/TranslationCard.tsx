@@ -278,12 +278,6 @@ export default function TranslationCard({
     try {
       let textToCopy = result.translatedText;
 
-      if (result.meanings && result.meanings.length > 0) {
-        textToCopy = result.meanings
-          .map((meaning) => `${meaning.translation} - ${meaning.type}`)
-          .join('\n');
-      }
-
       await Clipboard.setStringAsync(textToCopy);
     } catch (error) {
       Alert.alert(t('alert.error'), t('message.copyError'));

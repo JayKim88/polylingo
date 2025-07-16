@@ -74,12 +74,30 @@
     "rateSubtitle": "Rate us on the App Store",
     "privacyPolicy": "Privacy Policy",
     "privacyPolicySubtitle": "Data handling and security policy",
-    "aboutTitle": "About Polyglot Translator",
+    "termsOfService": "Terms of Service",
+    "termsOfServiceSubtitle": "App usage terms and conditions",
+    "dataManagement": "Data Management",
+    "exportData": "Export Data",
+    "exportDataSubtitle": "Export your favorites and history",
+    "exportDataTitle": "Export Data",
+    "exportDataSuccess": "Data Exported Successfully",
+    "exportDataSuccessMessage": "Your data has been copied to clipboard as {{fileName}}. You can paste it into a text editor or email.",
+    "exportDataError": "Failed to export data. Please try again.",
+    "noDataToExport": "No data to export. Your favorites and history are empty.",
+    "deleteAllData": "Delete All Data",
+    "deleteAllDataSubtitle": "Permanently delete all your data",
+    "deleteAllDataTitle": "Delete All Data",
+    "deleteAllDataMessage": "This will permanently delete all your favorites, history, and settings. This action cannot be undone.",
+    "deleteAllDataConfirm": "Delete All",
+    "deleteAllDataSuccess": "Data Deleted Successfully",
+    "deleteAllDataSuccessMessage": "All your data has been permanently deleted.",
+    "deleteAllDataError": "Failed to delete data. Please try again.",
+    "aboutTitle": "About PolyLingo",
     "aboutVersion": "Version 1.0.0",
     "aboutSubtitle": "Your AI-powered multilingual translator",
     "aboutFeatures": "Features:\n• Up to 5 languages simultaneously\n• Voice input and text-to-speech\n• Favorite translations for quick access\n• Translation history with date filtering\n• Dark/Light theme support\n• Beautiful, intuitive interface",
     "aboutBuiltWith": "Built with React Native & Claude AI",
-    "aboutCopyright": "© 2025 Polyglot Translator Team",
+    "aboutCopyright": "© 2025 PolyLingo Team",
     "aboutButton": "Got it"
   },
   "alert": {
@@ -88,7 +106,9 @@
     "confirm": "OK",
     "cancel": "Cancel",
     "later": "Later",
-    "translationError": "An error occurred during translation. Please try again."
+    "translationError": "An error occurred during translation. Please try again.",
+    "networkRequired": "Internet connection required",
+    "networkRequiredMessage": "Please check your internet connection and try again. Translation requires an active internet connection."
   },
   "language": {
     "korean": "한국어",
@@ -146,9 +166,9 @@
   },
   "feedbackModal": {
     "title": "Send Feedback",
-    "message": "We'd love to hear from you! 💬\n\nHelp us improve Polyglot Translator by sharing:\n\n• Feature requests\n• Bug reports\n• Language accuracy feedback\n• UI/UX suggestions\n• General thoughts\n\nYour feedback helps us make the app better for everyone!",
-    "emailSubject": "Polyglot Translator Feedback",
-    "emailBody": "Hello,\n\nI would like to share feedback about Polyglot Translator:\n\n",
+    "message": "We'd love to hear from you! 💬\n\nHelp us improve PolyLingo by sharing:\n\n• Feature requests\n• Bug reports\n• Language accuracy feedback\n• UI/UX suggestions\n• General thoughts\n\nYour feedback helps us make the app better for everyone!",
+    "emailSubject": "PolyLingo Feedback",
+    "emailBody": "Hello,\n\nI would like to share feedback about PolyLingo:\n\n",
     "emailError": "Unable to open mail app",
     "emailFallbackTitle": "Send Feedback",
     "emailFallbackMessage": "Email app is not available. The feedback email address has been copied to your clipboard:\n\nyongjae.kim.dev@gmail.com\n\nYou can paste it in your preferred email app or browser.",
@@ -156,12 +176,12 @@
   },
   "rateModal": {
     "title": "Rate Our App ⭐",
-    "message": "Enjoying Polyglot Translator?\n\nYour rating helps others discover our app and motivates us to keep improving!\n\n⭐⭐⭐⭐⭐\n\n• Quick & accurate translations\n• Beautiful, intuitive interface\n• Regular updates & new features\n• Free with premium features\n\nIt only takes 30 seconds and means the world to us! 🙏",
+    "message": "Enjoying PolyLingo?\n\nYour rating helps others discover our app and motivates us to keep improving!\n\n⭐⭐⭐⭐⭐\n\n• Quick & accurate translations\n• Beautiful, intuitive interface\n• Regular updates & new features\n• Free with premium features\n\nIt only takes 30 seconds and means the world to us! 🙏",
     "rate": "Rate 5 Stars ⭐"
   },
   "privacyModal": {
     "title": "Privacy Policy 🔒",
-    "message": "Effective Date: July 2025\n\nPolyglot Translator Privacy Policy\n\nWe respect your privacy and are committed to protecting your personal data.\n\n📱 INFORMATION WE COLLECT:\n• Translation text (processed temporarily)\n• App usage preferences (stored locally)\n• No personal identifying information\n\n🔒 HOW WE USE YOUR DATA:\n• Process translations via secure API\n• Improve app functionality\n• Store favorites/history locally on your device\n\n🤝 THIRD-PARTY SERVICES:\n• Claude AI: Translation processing only\n• Google AdMob: Anonymous advertising (if applicable)\n• No data shared for other purposes\n\n👤 YOUR RIGHTS:\n• Access your data\n• Delete your data anytime\n• Opt-out of ads\n\n📧 CONTACT:\nyongjae.kim.dev@gmail.com\n\nFor questions about this policy, please contact us via email."
+    "message": "Effective Date: July 2025\n\nPolyLingo Privacy Policy\n\nWe respect your privacy and are committed to protecting your personal data.\n\n📱 INFORMATION WE COLLECT:\n• Translation text (processed temporarily)\n• App usage preferences (stored locally)\n• No personal identifying information\n\n🔒 HOW WE USE YOUR DATA:\n• Process translations via secure API\n• Improve app functionality\n• Store favorites/history locally on your device\n\n🤝 THIRD-PARTY SERVICES:\n• Claude AI: Translation processing only\n• Google AdMob: Anonymous advertising (if applicable)\n• No data shared for other purposes\n\n👤 YOUR RIGHTS:\n• Access your data\n• Delete your data anytime\n• Opt-out of ads\n\n📧 CONTACT:\nyongjae.kim.dev@gmail.com\n\nFor questions about this policy, please contact us via email."
   },
   "featuresModal": {
     "title": "Key Features",
@@ -182,10 +202,18 @@
     "goodMorning": "Good morning ☀️",
     "goodAfternoon": "Good afternoon 🌤️",
     "goodEvening": "Good evening 🌙",
-    "translateTitle": "Polyglot translator",
+    "translateTitle": "PolyLingo",
     "speechNotAvailable": "Speech recognition is not available on this device",
     "voiceStartError": "Failed to start voice recognition",
-    "searching": "Searching..."
+    "searching": "Searching...",
+    "micPermissionTitle": "Microphone Permission Required",
+    "micPermissionMessage": "PolyLingo needs microphone access to use voice input. Please grant permission in your device settings.",
+    "openSettings": "Open Settings",
+    "tryAgain": "Try Again",
+    "micPermissionRequired": "Microphone permission is required for voice input",
+    "micPermissionDenied": "Microphone permission is still denied. Please enable it in Settings.",
+    "micPermissionFailed": "Failed to check microphone permission. Please try again.",
+    "settingsOpenFailed": "Unable to open settings. Please manually enable microphone permission for PolyLingo."
   },
   "loading": {
     "searching": "Searching...",
@@ -272,5 +300,31 @@
       "freeUsageDescription": "1 language = 0.5 usage, 2 languages = 1 usage", 
       "premiumUsageDescription": "1 language = 0.2 usage, 5 languages = 1 usage"
     }
+  },
+  "consent": {
+    "title": "Welcome to PolyLingo",
+    "subtitle": "Your privacy matters to us",
+    "welcomeTitle": "Welcome to PolyLingo!",
+    "welcomeMessage": "Thank you for downloading PolyLingo. We're excited to help you break down language barriers with our AI-powered translation app.",
+    "dataCollectionTitle": "Data Collection & Privacy",
+    "dataCollectionMessage": "We believe in transparency about how we handle your data. Here's what you need to know:",
+    "dataWeCollect": "What we collect:",
+    "translationText": "Translation text (processed temporarily, not stored)",
+    "languagePreferences": "Language preferences and app settings",
+    "usageStatistics": "Anonymous usage statistics to improve the app",
+    "crashReports": "Crash reports to fix bugs and improve stability",
+    "dataWeDontCollect": "What we DON'T collect:",
+    "personalIdentity": "Personal information (name, email, phone)",
+    "locationData": "Location data or GPS information",
+    "contactInfo": "Contact lists or personal files",
+    "agreementTitle": "Your Agreement",
+    "termsAgreement": "I have read and agree to the Terms of Service",
+    "termsDescription": "App usage terms and conditions",
+    "privacyAgreement": "I have read and agree to the Privacy Policy",
+    "privacyDescription": "Data handling and security policy",
+    "finalMessage": "By continuing, you agree to our data handling practices and confirm you're 13 years or older.",
+    "accept": "Accept & Continue",
+    "decline": "Decline",
+    "footerMessage": "You can change your preferences anytime in Settings"
   }
 }

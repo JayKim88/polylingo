@@ -20,6 +20,9 @@ import {
   Languages,
   Moon,
   Sun,
+  FileText,
+  Trash2,
+  Download,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
@@ -33,9 +36,13 @@ import {
 
 import AppLanguageModal from '../../components/AppLanguageModal';
 import SubscriptionModal from '../../components/SubscriptionModal';
+import LegalDocumentModal from '../../components/LegalDocumentModal';
 import { SubscriptionService } from '../../utils/subscriptionService';
 import { VersionService } from '../../utils/version';
 import { NEW_AD_TERM } from './favorites';
+import { PRIVACY_POLICY_CONTENT, TERMS_OF_SERVICE_CONTENT } from '../../constants/legalDocuments';
+import { StorageService } from '../../utils/storage';
+import { TranslationAPI } from '../../utils/translationAPI';
 
 type SettingItemProps = {
   icon: React.ReactNode;
@@ -54,6 +61,8 @@ export default function SettingsTab() {
 
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
   const [showAd, setShowAd] = useState(false);
@@ -108,9 +117,88 @@ export default function SettingsTab() {
   };
 
   const handlePrivacy = () => {
-    Alert.alert(t('privacyModal.title'), t('privacyModal.message'), [
-      { text: t('alert.confirm') },
-    ]);
+    setShowPrivacyModal(true);
+  };
+
+  const handleTermsOfService = () => {
+    setShowTermsModal(true);
+  };
+
+  const handleDeleteAllData = () => {
+    Alert.alert(
+      t('settings.deleteAllDataTitle'),
+      t('settings.deleteAllDataMessage'),
+      [
+        { text: t('alert.cancel'), style: 'cancel' },
+        {
+          text: t('settings.deleteAllDataConfirm'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Clear all stored data
+              await StorageService.clearAllData();
+              // Clear translation cache
+              TranslationAPI.clearCache();
+              // Reset subscription to free plan
+              await SubscriptionService.setSubscription('free', true);
+              
+              Alert.alert(
+                t('settings.deleteAllDataSuccess'),
+                t('settings.deleteAllDataSuccessMessage'),
+                [{ text: t('alert.confirm') }]
+              );
+            } catch (error) {
+              Alert.alert(
+                t('alert.error'),
+                t('settings.deleteAllDataError'),
+                [{ text: t('alert.confirm') }]
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleExportData = async () => {
+    try {
+      const favorites = await StorageService.getFavorites();
+      const history = await StorageService.getHistory();
+      
+      if (favorites.length === 0 && history.length === 0) {
+        Alert.alert(
+          t('settings.exportDataTitle'),
+          t('settings.noDataToExport'),
+          [{ text: t('alert.confirm') }]
+        );
+        return;
+      }
+      
+      const exportData = {
+        favorites,
+        history,
+        exportDate: new Date().toISOString(),
+        appVersion: VersionService.getFormattedVersion(),
+      };
+      
+      const dataString = JSON.stringify(exportData, null, 2);
+      const fileName = `polylingo-data-${new Date().toISOString().split('T')[0]}.json`;
+      
+      // Copy to clipboard as fallback
+      Clipboard.setString(dataString);
+      
+      Alert.alert(
+        t('settings.exportDataSuccess'),
+        t('settings.exportDataSuccessMessage', { fileName }),
+        [{ text: t('alert.confirm') }]
+      );
+    } catch (error) {
+      Alert.alert(
+        t('alert.error'),
+        t('settings.exportDataError'),
+        [{ text: t('alert.confirm') }]
+      );
+    }
   };
 
   const handleLanguageSupport = () => {
@@ -572,6 +660,40 @@ export default function SettingsTab() {
               iconColor="#8B5CF6"
               backgroundColor="#F3E8FF"
             />
+            <SettingItem
+              icon={<FileText size={20} color="#059669" />}
+              title={t('settings.termsOfService')}
+              subtitle={t('settings.termsOfServiceSubtitle')}
+              onPress={handleTermsOfService}
+              iconColor="#059669"
+              backgroundColor="#ECFDF5"
+            />
+          </View>
+
+          {/* Data Management Card */}
+          <View className="rounded-3xl mt-4">
+            <Text
+              className="text-lg font-bold mb-4"
+              style={{ color: colors.text }}
+            >
+              {t('settings.dataManagement')}
+            </Text>
+            <SettingItem
+              icon={<Download size={20} color="#3B82F6" />}
+              title={t('settings.exportData')}
+              subtitle={t('settings.exportDataSubtitle')}
+              onPress={handleExportData}
+              iconColor="#3B82F6"
+              backgroundColor="#EFF6FF"
+            />
+            <SettingItem
+              icon={<Trash2 size={20} color="#EF4444" />}
+              title={t('settings.deleteAllData')}
+              subtitle={t('settings.deleteAllDataSubtitle')}
+              onPress={handleDeleteAllData}
+              iconColor="#EF4444"
+              backgroundColor="#FEF2F2"
+            />
           </View>
 
           {/* Footer */}
@@ -599,6 +721,18 @@ export default function SettingsTab() {
         onSubscriptionChange={() => {
           // Refresh any subscription-related UI if needed
         }}
+      />
+      <LegalDocumentModal
+        visible={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        title={t('settings.privacyPolicy')}
+        content={PRIVACY_POLICY_CONTENT}
+      />
+      <LegalDocumentModal
+        visible={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        title={t('settings.termsOfService')}
+        content={TERMS_OF_SERVICE_CONTENT}
       />
     </Animated.View>
   );
