@@ -310,7 +310,9 @@ export default function SearchTab() {
 
     isVoiceActive && (await stopVoiceRecording());
 
-    setResults([]);
+    // Initialize results array with null placeholders for skeleton loading
+    const initialResults = new Array(targetLanguages.length).fill(null);
+    setResults(initialResults);
     setIsLoading(true);
 
     // Clear previous translation states
