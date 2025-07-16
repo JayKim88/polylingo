@@ -1,17 +1,17 @@
 import React from 'react';
-import { View, Text, Animated, ActivityIndicator } from 'react-native';
+import { View, Text, Animated } from 'react-native';
+import { useTranslation } from 'react-i18next';
+
 import { TranslationResult } from '../types/dictionary';
 import TranslationCard from './TranslationCard';
-import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
 import Loading from './Loading';
+import { TranslationState as ImportedTranslationState } from '@/app/(tabs)';
 
-type TranslationState = {
-  status: 'loading' | 'timeout' | 'retrying' | 'success' | 'error';
-  result?: TranslationResult;
-  error?: string;
-  retryCount: number;
-};
+type TranslationState = Omit<
+  ImportedTranslationState,
+  'abortController' | 'timeoutId'
+>;
 
 type TranslationListProps = {
   results: (TranslationResult | null)[];
@@ -64,6 +64,7 @@ export default function TranslationList({
       fadeAnim.setValue(0);
     }
   }, [results.length, isLoading, fadeAnim]);
+
   const isFavorite = (result: TranslationResult) => {
     const id = `${result.sourceText}-${result.sourceLanguage}-${result.targetLanguage}`;
     return favorites.includes(id);

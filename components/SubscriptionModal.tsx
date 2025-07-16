@@ -10,11 +10,12 @@ import {
 } from 'react-native';
 import { X, Crown, Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { Subscription } from 'react-native-iap';
+
 import { useTheme } from '../contexts/ThemeContext';
 import { IAPService } from '../utils/iapService';
 import { SubscriptionService } from '../utils/subscriptionService';
 import { SUBSCRIPTION_PLANS, UserSubscription } from '../types/subscription';
-import { Subscription } from 'react-native-iap';
 
 interface SubscriptionModalProps {
   visible: boolean;
@@ -29,6 +30,7 @@ export default function SubscriptionModal({
 }: SubscriptionModalProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+
   const [products, setProducts] = useState<Subscription[]>([]);
   const [currentSubscription, setCurrentSubscription] =
     useState<UserSubscription | null>(null);
@@ -37,9 +39,8 @@ export default function SubscriptionModal({
   const [iapAvailable, setIapAvailable] = useState(false);
 
   useEffect(() => {
-    if (visible) {
-      loadSubscriptionData();
-    }
+    if (!visible) return;
+    loadSubscriptionData();
   }, [visible]);
 
   const loadSubscriptionData = async () => {
@@ -47,7 +48,7 @@ export default function SubscriptionModal({
     try {
       // Check if IAP is available
       setIapAvailable(IAPService.isIAPAvailable());
-      
+
       const [productsResult, subscriptionResult] = await Promise.all([
         IAPService.getSubscriptionProducts(),
         SubscriptionService.getCurrentSubscription(),
@@ -261,13 +262,15 @@ export default function SubscriptionModal({
               className="text-center mb-6"
               style={{ color: colors.textSecondary }}
             >
-              Subscription features are not available in this environment. This is normal when running in a simulator or development build.
+              Subscription features are not available in this environment. This
+              is normal when running in a simulator or development build.
             </Text>
             <Text
               className="text-sm text-center"
               style={{ color: colors.textSecondary }}
             >
-              You currently have access to the Free plan with all basic features.
+              You currently have access to the Free plan with all basic
+              features.
             </Text>
           </View>
         ) : (

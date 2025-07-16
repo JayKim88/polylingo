@@ -14,10 +14,11 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { X, RotateCcw, TestTube, Save } from 'lucide-react-native';
-import { StorageService, VoiceSettings } from '../utils/storage';
-import { SpeechService } from '../utils/speechService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+
+import { StorageService, VoiceSettings } from '../utils/storage';
+import { SpeechService } from '../utils/speechService';
 import { useTheme } from '../contexts/ThemeContext';
 
 type VoiceSettingsModalProps = {
@@ -39,8 +40,8 @@ export default function VoiceSettingsModal({
     rate: 0.8,
     pitch: 1.0,
   });
-
   const [isTesting, setIsTesting] = useState(false);
+
   const resetButtonScale = useRef(new Animated.Value(1)).current;
   const testButtonScale = useRef(new Animated.Value(1)).current;
   const saveButtonScale = useRef(new Animated.Value(1)).current;

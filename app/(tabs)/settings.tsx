@@ -14,7 +14,6 @@ import {
   Settings,
   Info,
   MessageCircle,
-  Star,
   Shield,
   Globe,
   ChevronRight,
@@ -36,6 +35,7 @@ import AppLanguageModal from '../../components/AppLanguageModal';
 import SubscriptionModal from '../../components/SubscriptionModal';
 import { SubscriptionService } from '../../utils/subscriptionService';
 import { VersionService } from '../../utils/version';
+import { NEW_AD_TERM } from './favorites';
 
 type SettingItemProps = {
   icon: React.ReactNode;
@@ -49,30 +49,18 @@ type SettingItemProps = {
 
 export default function SettingsTab() {
   const { t } = useTranslation();
+  const { animatedStyle } = useTabSlideAnimation();
+  const { theme, colors, toggleTheme } = useTheme();
+
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const { theme, colors, toggleTheme } = useTheme();
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
-  const { animatedStyle } = useTabSlideAnimation();
   const [showAd, setShowAd] = useState(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      // Generate new ad only if 30 seconds have passed
-      const now = Date.now();
-      if (now - lastAdRefresh > 30000) {
-        // 30 seconds interval
-        setAdKey((prev) => prev + 1);
-        setLastAdRefresh(now);
-      }
-      SubscriptionService.shouldShowAds().then((result) => setShowAd(result));
-    }, [lastAdRefresh])
-  );
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
   const headerAnimValue = useRef(new Animated.Value(1)).current;
   const contentAnimValue = useRef(new Animated.Value(0)).current;
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
 
   const handleAbout = () => {
@@ -355,6 +343,17 @@ export default function SettingsTab() {
     );
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      const now = Date.now();
+      if (now - lastAdRefresh > NEW_AD_TERM) {
+        setAdKey((prev) => prev + 1);
+        setLastAdRefresh(now);
+      }
+      SubscriptionService.shouldShowAds().then((result) => setShowAd(result));
+    }, [lastAdRefresh])
+  );
+
   return (
     <Animated.View
       style={{
@@ -362,7 +361,6 @@ export default function SettingsTab() {
         flex: 1,
       }}
     >
-      {/* Modern Header */}
       <Animated.View
         className="px-6 pt-4 pb-2 rounded-b-3xl"
         style={{

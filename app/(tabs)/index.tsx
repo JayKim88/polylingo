@@ -15,6 +15,12 @@ import {
 } from 'react-native';
 import { Languages, Volume2, Mic, Search, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import {
+  BannerAd,
+  BannerAdSize,
+  TestIds,
+} from 'react-native-google-mobile-ads';
+
 import LanguageSelector from '../../components/LanguageSelector';
 import SearchInput from '../../components/SearchInput';
 import TranslationList from '../../components/TranslationList';
@@ -34,28 +40,24 @@ import { hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '../../utils/subscriptionService';
 import { IAPService } from '../../utils/iapService';
 
-import {
-  BannerAd,
-  BannerAdSize,
-  TestIds,
-} from 'react-native-google-mobile-ads';
+const TRANSLATION_PROVIDER = 'claude';
+const MAX_LENGTH = 50;
+
+export type TranslationState = {
+  status: 'loading' | 'timeout' | 'retrying' | 'success' | 'error';
+  result?: TranslationResult;
+  error?: string;
+  retryCount: number;
+  abortController?: AbortController;
+  timeoutId?: ReturnType<typeof setTimeout>;
+};
 
 export default function SearchTab() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { refreshSubscription } = useSubscription();
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const [searchText, setSearchText] = useState('');
-  // 개별 번역 상태 관리
-  type TranslationState = {
-    status: 'loading' | 'timeout' | 'retrying' | 'success' | 'error';
-    result?: TranslationResult;
-    error?: string;
-    retryCount: number;
-    abortController?: AbortController;
-    timeoutId?: ReturnType<typeof setTimeout>;
-  };
 
+  const [searchText, setSearchText] = useState('');
   const [results, setResults] = useState<(TranslationResult | null)[]>([]);
   const [translationStates, setTranslationStates] = useState<
     Map<string, TranslationState>
@@ -73,27 +75,24 @@ export default function SearchTab() {
   const [speechRecognition, setSpeechRecognition] = useState<{
     stop: () => void;
   } | null>(null);
-  const [translationProvider, setTranslationProvider] = useState<
-    'default' | 'claude'
-  >('claude');
   const [searchAbortController, setSearchAbortController] =
     useState<AbortController | null>(null);
   const [showBannerAd, setShowBannerAd] = useState(false);
   const [shouldShowAds, setShouldShowAds] = useState(true);
   const [adKey, setAdKey] = useState(0); // 새로운 광고를 위한 키
-  const searchAnimValue = useRef(new Animated.Value(0)).current;
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
+
   const isInitialFocus = useRef(true);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const searchAnimValue = useRef(new Animated.Value(0)).current;
   const voiceButtonScale = useRef(new Animated.Value(1)).current;
   const translateButtonScale = useRef(new Animated.Value(1)).current;
   const headerAnimValue = useRef(
     new Animated.Value(isInitialFocus.current ? -1 : 0)
   ).current;
 
-  const MAX_LENGTH = 50;
   const isInputTooLong = searchText.length > MAX_LENGTH;
 
-  // 시간대에 따라 인사말 결정
   const greetingKey = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 12) return 'search.goodMorning';
@@ -159,12 +158,10 @@ export default function SearchTab() {
     checkVoiceAvailability();
     showTabBar();
 
-    // Animate header in sync with tab slide animation
     if (isInitialFocus.current) {
       isInitialFocus.current = false;
       setIsHeaderVisible(true);
 
-      // Animate header after safe area animation completes
       setTimeout(() => {
         Animated.timing(headerAnimValue, {
           toValue: 1,
@@ -221,7 +218,6 @@ export default function SearchTab() {
       // Only hide header when scrolling down and header is currently visible
       if (!scrollingUp && scrollY > 50 && isHeaderVisible) {
         setIsHeaderVisible(false);
-        // Hide header and tab bar, move search up when scrolling down
         hideTabBar();
         Animated.parallel([
           Animated.timing(headerAnimValue, {
@@ -267,7 +263,6 @@ export default function SearchTab() {
   useEffect(() => {
     checkVoiceAvailability();
 
-    // Cleanup IAP service on unmount
     return () => {
       IAPService.cleanup().catch(console.error);
     };
@@ -277,7 +272,6 @@ export default function SearchTab() {
     if (!searchText.trim()) return;
     if (selectedLanguages.length === 0) return;
 
-    // 키보드 닫기
     Keyboard.dismiss();
 
     // 선택된 언어들 중 소스 언어 제외
@@ -285,8 +279,8 @@ export default function SearchTab() {
       (lang) => lang !== sourceLanguage
     );
 
-    // 일일 사용량 확인 (번역할 언어 수 전달)
-    const canUse = await SubscriptionService.incrementDailyUsage(
+    // 일일 사용량 확인 (번역하기 전에 사용 가능한지만 체크)
+    const canUse = await SubscriptionService.canUseTranslation(
       targetLanguages.length
     );
     if (!canUse) {
@@ -302,12 +296,7 @@ export default function SearchTab() {
       return;
     }
 
-    // Trigger usage refresh immediately after usage increment
-    setUsageRefreshTrigger((prev) => prev + 1);
-
-    if (isVoiceActive) {
-      await stopVoiceRecording();
-    }
+    isVoiceActive && (await stopVoiceRecording());
 
     setResults([]);
     setIsLoading(true);
@@ -368,6 +357,14 @@ export default function SearchTab() {
         );
 
       if (successfulTranslations.length > 0) {
+        // 성공한 번역이 있을 때만 사용량 증가
+        await SubscriptionService.incrementDailyUsage(
+          successfulTranslations.length
+        );
+
+        // Trigger usage refresh after successful translations
+        setUsageRefreshTrigger((prev) => prev + 1);
+
         // Show banner ad after successful search with new ad (if ads should be shown)
         if (shouldShowAds) {
           setShowBannerAd(true);
@@ -398,16 +395,13 @@ export default function SearchTab() {
   };
 
   const handleCancelSearch = () => {
-    // 키보드 닫기
     Keyboard.dismiss();
 
-    // Cancel ongoing search if active
     if (searchAbortController) {
       searchAbortController.abort();
       setSearchAbortController(null);
     }
 
-    // Clear results and reset states
     handleClear();
   };
 
@@ -423,19 +417,18 @@ export default function SearchTab() {
     // 상태 초기화
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => {
-      if (!abortController.signal.aborted) {
-        setTranslationStates((prev) => {
-          const newMap = new Map(prev);
-          const currentState = newMap.get(stateKey);
-          if (currentState && currentState.status === 'loading') {
-            newMap.set(stateKey, {
-              ...currentState,
-              status: 'timeout',
-            });
-          }
-          return newMap;
-        });
-      }
+      if (abortController.signal.aborted) return;
+      setTranslationStates((prev) => {
+        const newMap = new Map(prev);
+        const currentState = newMap.get(stateKey);
+        if (currentState && currentState.status === 'loading') {
+          newMap.set(stateKey, {
+            ...currentState,
+            status: 'timeout',
+          });
+        }
+        return newMap;
+      });
     }, 10000);
 
     setTranslationStates((prev) => {
@@ -454,7 +447,7 @@ export default function SearchTab() {
         searchText.trim(),
         sourceLanguage,
         targetLang,
-        { provider: translationProvider }
+        { provider: TRANSLATION_PROVIDER }
       );
 
       clearTimeout(timeoutId);
@@ -487,17 +480,17 @@ export default function SearchTab() {
     } catch (error) {
       clearTimeout(timeoutId);
 
-      if (!abortController.signal.aborted) {
-        setTranslationStates((prev) => {
-          const newMap = new Map(prev);
-          newMap.set(stateKey, {
-            status: 'error',
-            error: (error as Error).message,
-            retryCount,
-          });
-          return newMap;
+      if (abortController.signal.aborted) return;
+
+      setTranslationStates((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(stateKey, {
+          status: 'error',
+          error: (error as Error).message,
+          retryCount,
         });
-      }
+        return newMap;
+      });
     }
 
     return null;
@@ -518,6 +511,12 @@ export default function SearchTab() {
     );
 
     if (result) {
+      // 재시도 성공 시 사용량 증가 (1개 언어)
+      await SubscriptionService.incrementDailyUsage(1);
+      
+      // Trigger usage refresh after successful retry
+      setUsageRefreshTrigger((prev) => prev + 1);
+
       // Update results array
       const targetLanguages = selectedLanguages.filter(
         (lang) => lang !== sourceLanguage

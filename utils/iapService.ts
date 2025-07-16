@@ -14,6 +14,7 @@ import {
   Subscription,
 } from 'react-native-iap';
 import { Platform, Alert } from 'react-native';
+
 import { SubscriptionService } from './subscriptionService';
 import { IAP_PRODUCT_IDS } from '../types/subscription';
 
@@ -83,7 +84,6 @@ export class IAPService {
     }
   }
 
-  // IAP 사용 가능 여부 확인
   static isIAPAvailable(): boolean {
     return this.isAvailable;
   }
@@ -91,7 +91,6 @@ export class IAPService {
   // 구매 리스너 설정
   private static setupPurchaseListeners() {
     // 구매 성공 리스너
-
     this.purchaseUpdateSubscription = purchaseUpdatedListener(
       async (purchase: Purchase) => {
         console.log('Purchase successful:', purchase);

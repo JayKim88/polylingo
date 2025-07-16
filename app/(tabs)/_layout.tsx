@@ -2,17 +2,19 @@ import { Tabs } from 'expo-router';
 import { Search, Heart, Clock, Settings } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Animated, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
-// Global tab bar animation state
 export const globalTabBarAnim = new Animated.Value(1);
+
+export const ANIMATION_DURATION = 300;
+const TAB_BAR_ICON_SIZE = 30;
 
 export const hideTabBar = () => {
   Animated.timing(globalTabBarAnim, {
     toValue: 0,
-    duration: 300,
+    duration: ANIMATION_DURATION,
     useNativeDriver: true,
   }).start();
 };
@@ -20,40 +22,40 @@ export const hideTabBar = () => {
 export const showTabBar = () => {
   Animated.timing(globalTabBarAnim, {
     toValue: 1,
-    duration: 300,
+    duration: ANIMATION_DURATION,
     useNativeDriver: true,
   }).start();
 };
 
 export default function TabLayout() {
   const { t } = useTranslation();
-  const slideAnim = useRef(new Animated.Value(100)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const topSafeareaSlideAnim = useRef(new Animated.Value(0)).current;
   const { colors } = useTheme();
+  const verticalSlideAnim = useRef(new Animated.Value(100)).current;
+  const topSafeareaSlideAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     setTimeout(() => {
       Animated.timing(topSafeareaSlideAnim, {
         toValue: 1,
-        duration: 300,
+        duration: ANIMATION_DURATION,
         useNativeDriver: true,
       }).start(() => {
         Animated.parallel([
-          Animated.timing(slideAnim, {
+          Animated.timing(verticalSlideAnim, {
             toValue: 0,
-            duration: 300,
+            duration: ANIMATION_DURATION,
             useNativeDriver: true,
           }),
           Animated.timing(fadeAnim, {
             toValue: 1,
-            duration: 300,
+            duration: ANIMATION_DURATION,
             useNativeDriver: true,
           }),
         ]).start();
       });
     }, 100);
-  }, [slideAnim, fadeAnim, topSafeareaSlideAnim]);
+  }, [verticalSlideAnim, fadeAnim, topSafeareaSlideAnim]);
 
   const tabBarStyle = {
     backgroundColor: colors.surface,
@@ -72,13 +74,12 @@ export default function TabLayout() {
   };
 
   const animatedTabBarStyle = {
-    ...tabBarStyle,
     transform: [
-      { translateY: slideAnim },
+      { translateY: verticalSlideAnim },
       {
         translateY: globalTabBarAnim.interpolate({
           inputRange: [0, 1],
-          outputRange: [100, 0], // Hide 100px down when scrolling
+          outputRange: [100, 0],
         }),
       },
     ],
@@ -108,7 +109,7 @@ export default function TabLayout() {
             {
               translateY: topSafeareaSlideAnim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [-100, 0], // Start from above (-100px) and slide down to 0
+                outputRange: [-100, 0],
               }),
             },
           ],
@@ -117,7 +118,7 @@ export default function TabLayout() {
         <SafeAreaView
           style={{
             flex: 0,
-            backgroundColor: 'transparent', // Make SafeAreaView transparent
+            backgroundColor: 'transparent',
           }}
           edges={['top']}
         />
@@ -130,28 +131,28 @@ export default function TabLayout() {
         <Tabs
           screenOptions={{
             headerShown: false,
+            tabBarShowLabel: false,
+            tabBarIconStyle: {
+              height: '100%',
+              justifyContent: 'center',
+              alignItems: 'center',
+            },
             tabBarActiveTintColor: colors.primary,
             tabBarInactiveTintColor: colors.textTertiary,
             tabBarStyle: {
+              ...tabBarStyle,
               ...animatedTabBarStyle,
-              position: 'absolute',
               backgroundColor: colors.surface,
               borderTopColor: colors.border,
             },
-            tabBarLabelStyle: {
-              fontSize: 12,
-              fontFamily: 'Inter-SemiBold',
-              marginTop: 4,
-            },
-            tabBarBackground: () => <View className="bg-red"></View>,
           }}
         >
           <Tabs.Screen
             name="index"
             options={{
               title: t('tabs.search'),
-              tabBarIcon: ({ size, color }) => (
-                <Search size={size} color={color} />
+              tabBarIcon: ({ color }) => (
+                <Search size={TAB_BAR_ICON_SIZE} color={color} />
               ),
             }}
           />
@@ -159,8 +160,8 @@ export default function TabLayout() {
             name="favorites"
             options={{
               title: t('tabs.favorites'),
-              tabBarIcon: ({ size, color }) => (
-                <Heart size={size} color={color} />
+              tabBarIcon: ({ color }) => (
+                <Heart size={TAB_BAR_ICON_SIZE} color={color} />
               ),
             }}
           />
@@ -168,8 +169,8 @@ export default function TabLayout() {
             name="history"
             options={{
               title: t('tabs.history'),
-              tabBarIcon: ({ size, color }) => (
-                <Clock size={size} color={color} />
+              tabBarIcon: ({ color }) => (
+                <Clock size={TAB_BAR_ICON_SIZE} color={color} />
               ),
             }}
           />
@@ -177,8 +178,8 @@ export default function TabLayout() {
             name="settings"
             options={{
               title: t('tabs.settings'),
-              tabBarIcon: ({ size, color }) => (
-                <Settings size={size} color={color} />
+              tabBarIcon: ({ color }) => (
+                <Settings size={TAB_BAR_ICON_SIZE} color={color} />
               ),
             }}
           />

@@ -10,10 +10,11 @@ import {
 } from '@expo-google-fonts/inter';
 import { SplashScreen } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { ThemeProvider } from '../contexts/ThemeContext';
-import '../i18n';
 import { useEffect, useState } from 'react';
 import mobileAds from 'react-native-google-mobile-ads';
+
+import '../i18n';
+import { ThemeProvider } from '../contexts/ThemeContext';
 import CustomSplashScreen from '../components/SplashScreen';
 
 SplashScreen.preventAutoHideAsync();
@@ -36,9 +37,7 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
-  const handleSplashComplete = () => {
-    setShowCustomSplash(false);
-  };
+  const handleSplashComplete = () => setShowCustomSplash(false);
 
   useEffect(() => {
     // Initialize Google Mobile Ads

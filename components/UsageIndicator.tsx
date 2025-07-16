@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { useTheme } from '../contexts/ThemeContext';
 import { SubscriptionService } from '../utils/subscriptionService';
 import { useFocusEffect } from '@react-navigation/native';
@@ -8,6 +9,7 @@ import { useFocusEffect } from '@react-navigation/native';
 export default function UsageIndicator() {
   const { t } = useTranslation();
   const { colors } = useTheme();
+
   const [usage, setUsage] = useState({ used: 0, limit: 100, remaining: 100 });
   const [planId, setPlanId] = useState('free');
 
@@ -17,7 +19,7 @@ export default function UsageIndicator() {
         SubscriptionService.getDailyUsage(),
         SubscriptionService.getCurrentSubscription(),
       ]);
-      
+
       setUsage(usageData);
       setPlanId(subscription?.planId || 'free');
     } catch (error) {
@@ -31,24 +33,25 @@ export default function UsageIndicator() {
     }, [])
   );
 
-  // 사용량 퍼센티지 계산
   const usagePercentage = (usage.used / usage.limit) * 100;
-  
-  // 상태에 따른 색상 결정
+
   const getStatusColor = () => {
     if (usagePercentage >= 95) return '#EF4444'; // 빨간색 (위험)
     if (usagePercentage >= 80) return '#F59E0B'; // 주황색 (주의)
     return '#10B981'; // 초록색 (안전)
   };
 
-  // 플랜별 언어 수에 따른 안내 메시지
   const getUsageDescription = () => {
     if (planId === 'free') {
-      return t('subscription.features.freeUsageDescription') || 
-        '1개 언어 = 0.5회, 2개 언어 = 1회 사용량';
+      return (
+        t('subscription.features.freeUsageDescription') ||
+        '1개 언어 = 0.5회, 2개 언어 = 1회 사용량'
+      );
     }
-    return t('subscription.features.premiumUsageDescription') || 
-      '1개 언어 = 0.2회, 5개 언어 = 1회 사용량';
+    return (
+      t('subscription.features.premiumUsageDescription') ||
+      '1개 언어 = 0.2회, 5개 언어 = 1회 사용량'
+    );
   };
 
   return (
@@ -62,20 +65,17 @@ export default function UsageIndicator() {
       onPress={loadUsage}
     >
       <View className="flex-row items-center justify-between mb-2">
-        <Text
-          className="text-sm font-medium"
-          style={{ color: colors.text }}
-        >
-          {t('subscription.dailyUsage', { used: usage.used.toFixed(1), limit: usage.limit })}
+        <Text className="text-sm font-medium" style={{ color: colors.text }}>
+          {t('subscription.dailyUsage', {
+            used: usage.used.toFixed(1),
+            limit: usage.limit,
+          })}
         </Text>
-        <Text
-          className="text-xs font-bold"
-          style={{ color: getStatusColor() }}
-        >
+        <Text className="text-xs font-bold" style={{ color: getStatusColor() }}>
           {usage.remaining.toFixed(1)} {t('subscription.remaining')}
         </Text>
       </View>
-      
+
       {/* 사용량 진행 바 */}
       <View
         className="h-2 rounded-full mb-2"
@@ -89,11 +89,8 @@ export default function UsageIndicator() {
           }}
         />
       </View>
-      
-      <Text
-        className="text-xs"
-        style={{ color: colors.textSecondary }}
-      >
+
+      <Text className="text-xs" style={{ color: colors.textSecondary }}>
         {getUsageDescription()}
       </Text>
     </TouchableOpacity>

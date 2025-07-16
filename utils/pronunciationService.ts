@@ -11,18 +11,6 @@ export class PronunciationService {
     languageCode: string
   ): Promise<string | null> {
     try {
-      /**
-       * @description not working properly.
-       */
-      // const googlePronunciation = await this.getGoogleTranslatePronunciation(
-      //   word,
-      //   languageCode
-      // );
-
-      // if (googlePronunciation) {
-      //   return googlePronunciation;
-      // }
-
       if (languageCode === 'en') {
         const dictPronunciation = await this.getEnglishPronunciation(word);
         if (dictPronunciation) {

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
-import { Heart, Calendar } from 'lucide-react-native';
+import { Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import {
   BannerAd,
@@ -15,12 +15,18 @@ import DatePickerModal from '../../components/DatePickerModal';
 import { StorageService } from '../../utils/storage';
 import { FavoriteItem } from '../../types/dictionary';
 import { useTheme } from '../../contexts/ThemeContext';
-import { hideTabBar, showTabBar } from './_layout';
+import { ANIMATION_DURATION, hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '@/utils/subscriptionService';
+
+/**
+ * 3s
+ */
+export const NEW_AD_TERM = 30000;
 
 export default function FavoritesTab() {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { animatedStyle } = useTabSlideAnimation();
 
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -31,11 +37,12 @@ export default function FavoritesTab() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const contentAnimValue = useRef(new Animated.Value(0)).current;
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
-  const headerAnimValue = useRef(new Animated.Value(1)).current;
   const [showAd, setShowAd] = useState(false);
+
+  const contentAnimValue = useRef(new Animated.Value(0)).current;
+  const headerAnimValue = useRef(new Animated.Value(1)).current;
 
   const loadFavorites = useCallback(async () => {
     setIsLoading(true);
@@ -49,6 +56,7 @@ export default function FavoritesTab() {
           favs.map((fav) => new Date(fav.createdAt).toISOString().split('T')[0])
         ),
       ];
+      // Use it for marking in calendar
       setFavoriteDates(dates);
 
       // Show all favorites initially
@@ -57,24 +65,6 @@ export default function FavoritesTab() {
       setIsLoading(false);
     }
   }, []);
-
-  const { animatedStyle } = useTabSlideAnimation();
-
-  useFocusEffect(
-    useCallback(() => {
-      loadFavorites();
-
-      // Generate new ad only if 30 seconds have passed
-      const now = Date.now();
-      if (now - lastAdRefresh > 30000) {
-        // 30 seconds interval
-        setAdKey((prev) => prev + 1);
-        setLastAdRefresh(now);
-      }
-
-      SubscriptionService.shouldShowAds().then((result) => setShowAd(result));
-    }, [loadFavorites, lastAdRefresh])
-  );
 
   const handleDateSelect = (date: string | null) => {
     setSelectedDate(date);
@@ -89,10 +79,6 @@ export default function FavoritesTab() {
     }
   };
 
-  const handleDatePickerSelect = (date: string | null) => {
-    handleDateSelect(date);
-  };
-
   const handleRemoveFavorite = async (id: string) => {
     await StorageService.removeFavorite(id);
     loadFavorites();
@@ -105,12 +91,12 @@ export default function FavoritesTab() {
     Animated.parallel([
       Animated.timing(headerAnimValue, {
         toValue: 0,
-        duration: 300,
+        duration: ANIMATION_DURATION,
         useNativeDriver: true,
       }),
       Animated.timing(contentAnimValue, {
         toValue: 1,
-        duration: 300,
+        duration: ANIMATION_DURATION,
         useNativeDriver: true,
       }),
     ]).start();
@@ -123,16 +109,30 @@ export default function FavoritesTab() {
     Animated.parallel([
       Animated.timing(headerAnimValue, {
         toValue: 1,
-        duration: 300,
+        duration: ANIMATION_DURATION,
         useNativeDriver: true,
       }),
       Animated.timing(contentAnimValue, {
         toValue: 0,
-        duration: 300,
+        duration: ANIMATION_DURATION,
         useNativeDriver: true,
       }),
     ]).start();
   }, [headerAnimValue, contentAnimValue, isHeaderVisible]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadFavorites();
+
+      const now = Date.now();
+      if (now - lastAdRefresh > NEW_AD_TERM) {
+        setAdKey((prev) => prev + 1);
+        setLastAdRefresh(now);
+      }
+
+      SubscriptionService.shouldShowAds().then((result) => setShowAd(result));
+    }, [loadFavorites, lastAdRefresh])
+  );
 
   return (
     <Animated.View
@@ -141,7 +141,6 @@ export default function FavoritesTab() {
         backgroundColor: colors.background,
       }}
     >
-      {/* Modern Header */}
       <Animated.View
         className="px-6 pt-4 pb-2 rounded-b-3xl"
         style={{
@@ -247,7 +246,7 @@ export default function FavoritesTab() {
         visible={showDatePicker}
         selectedDate={selectedDate}
         markedDates={favoriteDates}
-        onDateSelect={handleDatePickerSelect}
+        onDateSelect={handleDateSelect}
         onClose={() => setShowDatePicker(false)}
       />
     </Animated.View>

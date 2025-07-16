@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { FavoriteItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { Trash2, Heart } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+
 import { useTheme } from '../contexts/ThemeContext';
 import Loading from './Loading';
 

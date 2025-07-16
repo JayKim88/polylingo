@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { X, Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+
 import { useTheme } from '../contexts/ThemeContext';
 
 type AppLanguageModalProps = {

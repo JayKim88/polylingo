@@ -40,7 +40,7 @@ const CircularUsageButton = React.memo(
         const usageData = await SubscriptionService.getDailyUsage();
         setUsage(usageData);
       } catch (error) {
-        // console.error('Error loading usage:', error);
+        console.error('Error loading usage:', error);
       }
     };
 

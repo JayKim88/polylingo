@@ -1,8 +1,9 @@
 import React, { useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { HistoryItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
-import { Trash2, Clock, RefreshCw } from 'lucide-react-native';
+import { Trash2, Clock } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+
+import { HistoryItem, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { useTheme } from '../contexts/ThemeContext';
 import Loading from './Loading';
 

@@ -217,10 +217,8 @@ export default function LanguageModal({
                 }
               }}
               onDragEnd={({ data, from, to }) => {
-                // Only allow reordering within selected languages
                 const selectedCount = tempSelected.length;
 
-                // If trying to move a selected language outside the selected section, cancel the move
                 if (from < selectedCount && to >= selectedCount) {
                   return; // Cancel the drag operation
                 }

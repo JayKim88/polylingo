@@ -19,8 +19,8 @@ export default function LanguageSelector({
   onOpen,
 }: LanguageSelectorProps) {
   const { t } = useTranslation();
-  const [isVisible, setIsVisible] = React.useState(false);
   const { colors } = useTheme();
+  const [isVisible, setIsVisible] = React.useState(false);
 
   const selectedLang = SUPPORTED_LANGUAGES.find(
     (lang) => lang.code === selectedLanguage

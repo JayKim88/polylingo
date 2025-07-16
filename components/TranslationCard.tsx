@@ -9,20 +9,19 @@ import {
 } from 'react-native';
 import { Heart, Copy, Volume2, VolumeX } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
+import { useTranslation } from 'react-i18next';
 
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { StorageService } from '../utils/storage';
 import { SpeechService } from '../utils/speechService';
 import { GoogleIcon } from './GoogleIcon';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useTranslation } from 'react-i18next';
+import { TranslationState as ImportedTranslationState } from '@/app/(tabs)';
 
-type TranslationState = {
-  status: 'loading' | 'timeout' | 'retrying' | 'success' | 'error';
-  result?: TranslationResult;
-  error?: string;
-  retryCount: number;
-};
+type TranslationState = Omit<
+  ImportedTranslationState,
+  'abortController' | 'timeoutId'
+>;
 
 type TranslationCardProps = {
   result: TranslationResult | null; // null인 경우 skeleton 표시
@@ -34,17 +33,19 @@ type TranslationCardProps = {
   onCancel?: (targetLang: string) => void;
 };
 
+type SkeletonTranslationCardProps = {
+  translationState?: TranslationState;
+  targetLanguage?: string;
+  onRetry?: (targetLang: string) => void;
+  onCancel?: (targetLang: string) => void;
+};
+
 const SkeletonTranslationCard = ({
   translationState,
   targetLanguage,
   onRetry,
   onCancel,
-}: {
-  translationState?: TranslationState;
-  targetLanguage?: string;
-  onRetry?: (targetLang: string) => void;
-  onCancel?: (targetLang: string) => void;
-}) => {
+}: SkeletonTranslationCardProps) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const skeletonOpacity = useRef(new Animated.Value(0.3)).current;

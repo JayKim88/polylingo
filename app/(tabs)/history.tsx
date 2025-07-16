@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
-import { Clock, Calendar } from 'lucide-react-native';
+import { Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import {
   BannerAd,
@@ -15,24 +15,28 @@ import { StorageService } from '../../utils/storage';
 import { HistoryItem } from '../../types/dictionary';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
 import { useTheme } from '../../contexts/ThemeContext';
-import { hideTabBar, showTabBar } from './_layout';
+import { ANIMATION_DURATION, hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '@/utils/subscriptionService';
+import { NEW_AD_TERM } from './favorites';
 
 export default function HistoryTab() {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { animatedStyle } = useTabSlideAnimation();
+
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [filteredHistory, setFilteredHistory] = useState<HistoryItem[]>([]);
   const [historyDates, setHistoryDates] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const headerAnimValue = useRef(new Animated.Value(1)).current;
-  const contentAnimValue = useRef(new Animated.Value(0)).current;
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
   const [showAd, setShowAd] = useState(false);
+
+  const headerAnimValue = useRef(new Animated.Value(1)).current;
+  const contentAnimValue = useRef(new Animated.Value(0)).current;
 
   const loadHistory = useCallback(async () => {
     setIsLoading(true);
@@ -49,15 +53,11 @@ export default function HistoryTab() {
         ),
       ];
       setHistoryDates(dates);
-
-      // Show all history initially
       setFilteredHistory(hist);
     } finally {
       setIsLoading(false);
     }
   }, []);
-
-  const { animatedStyle } = useTabSlideAnimation();
 
   useFocusEffect(
     useCallback(() => {
@@ -65,7 +65,7 @@ export default function HistoryTab() {
 
       // Generate new ad only if 30 seconds have passed
       const now = Date.now();
-      if (now - lastAdRefresh > 30000) {
+      if (now - lastAdRefresh > NEW_AD_TERM) {
         // 30 seconds interval
         setAdKey((prev) => prev + 1);
         setLastAdRefresh(now);
@@ -85,10 +85,6 @@ export default function HistoryTab() {
     } else {
       setFilteredHistory(history);
     }
-  };
-
-  const handleDatePickerSelect = (date: string | null) => {
-    handleDateSelect(date);
   };
 
   const handleClearHistory = async () => {
@@ -111,31 +107,30 @@ export default function HistoryTab() {
     Animated.parallel([
       Animated.timing(headerAnimValue, {
         toValue: 0,
-        duration: 300,
+        duration: ANIMATION_DURATION,
         useNativeDriver: true,
       }),
       Animated.timing(contentAnimValue, {
         toValue: 1,
-        duration: 300,
+        duration: ANIMATION_DURATION,
         useNativeDriver: true,
       }),
     ]).start();
   }, [headerAnimValue, contentAnimValue, isHeaderVisible]);
 
   const handlePullDown = useCallback(() => {
-    // Show header and tab bar when user pulls down
     if (isHeaderVisible) return;
     setIsHeaderVisible(true);
     showTabBar();
     Animated.parallel([
       Animated.timing(headerAnimValue, {
         toValue: 1,
-        duration: 300,
+        duration: ANIMATION_DURATION,
         useNativeDriver: true,
       }),
       Animated.timing(contentAnimValue, {
         toValue: 0,
-        duration: 300,
+        duration: ANIMATION_DURATION,
         useNativeDriver: true,
       }),
     ]).start();
@@ -148,7 +143,6 @@ export default function HistoryTab() {
         backgroundColor: colors.background,
       }}
     >
-      {/* Modern Header */}
       <Animated.View
         className="px-6 pt-4 pb-2 rounded-b-3xl"
         style={{
@@ -255,7 +249,7 @@ export default function HistoryTab() {
         visible={showDatePicker}
         selectedDate={selectedDate}
         markedDates={historyDates}
-        onDateSelect={handleDatePickerSelect}
+        onDateSelect={handleDateSelect}
         onClose={() => setShowDatePicker(false)}
       />
     </Animated.View>

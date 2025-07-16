@@ -17,7 +17,6 @@ export interface VoiceSettings {
 }
 
 export class StorageService {
-
   static async getFavorites(): Promise<FavoriteItem[]> {
     try {
       const data = await AsyncStorage.getItem(FAVORITES_KEY);
@@ -78,9 +77,11 @@ export class StorageService {
       const favorites = await this.getFavorites();
       const filteredFavorites = favorites.filter(
         (fav) =>
-          !(fav.sourceText === sourceText &&
+          !(
+            fav.sourceText === sourceText &&
             fav.sourceLanguage === sourceLanguage &&
-            fav.targetLanguage === targetLanguage)
+            fav.targetLanguage === targetLanguage
+          )
       );
       await AsyncStorage.setItem(
         FAVORITES_KEY,
@@ -171,41 +172,22 @@ export class StorageService {
     }
   }
 
-  static async saveLanguageOrder(languageOrder: string[]): Promise<void> {
-    try {
-      await AsyncStorage.setItem(
-        LANGUAGE_ORDER_KEY,
-        JSON.stringify(languageOrder)
-      );
-    } catch (error) {
-      console.error('Error saving language order:', error);
-    }
-  }
-
-  static async getLanguageOrder(): Promise<string[]> {
-    try {
-      const data = await AsyncStorage.getItem(LANGUAGE_ORDER_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch (error) {
-      console.error('Error loading language order:', error);
-      return [];
-    }
-  }
-
   static async getVoiceSettings(): Promise<VoiceSettings> {
     try {
       const data = await AsyncStorage.getItem(VOICE_SETTINGS_KEY);
-      return data ? JSON.parse(data) : {
-        volume: 1.0,
-        rate: 0.8,
-        pitch: 1.0
-      };
+      return data
+        ? JSON.parse(data)
+        : {
+            volume: 1.0,
+            rate: 0.8,
+            pitch: 1.0,
+          };
     } catch (error) {
       console.error('Error loading voice settings:', error);
       return {
         volume: 1.0,
         rate: 0.8,
-        pitch: 1.0
+        pitch: 1.0,
       };
     }
   }
