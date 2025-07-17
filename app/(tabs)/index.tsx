@@ -179,35 +179,35 @@ export default function SearchTab() {
      * @todo revert this when ready for test by device.
      */
     // Initialize IAP service with timeout
-    // try {
-    //   const initPromise = IAPService.initialize();
-    //   const timeoutPromise = new Promise((_, reject) =>
-    //     setTimeout(() => reject(new Error('IAP initialization timeout')), 5000)
-    //   );
+    try {
+      const initPromise = IAPService.initialize();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('IAP initialization timeout')), 5000)
+      );
 
-    //   const initialized = await Promise.race([initPromise, timeoutPromise]);
+      const initialized = await Promise.race([initPromise, timeoutPromise]);
 
-    //   if (initialized) {
-    //     // Only check subscription status if initialization succeeded
-    //     setTimeout(async () => {
-    //       try {
-    //         await IAPService.checkSubscriptionStatus();
-    //       } catch (statusError) {
-    //         console.warn('Subscription status check failed:', statusError);
-    //         // Ensure we have a fallback to free plan
-    //         await SubscriptionService.setSubscription('free', true);
-    //       }
-    //     }, 1000); // Delay to avoid blocking UI
-    //   }
-    // } catch (error) {
-    //   console.error('Failed to initialize IAP service:', error);
-    //   // Ensure we have a fallback subscription
-    //   try {
-    //     await SubscriptionService.setSubscription('free', true);
-    //   } catch (fallbackError) {
-    //     console.error('Failed to set fallback subscription:', fallbackError);
-    //   }
-    // }
+      if (initialized) {
+        // Only check subscription status if initialization succeeded
+        setTimeout(async () => {
+          try {
+            await IAPService.checkSubscriptionStatus();
+          } catch (statusError) {
+            console.warn('Subscription status check failed:', statusError);
+            // Ensure we have a fallback to free plan
+            await SubscriptionService.setSubscription('free', true);
+          }
+        }, 1000); // Delay to avoid blocking UI
+      }
+    } catch (error) {
+      console.error('Failed to initialize IAP service:', error);
+      // Ensure we have a fallback subscription
+      try {
+        await SubscriptionService.setSubscription('free', true);
+      } catch (fallbackError) {
+        console.error('Failed to set fallback subscription:', fallbackError);
+      }
+    }
 
     // Check if ads should be shown
     const shouldShow = await SubscriptionService.shouldShowAds();

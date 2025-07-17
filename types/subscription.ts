@@ -97,7 +97,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 ];
 
 export const IAP_PRODUCT_IDS = {
-  PRO_MONTHLY: 'com.polyglottranslator.pro.monthly',
-  PRO_MAX_MONTHLY: 'com.polyglottranslator.promax.monthly',
-  PREMIUM_YEARLY: 'com.polyglottranslator.premium.yearly',
+  PRO_MONTHLY: 'com.polylingo.pro.monthly',
+  PRO_MAX_MONTHLY: 'com.polylingo.promax.monthly',
+  PREMIUM_YEARLY: 'com.polylingo.premium.yearly',
 } as const;

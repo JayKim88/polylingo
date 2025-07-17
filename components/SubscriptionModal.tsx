@@ -106,9 +106,9 @@ export default function SubscriptionModal({
 
     // Map plan ID to product ID
     const productIdMap: { [key: string]: string } = {
-      pro_monthly: 'com.polyglottranslator.pro.monthly',
-      pro_max_monthly: 'com.polyglottranslator.promax.monthly',
-      premium_yearly: 'com.polyglottranslator.premium.yearly',
+      pro_monthly: 'com.polylingo.pro.monthly',
+      pro_max_monthly: 'com.polylingo.promax.monthly',
+      premium_yearly: 'com.polylingo.premium.yearly',
     };
 
     const product = products.find((p) => p.productId === productIdMap[plan.id]);
