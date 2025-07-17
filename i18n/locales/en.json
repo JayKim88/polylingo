@@ -300,11 +300,9 @@
     "upgradeRequired": "Upgrade required for more translations",
     "remaining": "remaining",
     "features": {
-      "basicTranslation": "Basic translation",
-      "advancedTranslation": "Advanced translation",
-      "premiumTranslation": "Premium translation",
-      "twoLanguages": "Up to 3 languages",
-      "fiveLanguages": "Up to 6 languages",
+      "translation": "AI Powered Translation",
+      "twoLanguages": "Translate to 2 languages at once",
+      "fiveLanguages": "Translate to 5 languages at once",
       "noAds": "No advertisements",
       "adSupported": "Ad-supported",
       "dailyLimit100": "100 daily translations",
@@ -312,7 +310,7 @@
       "dailyLimit500": "500 daily translations",
       "prioritySupport": "Priority support",
       "yearlyDiscount": "Best value - yearly discount",
-      "freeUsageDescription": "1 language = 0.5 usage, 2 languages = 1 usage", 
+      "freeUsageDescription": "1 language = 0.5 usage, 2 languages = 1 usage",
       "premiumUsageDescription": "1 language = 0.2 usage, 5 languages = 1 usage"
     }
   },

@@ -113,6 +113,21 @@ export default function SubscriptionModal({
 
     const product = products.find((p) => p.productId === productIdMap[plan.id]);
 
+    const getPlanDisplayName = () => {
+      switch (plan.id) {
+        case 'free':
+          return t('subscription.free');
+        case 'pro_monthly':
+          return t('subscription.pro');
+        case 'pro_max_monthly':
+          return t('subscription.proMax');
+        case 'premium_yearly':
+          return t('subscription.premium');
+        default:
+          return t('subscription.free');
+      }
+    };
+
     return (
       <View
         key={plan.id}
@@ -134,11 +149,7 @@ export default function SubscriptionModal({
               />
             )}
             <Text className="text-lg font-bold" style={{ color: colors.text }}>
-              {t(
-                `subscription.${
-                  plan.id === 'free' ? 'free' : plan.id.split('_')[0]
-                }`
-              )}
+              {getPlanDisplayName()}
             </Text>
           </View>
           <View className="flex-row items-center">

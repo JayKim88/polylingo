@@ -56,11 +56,13 @@
       <true/>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your camera</string>
+    <string>This app needs access to your camera to allow you to take photos for translation or profile images.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <string>This app needs access to your microphone for voice input and speech recognition.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app needs access to your photo library to allow you to select and upload images.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to securely recognize user speech</string>
+    <string>This app uses speech recognition to convert your voice to text for translation.</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>

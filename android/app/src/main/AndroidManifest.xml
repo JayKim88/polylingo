@@ -30,8 +30,8 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="polyglot-dictionary"/>
-        <data android:scheme="exp+polyglot-dictionary"/>
+        <data android:scheme="polylingo"/>
+        <data android:scheme="exp+polylingo"/>
       </intent-filter>
     </activity>
   </application>

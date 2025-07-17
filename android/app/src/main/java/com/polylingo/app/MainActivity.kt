@@ -1,4 +1,4 @@
-package com.polyglot.dictionary
+package com.polylingo.app
 
 import android.os.Build
 import android.os.Bundle

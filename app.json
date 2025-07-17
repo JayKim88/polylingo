@@ -24,7 +24,11 @@
           {
             "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
           }
-        ]
+        ],
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to allow you to select and upload images.",
+        "NSCameraUsageDescription": "This app needs access to your camera to allow you to take photos for translation or profile images.",
+        "NSMicrophoneUsageDescription": "This app needs access to your microphone for voice input and speech recognition.",
+        "NSSpeechRecognitionUsageDescription": "This app uses speech recognition to convert your voice to text for translation."
       },
       "bundleIdentifier": "com.polylingo.app"
     },
@@ -61,10 +65,11 @@
     "experiments": {
       "typedRoutes": true
     },
+    "owner": "koriwan",
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "b727f779-cdae-4c04-9221-44033bed97e0"
+        "projectId": "68622704-5cd7-4eee-b043-450a21a64622"
       }
     }
   }

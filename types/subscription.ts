@@ -35,7 +35,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     maxLanguages: 2,
     hasAds: true,
     features: [
-      'subscription.features.basicTranslation',
+      'subscription.features.translation',
       'subscription.features.twoLanguages',
       'subscription.features.adSupported',
       'subscription.features.dailyLimit100',
@@ -52,7 +52,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     maxLanguages: 5,
     hasAds: false,
     features: [
-      'subscription.features.advancedTranslation',
+      'subscription.features.translation',
       'subscription.features.fiveLanguages',
       'subscription.features.noAds',
       'subscription.features.dailyLimit200',
@@ -69,7 +69,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     maxLanguages: 5,
     hasAds: false,
     features: [
-      'subscription.features.premiumTranslation',
+      'subscription.features.translation',
       'subscription.features.fiveLanguages',
       'subscription.features.noAds',
       'subscription.features.dailyLimit500',
@@ -87,7 +87,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     maxLanguages: 5,
     hasAds: false,
     features: [
-      'subscription.features.advancedTranslation',
+      'subscription.features.translation',
       'subscription.features.fiveLanguages',
       'subscription.features.noAds',
       'subscription.features.dailyLimit200',
