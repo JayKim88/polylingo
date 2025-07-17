@@ -8,7 +8,8 @@ import {
   Animated,
 } from 'react-native';
 import { Heart, Copy, Volume2, VolumeX } from 'lucide-react-native';
-import * as Clipboard from 'expo-clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
+
 import { useTranslation } from 'react-i18next';
 
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../types/dictionary';
@@ -278,7 +279,7 @@ export default function TranslationCard({
     try {
       let textToCopy = result.translatedText;
 
-      await Clipboard.setStringAsync(textToCopy);
+      await Clipboard.setString(textToCopy);
     } catch (error) {
       Alert.alert(t('alert.error'), t('message.copyError'));
     }

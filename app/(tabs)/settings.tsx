@@ -8,8 +8,9 @@ import {
   Alert,
   Animated,
   Linking,
-  Clipboard,
+  Share,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {
   Settings,
   Info,
@@ -40,7 +41,10 @@ import LegalDocumentModal from '../../components/LegalDocumentModal';
 import { SubscriptionService } from '../../utils/subscriptionService';
 import { VersionService } from '../../utils/version';
 import { NEW_AD_TERM } from './favorites';
-import { PRIVACY_POLICY_CONTENT, TERMS_OF_SERVICE_CONTENT } from '../../constants/legalDocuments';
+import {
+  PRIVACY_POLICY_CONTENT,
+  TERMS_OF_SERVICE_CONTENT,
+} from '../../constants/legalDocuments';
 import { StorageService } from '../../utils/storage';
 import { TranslationAPI } from '../../utils/translationAPI';
 
@@ -95,9 +99,9 @@ export default function SettingsTab() {
           const body = encodeURIComponent(t('feedbackModal.emailBody'));
           const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
 
-          Linking.openURL(mailtoUrl).catch((err) => {
+          Linking.openURL(mailtoUrl).catch(async (err) => {
             // Copy email to clipboard as fallback
-            Clipboard.setString(email);
+            await Clipboard.setString(email);
             Alert.alert(
               t('feedbackModal.emailFallbackTitle'),
               t('feedbackModal.emailFallbackMessage'),
@@ -141,18 +145,16 @@ export default function SettingsTab() {
               TranslationAPI.clearCache();
               // Reset subscription to free plan
               await SubscriptionService.setSubscription('free', true);
-              
+
               Alert.alert(
                 t('settings.deleteAllDataSuccess'),
                 t('settings.deleteAllDataSuccessMessage'),
                 [{ text: t('alert.confirm') }]
               );
             } catch (error) {
-              Alert.alert(
-                t('alert.error'),
-                t('settings.deleteAllDataError'),
-                [{ text: t('alert.confirm') }]
-              );
+              Alert.alert(t('alert.error'), t('settings.deleteAllDataError'), [
+                { text: t('alert.confirm') },
+              ]);
             }
           },
         },
@@ -164,7 +166,7 @@ export default function SettingsTab() {
     try {
       const favorites = await StorageService.getFavorites();
       const history = await StorageService.getHistory();
-      
+
       if (favorites.length === 0 && history.length === 0) {
         Alert.alert(
           t('settings.exportDataTitle'),
@@ -173,31 +175,118 @@ export default function SettingsTab() {
         );
         return;
       }
-      
-      const exportData = {
-        favorites,
-        history,
-        exportDate: new Date().toISOString(),
-        appVersion: VersionService.getFormattedVersion(),
-      };
-      
-      const dataString = JSON.stringify(exportData, null, 2);
-      const fileName = `polylingo-data-${new Date().toISOString().split('T')[0]}.json`;
-      
-      // Copy to clipboard as fallback
-      Clipboard.setString(dataString);
-      
+
+      // Create CSV content
+      const csvHeader = `${t('settings.csvType')},${t(
+        'settings.csvSourceText'
+      )},${t('settings.csvTranslatedText')},${t(
+        'settings.csvSourceLanguage'
+      )},${t('settings.csvTargetLanguage')},${t('settings.csvDate')}\n`;
+
+      let csvContent = csvHeader;
+
+      // Add favorites to CSV
+      favorites.forEach((favorite) => {
+        const escapeCsvValue = (value: string) => {
+          if (
+            value.includes(',') ||
+            value.includes('"') ||
+            value.includes('\n')
+          ) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return value;
+        };
+
+        csvContent += `${escapeCsvValue(
+          t('settings.csvFavorite')
+        )},${escapeCsvValue(favorite.sourceText)},${escapeCsvValue(
+          favorite.translatedText
+        )},${escapeCsvValue(favorite.sourceLanguage)},${escapeCsvValue(
+          favorite.targetLanguage
+        )},${new Date(favorite.createdAt).toLocaleDateString()}\n`;
+      });
+
+      // Add history to CSV
+      history.forEach((historyItem) => {
+        if (historyItem.searchedData && historyItem.searchedData.length > 0) {
+          // Multiple translations from history
+          historyItem.searchedData.forEach((searchData) => {
+            csvContent += `${t('settings.csvHistory')},${
+              historyItem.sourceText
+            },${searchData.text},${historyItem.sourceLanguage},${
+              searchData.lng
+            },${new Date(historyItem.searchedAt).toLocaleDateString()}\n`;
+          });
+        } else {
+          // Single translation from history
+          csvContent += `${t('settings.csvHistory')},${
+            historyItem.sourceText
+          },${historyItem.translatedText},${historyItem.sourceLanguage},${
+            historyItem.targetLanguage
+          },${new Date(historyItem.searchedAt).toLocaleDateString()}\n`;
+        }
+      });
+
+      const fileName = `polylingo-data-${
+        new Date().toISOString().split('T')[0]
+      }.csv`;
+
+      // Show export options
       Alert.alert(
-        t('settings.exportDataSuccess'),
-        t('settings.exportDataSuccessMessage', { fileName }),
-        [{ text: t('alert.confirm') }]
+        t('settings.exportDataTitle'),
+        t('settings.exportDataChooseMethod'),
+        [
+          { text: t('alert.cancel'), style: 'cancel' },
+          {
+            text: t('settings.exportViaEmail'),
+            onPress: async () => {
+              const subject = encodeURIComponent(
+                t('settings.exportDataEmailSubject')
+              );
+              const body = encodeURIComponent(
+                `${t('settings.exportDataEmailBody')}\n\n${csvContent}`
+              );
+              const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
+
+              try {
+                await Linking.openURL(mailtoUrl);
+              } catch (error) {
+                await Clipboard.setString(csvContent);
+                Alert.alert(
+                  t('settings.exportDataSuccess'),
+                  t('settings.exportDataFallbackMessage', { fileName }),
+                  [{ text: t('alert.confirm') }]
+                );
+              }
+            },
+          },
+          {
+            text: t('settings.exportViaShare'),
+            onPress: async () => {
+              try {
+                await Share.share({
+                  message: `${t(
+                    'settings.exportDataEmailBody'
+                  )}\n\n${csvContent}`,
+                  title: t('settings.exportDataEmailSubject'),
+                });
+              } catch (error) {
+                await Clipboard.setString(csvContent);
+                Alert.alert(
+                  t('settings.exportDataSuccess'),
+                  t('settings.exportDataFallbackMessage', { fileName }),
+                  [{ text: t('alert.confirm') }]
+                );
+              }
+            },
+          },
+        ]
       );
     } catch (error) {
-      Alert.alert(
-        t('alert.error'),
-        t('settings.exportDataError'),
-        [{ text: t('alert.confirm') }]
-      );
+      Alert.alert(t('alert.error'), t('settings.exportDataError'), [
+        { text: t('alert.confirm') },
+      ]);
     }
   };
 
