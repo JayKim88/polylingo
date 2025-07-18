@@ -314,7 +314,17 @@
       "yearlyDiscount": "최고 가치 - 연간 할인",
       "freeUsageDescription": "1개 언어 = 0.5 사용량, 2개 언어 = 1 사용량",
       "premiumUsageDescription": "1개 언어 = 0.2 사용량, 5개 언어 = 1 사용량"
-    }
+    },
+    "manageSubscription": "구독 관리",
+    "manageSubscriptionMessage": "구독을 취소하거나 수정하려면 기기의 구독 설정을 사용하세요. 이렇게 하면 올바른 취소가 보장되고 원치 않는 요금이 발생하지 않습니다.",
+    "openSettings": "설정 열기",
+    "switchToFree": "무료로 전환",
+    "subscriptionSuccess": "구독 업데이트 완료! 🎉",
+    "subscriptionSuccessMessage": "\n{{planName}}으로 성공적으로 전환되었습니다!\n새로운 기능을 이제 사용할 수 있습니다.",
+    "restoreSuccess": "구매 복원 완료! ✅",
+    "restoreSuccessMessage": "\n이전 구매가 성공적으로 복원되었습니다.\n\n모든 프리미엄 기능을 이제 사용할 수 있습니다.",
+    "restoreError": "복원 실패",
+    "restoreErrorMessage": "\n이전 구매를 찾을 수 없거나 복원에 실패했습니다.\n\n다시 시도하거나 문제가 지속되면 지원팀에 문의하세요."
   },
   "consent": {
     "title": "PolyLingo에 오신 것을 환영합니다",

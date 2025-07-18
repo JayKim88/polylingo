@@ -175,10 +175,6 @@ export default function SearchTab() {
 
     setIsHeaderVisible(true);
 
-    /**
-     * @todo revert this when ready for test by device.
-     */
-    // Initialize IAP service with timeout
     try {
       const initPromise = IAPService.initialize();
       const timeoutPromise = new Promise((_, reject) =>

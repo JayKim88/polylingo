@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Subscription } from 'react-native-iap';
 
 import { useTheme } from '../contexts/ThemeContext';
+import { useSubscription } from '../hooks/useSubscription';
 import { IAPService } from '../utils/iapService';
 import { SubscriptionService } from '../utils/subscriptionService';
 import { SUBSCRIPTION_PLANS, UserSubscription } from '../types/subscription';
@@ -30,6 +31,8 @@ export default function SubscriptionModal({
 }: SubscriptionModalProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { subscription: globalSubscription, refreshSubscription } =
+    useSubscription();
 
   const [products, setProducts] = useState<Subscription[]>([]);
   const [currentSubscription, setCurrentSubscription] =
@@ -41,13 +44,18 @@ export default function SubscriptionModal({
   useEffect(() => {
     if (!visible) return;
     loadSubscriptionData();
-  }, [visible]);
+    globalSubscription && setCurrentSubscription(globalSubscription);
+  }, [visible, globalSubscription]);
 
   const loadSubscriptionData = async () => {
     setLoading(true);
     try {
       // Check if IAP is available
-      setIapAvailable(IAPService.isIAPAvailable());
+      if (__DEV__) {
+        setIapAvailable(true);
+      } else {
+        setIapAvailable(IAPService.isIAPAvailable());
+      }
 
       const [productsResult, subscriptionResult] = await Promise.all([
         IAPService.getSubscriptionProducts(),
@@ -65,12 +73,42 @@ export default function SubscriptionModal({
 
   const handlePurchase = async (productId: string, planId: string) => {
     setPurchaseLoading(planId);
+
     try {
-      const success = await IAPService.purchaseSubscription(productId);
-      if (success) {
-        await loadSubscriptionData();
-        onSubscriptionChange?.();
+      if (__DEV__ || !iapAvailable) {
+        // Development mode or IAP not available - use direct subscription setting
+        await SubscriptionService.setSubscriptionWithLanguageReset(
+          planId,
+          true
+        );
+      } else {
+        // Production mode - use actual IAP
+        const success = await IAPService.purchaseSubscription(productId);
+        if (!success) {
+          throw new Error('Purchase failed');
+        }
+        // After successful purchase, reset language settings for the new plan
+        await SubscriptionService.setSubscriptionWithLanguageReset(
+          planId,
+          true
+        );
       }
+
+      await loadSubscriptionData();
+      onSubscriptionChange?.();
+
+      // Show success message
+      const planName = getPlanDisplayName(planId);
+      Alert.alert(
+        t('subscription.subscriptionSuccess'),
+        t('subscription.subscriptionSuccessMessage', { planName }),
+        [
+          {
+            text: t('alert.confirm'),
+            onPress: () => onClose(),
+          },
+        ]
+      );
     } catch (error) {
       console.error('Purchase failed:', error);
       Alert.alert(t('alert.error'), '구매 중 오류가 발생했습니다.');
@@ -85,10 +123,32 @@ export default function SubscriptionModal({
       const success = await IAPService.restorePurchases();
       if (success) {
         await loadSubscriptionData();
+        refreshSubscription(); // Refresh global subscription state
         onSubscriptionChange?.();
+
+        // Show success message
+        Alert.alert(
+          t('subscription.restoreSuccess'),
+          t('subscription.restoreSuccessMessage'),
+          [
+            {
+              text: t('alert.confirm'),
+              onPress: () => onClose(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert(
+          t('subscription.restoreError'),
+          t('subscription.restoreErrorMessage')
+        );
       }
     } catch (error) {
       console.error('Restore failed:', error);
+      Alert.alert(
+        t('subscription.restoreError'),
+        t('subscription.restoreErrorMessage')
+      );
     } finally {
       setLoading(false);
     }
@@ -98,6 +158,21 @@ export default function SubscriptionModal({
     const product = products.find((p) => p.productId === productId);
 
     return (product as any)?.priceString || (product as any)?.price || '$0.00';
+  };
+
+  const getPlanDisplayName = (planId: string): string => {
+    switch (planId) {
+      case 'free':
+        return t('subscription.free');
+      case 'pro_monthly':
+        return t('subscription.pro');
+      case 'pro_max_monthly':
+        return t('subscription.proMax');
+      case 'premium_yearly':
+        return t('subscription.premium');
+      default:
+        return t('subscription.free');
+    }
   };
 
   const renderPlanCard = (plan: any) => {
@@ -112,21 +187,6 @@ export default function SubscriptionModal({
     };
 
     const product = products.find((p) => p.productId === productIdMap[plan.id]);
-
-    const getPlanDisplayName = () => {
-      switch (plan.id) {
-        case 'free':
-          return t('subscription.free');
-        case 'pro_monthly':
-          return t('subscription.pro');
-        case 'pro_max_monthly':
-          return t('subscription.proMax');
-        case 'premium_yearly':
-          return t('subscription.premium');
-        default:
-          return t('subscription.free');
-      }
-    };
 
     return (
       <View
@@ -149,7 +209,7 @@ export default function SubscriptionModal({
               />
             )}
             <Text className="text-lg font-bold" style={{ color: colors.text }}>
-              {getPlanDisplayName()}
+              {getPlanDisplayName(plan.id)}
             </Text>
           </View>
           <View className="flex-row items-center">
@@ -198,17 +258,25 @@ export default function SubscriptionModal({
             </Text>
           </View>
         ) : isFreePlan ? (
-          <View
+          <TouchableOpacity
             className="py-3 px-4 rounded-xl border"
             style={{ borderColor: colors.border }}
+            onPress={() => handlePurchase('', plan.id)}
+            disabled={purchaseLoading === plan.id || !__DEV__}
           >
-            <Text
-              className="text-center font-medium"
-              style={{ color: colors.textSecondary }}
-            >
-              {t('subscription.free')}
-            </Text>
-          </View>
+            {purchaseLoading === plan.id ? (
+              <ActivityIndicator size="small" color={colors.textSecondary} />
+            ) : (
+              <Text
+                className="text-center font-medium"
+                style={{ color: colors.textSecondary }}
+              >
+                {__DEV__
+                  ? t('subscription.switchToFree')
+                  : t('subscription.free')}
+              </Text>
+            )}
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             className="py-3 px-4 rounded-xl"

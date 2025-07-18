@@ -3,7 +3,9 @@ import { SubscriptionService } from '../utils/subscriptionService';
 import { UserSubscription } from '../types/subscription';
 
 export const useSubscription = () => {
-  const [subscription, setSubscription] = useState<UserSubscription | null>(null);
+  const [subscription, setSubscription] = useState<UserSubscription | null>(
+    null
+  );
   const [isPremium, setIsPremium] = useState<boolean>(false);
   const [shouldShowAds, setShouldShowAds] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -35,8 +37,8 @@ export const useSubscription = () => {
     loadSubscription();
   }, [loadSubscription]);
 
-  const refreshSubscription = useCallback(() => {
-    loadSubscription();
+  const refreshSubscription = useCallback(async () => {
+    await loadSubscription();
   }, [loadSubscription]);
 
   return {

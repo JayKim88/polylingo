@@ -301,6 +301,7 @@
     "remaining": "remaining",
     "features": {
       "translation": "AI Powered Translation",
+      "basicTranslation": "Plan Features",
       "twoLanguages": "Translate to 2 languages at once",
       "fiveLanguages": "Translate to 5 languages at once",
       "noAds": "No advertisements",
@@ -312,7 +313,17 @@
       "yearlyDiscount": "Best value - yearly discount",
       "freeUsageDescription": "1 language = 0.5 usage, 2 languages = 1 usage",
       "premiumUsageDescription": "1 language = 0.2 usage, 5 languages = 1 usage"
-    }
+    },
+    "manageSubscription": "Manage Subscription",
+    "manageSubscriptionMessage": "To cancel or modify your subscription, please use your device's subscription settings. This ensures proper cancellation and prevents unwanted charges.",
+    "openSettings": "Open Settings",
+    "switchToFree": "Switch to Free",
+    "subscriptionSuccess": "Subscription Updated! 🎉",
+    "subscriptionSuccessMessage": "\nYou have successfully switched to {{planName}}!\nYour new features are now available.",
+    "restoreSuccess": "Purchases Restored! ✅",
+    "restoreSuccessMessage": "\nYour previous purchases have been successfully restored.\n\nAll premium features are now available.",
+    "restoreError": "Restore Failed",
+    "restoreErrorMessage": "\nNo previous purchases found or restore failed.\n\nPlease try again or contact support if you believe this is an error."
   },
   "consent": {
     "title": "Welcome to PolyLingo",

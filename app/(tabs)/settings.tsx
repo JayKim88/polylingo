@@ -27,6 +27,7 @@ import {
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
 import {
@@ -62,6 +63,7 @@ export default function SettingsTab() {
   const { t } = useTranslation();
   const { animatedStyle } = useTabSlideAnimation();
   const { theme, colors, toggleTheme } = useTheme();
+  const { refreshSubscription } = useSubscription();
 
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -143,8 +145,6 @@ export default function SettingsTab() {
               await StorageService.clearAllData();
               // Clear translation cache
               TranslationAPI.clearCache();
-              // Reset subscription to free plan
-              await SubscriptionService.setSubscription('free', true);
 
               Alert.alert(
                 t('settings.deleteAllDataSuccess'),
@@ -383,6 +383,7 @@ export default function SettingsTab() {
     try {
       console.log('🔍 Settings: Setting subscription to:', planId);
       await SubscriptionService.setSubscriptionWithLanguageReset(planId, true);
+      refreshSubscription();
 
       // Verify the subscription was set correctly
       const newSub = await SubscriptionService.getCurrentSubscription();
@@ -671,7 +672,7 @@ export default function SettingsTab() {
               iconColor="#8B5CF6"
               backgroundColor="#F3E8FF"
             />
-            {__DEV__ && (
+            {/* {__DEV__ && (
               <SettingItem
                 icon={<Settings size={20} color="#F59E0B" />}
                 title="구독 테스트 (개발 모드)"
@@ -680,7 +681,7 @@ export default function SettingsTab() {
                 iconColor="#F59E0B"
                 backgroundColor="#FEF3C7"
               />
-            )}
+            )} */}
             <SettingItem
               icon={<Info size={20} color="#6366F1" />}
               title={t('settings.about')}
@@ -807,8 +808,10 @@ export default function SettingsTab() {
       <SubscriptionModal
         visible={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
-        onSubscriptionChange={() => {
-          // Refresh any subscription-related UI if needed
+        onSubscriptionChange={async () => {
+          await refreshSubscription();
+          const newSub = await SubscriptionService.getCurrentSubscription();
+          setShowAd(newSub?.planId === 'free');
         }}
       />
       <LegalDocumentModal

@@ -11,23 +11,23 @@ export class SubscriptionService {
     try {
       const subscriptionData = await AsyncStorage.getItem(SUBSCRIPTION_KEY);
 
-      console.log(
-        '🔍 getCurrentSubscription: Raw subscription data:',
-        subscriptionData
-      );
+      // console.log(
+      //   '🔍 getCurrentSubscription: Raw subscription data:',
+      //   subscriptionData
+      // );
 
       if (subscriptionData) {
         const subscription = JSON.parse(subscriptionData);
-        console.log(
-          '🔍 getCurrentSubscription: Parsed subscription:',
-          subscription
-        );
+        // console.log(
+        //   '🔍 getCurrentSubscription: Parsed subscription:',
+        //   subscription
+        // );
 
         // 구독 만료 확인
         if (subscription.endDate && Date.now() > subscription.endDate) {
-          console.log(
-            '🔍 getCurrentSubscription: Subscription expired, setting to free'
-          );
+          // console.log(
+          //   '🔍 getCurrentSubscription: Subscription expired, setting to free'
+          // );
           // 만료된 구독은 Free로 변경
           await this.setSubscription('free');
           return this.getDefaultSubscription();
@@ -75,6 +75,8 @@ export class SubscriptionService {
         },
         isTrialUsed: false,
       };
+
+      console.log('set subscription????', subscription);
 
       console.log('🔍 setSubscription: Saving subscription:', subscription);
 
@@ -205,26 +207,26 @@ export class SubscriptionService {
       const subscription = await this.getCurrentSubscription();
 
       if (!subscription) {
-        console.log(
-          '🔍 getDailyUsage: No subscription found, returning free defaults'
-        );
+        // console.log(
+        //   '🔍 getDailyUsage: No subscription found, returning free defaults'
+        // );
         return { used: 0, limit: 100, remaining: 100 };
       }
 
       const plan = SUBSCRIPTION_PLANS.find((p) => p.id === subscription.planId);
       if (!plan) {
-        console.log(
-          '🔍 getDailyUsage: No plan found for planId:',
-          subscription.planId
-        );
+        // console.log(
+        //   '🔍 getDailyUsage: No plan found for planId:',
+        //   subscription.planId
+        // );
         return { used: 0, limit: 100, remaining: 100 };
       }
 
-      console.log('🔍 getDailyUsage: Found plan:', plan);
-      console.log(
-        '🔍 getDailyUsage: Plan daily translations:',
-        plan.dailyTranslations
-      );
+      // console.log('🔍 getDailyUsage: Found plan:', plan);
+      // console.log(
+      //   '🔍 getDailyUsage: Plan daily translations:',
+      //   plan.dailyTranslations
+      // );
 
       const today = new Date().toDateString();
       let used = 0;
@@ -240,7 +242,7 @@ export class SubscriptionService {
         remaining: Math.max(0, plan.dailyTranslations - used),
       };
 
-      console.log('🔍 getDailyUsage: Returning result:', result);
+      // console.log('🔍 getDailyUsage: Returning result:', result);
       return result;
     } catch (error) {
       console.error('Error getting daily usage:', error);
