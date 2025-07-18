@@ -53,7 +53,17 @@ export default function HistoryTab() {
         ),
       ];
       setHistoryDates(dates);
-      setFilteredHistory(hist);
+
+      if (selectedDate) {
+        const filtered = hist.filter(
+          (hist) =>
+            new Date(hist.searchedAt).toISOString().split('T')[0] ===
+            selectedDate
+        );
+        setFilteredHistory(filtered);
+      } else {
+        setFilteredHistory(hist);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -234,6 +244,7 @@ export default function HistoryTab() {
         }}
       >
         <HistoryList
+          key={`favorites-${filteredHistory.length}-${selectedDate}`}
           history={filteredHistory}
           selectedDate={selectedDate}
           onClearHistory={handleClearHistory}

@@ -18,7 +18,6 @@ import { FavoriteItem } from '../../types/dictionary';
 import { useTheme } from '../../contexts/ThemeContext';
 import { ANIMATION_DURATION, hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '@/utils/subscriptionService';
-import { useNetInfo } from '@/contexts/NetInfoContext';
 
 /**
  * 3s
@@ -61,12 +60,20 @@ export default function FavoritesTab() {
       // Use it for marking in calendar
       setFavoriteDates(dates);
 
-      // Show all favorites initially
-      setFilteredFavorites(favs);
+      // Show all favorites initially (respect current date filter)
+      if (selectedDate) {
+        const filtered = favs.filter(
+          (fav) =>
+            new Date(fav.createdAt).toISOString().split('T')[0] === selectedDate
+        );
+        setFilteredFavorites(filtered);
+      } else {
+        setFilteredFavorites(favs);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedDate]);
 
   const handleDateSelect = (date: string | null) => {
     setSelectedDate(date);
@@ -241,6 +248,7 @@ export default function FavoritesTab() {
         }}
       >
         <FavoritesList
+          key={`favorites-${filteredFavorites.length}-${selectedDate}`}
           favorites={filteredFavorites}
           selectedDate={selectedDate}
           onRemoveFavorite={handleRemoveFavorite}
