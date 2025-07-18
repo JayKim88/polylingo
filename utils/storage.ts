@@ -243,10 +243,9 @@ export class StorageService {
         HISTORY_KEY,
         FAVORITES_KEY,
         SELECTED_LANGUAGES_KEY,
-        SUBSCRIPTION_KEY,
         VOICE_SETTINGS_KEY,
-        // Note: We don't clear APP_LANGUAGE_KEY and THEME_KEY
-        // as these are user preference settings
+        // Note: We don't clear APP_LANGUAGE_KEY, THEME_KEY, and SUBSCRIPTION_KEY
+        // as these are user preference settings and subscription information
       ]);
       console.log('All user data cleared successfully');
     } catch (error) {

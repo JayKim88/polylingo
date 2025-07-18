@@ -319,7 +319,7 @@
     "openSettings": "Open Settings",
     "switchToFree": "Switch to Free",
     "subscriptionSuccess": "Subscription Updated! 🎉",
-    "subscriptionSuccessMessage": "\nYou have successfully switched to {{planName}}!\nYour new features are now available.",
+    "subscriptionSuccessMessage": "\nYou have successfully switched to {{planName}}!",
     "restoreSuccess": "Purchases Restored! ✅",
     "restoreSuccessMessage": "\nYour previous purchases have been successfully restored.\n\nAll premium features are now available.",
     "restoreError": "Restore Failed",

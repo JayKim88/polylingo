@@ -320,7 +320,7 @@
     "openSettings": "打开设置",
     "switchToFree": "切换到免费版",
     "subscriptionSuccess": "订阅更新成功！🎉",
-    "subscriptionSuccessMessage": "\n您已成功切换到{{planName}}！\n现在可以使用新功能了。",
+    "subscriptionSuccessMessage": "\n您已成功切换到{{planName}}！",
     "restoreSuccess": "购买恢复成功！✅",
     "restoreSuccessMessage": "\n您之前的购买已成功恢复。\n\n现在可以使用所有高级功能。",
     "restoreError": "恢复失败",

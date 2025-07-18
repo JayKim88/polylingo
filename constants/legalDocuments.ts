@@ -1,6 +1,6 @@
 export const PRIVACY_POLICY_CONTENT = `# Privacy Policy
 
-Effective Date: January 2025
+Effective Date: July 2025
 
 ## Introduction
 
@@ -109,7 +109,7 @@ Last Updated: January 2025`;
 
 export const TERMS_OF_SERVICE_CONTENT = `# Terms of Service
 
-Effective Date: January 2025
+Effective Date: July 2025
 
 ## Agreement to Terms
 
