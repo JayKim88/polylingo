@@ -19,7 +19,6 @@
       "backgroundColor": "#000000",
       "icon": "./assets/images/polylingo.png",
       "infoPlist": {
-        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
         "SKAdNetworkItems": [
           {
             "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
