@@ -324,7 +324,14 @@
     "restoreSuccess": "购买恢复成功！✅",
     "restoreSuccessMessage": "\n您之前的购买已成功恢复。\n\n现在可以使用所有高级功能。",
     "restoreError": "恢复失败",
-    "restoreErrorMessage": "\n未找到之前的购买或恢复失败。\n\n请重试，如果问题仍然存在，请联系客服。"
+    "restoreErrorMessage": "\n未找到之前的购买或恢复失败。\n\n请重试，如果问题仍然存在，请联系客服。",
+    "loginRequired": "需要Apple ID登录",
+    "appleIDRequiredMessage": "要购买订阅，您需要使用Apple ID登录。这确保了安全的购买处理和订阅管理。",
+    "loginAndTryAgain": "登录并重试",
+    "loginRequiredMessage": "需要Apple ID登录才能完成此购买。请重试。",
+    "restoreLoginRequiredMessage": "需要Apple ID登录才能恢复您的购买。请重试。",
+    "tryAgain": "重试",
+    "purchaseError": "购买失败。请重试。"
   },
   "consent": {
     "title": "欢迎使用PolyLingo",

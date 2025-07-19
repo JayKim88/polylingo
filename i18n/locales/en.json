@@ -323,7 +323,14 @@
     "restoreSuccess": "Purchases Restored! ✅",
     "restoreSuccessMessage": "\nYour previous purchases have been successfully restored.\n\nAll premium features are now available.",
     "restoreError": "Restore Failed",
-    "restoreErrorMessage": "\nNo previous purchases found or restore failed.\n\nPlease try again or contact support if you believe this is an error."
+    "restoreErrorMessage": "\nNo previous purchases found or restore failed.\n\nPlease try again or contact support if you believe this is an error.",
+    "loginRequired": "Apple ID Login Required",
+    "appleIDRequiredMessage": "To purchase subscriptions, you need to sign in with your Apple ID. This ensures secure purchase processing and subscription management.",
+    "loginAndTryAgain": "Sign In & Try Again",
+    "loginRequiredMessage": "Apple ID login is required to complete this purchase. Please try again.",
+    "restoreLoginRequiredMessage": "Apple ID login is required to restore your purchases. Please try again.",
+    "tryAgain": "Try Again",
+    "purchaseError": "Purchase failed. Please try again."
   },
   "consent": {
     "title": "Welcome to PolyLingo",

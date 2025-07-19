@@ -23,6 +23,7 @@ export class IAPService {
   private static purchaseErrorSubscription: any;
   private static isInitialized = false;
   private static isAvailable = false;
+  private static isAppleIDLoggedIn = false;
 
   // IAP 서비스 초기화
   static async initialize(): Promise<boolean> {
@@ -88,6 +89,39 @@ export class IAPService {
     return this.isAvailable;
   }
 
+  static getAppleIDLoginState(): boolean {
+    return this.isAppleIDLoggedIn;
+  }
+
+  private static setAppleIDLoginState(isLoggedIn: boolean): void {
+    this.isAppleIDLoggedIn = isLoggedIn;
+  }
+
+  // TestFlight/Sandbox 환경 감지
+  private static determineTestEnvironment(): boolean {
+    // 1. 개발 모드는 무조건 Sandbox
+    if (__DEV__) {
+      console.log('Development mode detected - using Sandbox');
+      return true;
+    }
+
+    // 2. 환경변수로 강제 설정 (TestFlight 배포용)
+    if (process.env.EXPO_PUBLIC_IAP_USE_SANDBOX === 'true') {
+      console.log('Forced sandbox mode via environment variable');
+      return true;
+    }
+
+    // 3. Expo 환경 체크
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Non-production environment - using Sandbox');
+      return true;
+    }
+
+    // 4. 기본값: Production (App Store)
+    console.log('Production environment - using Production server');
+    return false;
+  }
+
   // 구매 리스너 설정
   private static setupPurchaseListeners() {
     // 구매 성공 리스너
@@ -100,10 +134,8 @@ export class IAPService {
           const isValid = await this.validatePurchase(purchase);
 
           if (isValid) {
-            // 구독 상태 업데이트
             await this.handleSuccessfulPurchase(purchase);
 
-            // 트랜잭션 완료 처리
             await finishTransaction({
               purchase,
               isConsumable: false,
@@ -142,9 +174,9 @@ export class IAPService {
       // Check if IAP is available
       if (!this.isAvailable) {
         console.log(
-          'IAP not available - returning mock products for development'
+          'IAP not available - returning simulation products for development'
         );
-        return this.getMockProducts();
+        return this.getSimulationProducts();
       }
 
       // Ensure IAP is initialized before getting products
@@ -152,39 +184,37 @@ export class IAPService {
         const initialized = await this.initialize();
         if (!initialized) {
           console.error(
-            'Failed to initialize IAP service - returning mock products'
+            'Failed to initialize IAP service - returning simulation products'
           );
-          return this.getMockProducts();
+          return this.getSimulationProducts();
         }
       }
 
       const productIds = Object.values(IAP_PRODUCT_IDS);
       const products = await getSubscriptions({ skus: productIds });
 
-      // If no products found (not registered in App Store Connect), return mock products for development
       if (products.length === 0 && __DEV__) {
         console.log(
-          'No products found in App Store Connect - returning mock products for development'
+          'No products found in App Store Connect - returning simulation products for development'
         );
-        return this.getMockProducts();
+        return this.getSimulationProducts();
       }
 
       return products;
     } catch (error) {
       console.error('Failed to get subscription products:', error);
 
-      // Return mock products in development mode for testing
       if (__DEV__) {
-        console.log('Returning mock products for development testing');
-        return this.getMockProducts();
+        console.log('Returning simulation products for development testing');
+        return this.getSimulationProducts();
       }
 
       return [];
     }
   }
 
-  // 개발용 목 상품 목록
-  private static getMockProducts(): Subscription[] {
+  // 개발용 시뮬레이션 상품 목록 (App Store Connect 미등록 시 사용)
+  private static getSimulationProducts(): Subscription[] {
     if (!__DEV__) return [];
 
     return [
@@ -221,25 +251,6 @@ export class IAPService {
   // 구독 구매 실행
   static async purchaseSubscription(productId: string): Promise<boolean> {
     try {
-      // In development mode, simulate purchase for testing
-      if (__DEV__ && !this.isAvailable) {
-        console.log('Simulating purchase in development mode:', productId);
-        Alert.alert(
-          '개발 모드 구매 시뮬레이션',
-          `${productId} 구독을 시뮬레이션합니다.\n\n실제 결제는 발생하지 않습니다.`,
-          [
-            { text: '취소', style: 'cancel', onPress: () => {} },
-            {
-              text: '시뮬레이션 실행',
-              onPress: async () => {
-                await this.simulatePurchase(productId);
-              },
-            },
-          ]
-        );
-        return true;
-      }
-
       // Check if IAP is available
       if (!this.isAvailable) {
         Alert.alert(
@@ -260,60 +271,8 @@ export class IAPService {
       return true;
     } catch (error) {
       console.error('Purchase failed:', error);
-
-      // In development mode, offer to simulate purchase
-      if (__DEV__) {
-        Alert.alert(
-          '구매 실패',
-          '실제 구매에 실패했습니다. 개발 모드에서 시뮬레이션하시겠습니까?',
-          [
-            { text: '취소', style: 'cancel' },
-            {
-              text: '시뮬레이션',
-              onPress: async () => {
-                await this.simulatePurchase(productId);
-              },
-            },
-          ]
-        );
-      }
-
       return false;
     }
-  }
-
-  // 개발용 구매 시뮬레이션
-  private static async simulatePurchase(productId: string): Promise<void> {
-    if (!__DEV__) return;
-
-    console.log('Simulating purchase for:', productId);
-
-    // Map productId to planId
-    let planId: string;
-    switch (productId) {
-      case IAP_PRODUCT_IDS.PRO_MONTHLY:
-        planId = 'pro_monthly';
-        break;
-      case IAP_PRODUCT_IDS.PRO_MAX_MONTHLY:
-        planId = 'pro_max_monthly';
-        break;
-      case IAP_PRODUCT_IDS.PREMIUM_YEARLY:
-        planId = 'premium_yearly';
-        break;
-      default:
-        console.error('Unknown product ID for simulation:', productId);
-        return;
-    }
-
-    // Set the subscription in local storage
-    await SubscriptionService.setSubscription(planId, true);
-
-    Alert.alert(
-      '시뮬레이션 완료',
-      `${planId} 구독이 활성화되었습니다.\n\n이는 개발 모드 시뮬레이션입니다.`
-    );
-
-    console.log(`Simulated subscription activated: ${planId}`);
   }
 
   // 구매 복원
@@ -391,19 +350,22 @@ export class IAPService {
 
       const validationPromise = (async () => {
         if (Platform.OS === 'ios') {
-          // Skip iOS validation if no shared secret is provided
           const sharedSecret = process.env.EXPO_PUBLIC_APPLE_SHARED_SECRET;
-          if (!sharedSecret) {
-            console.log('No Apple shared secret - skipping iOS validation');
-            return true;
-          }
+
+          // Determine if we should use sandbox or production
+          const isTestEnvironment = this.determineTestEnvironment();
 
           const result = await validateReceiptIos({
             receiptBody: {
               'receipt-data': purchase.transactionReceipt,
               password: sharedSecret,
             },
-            isTest: true,
+            /**
+             * isTest determines which Apple server to use:
+             * - true: Sandbox (development/TestFlight)
+             * - false: Production (App Store)
+             */
+            isTest: isTestEnvironment,
           });
 
           return result.status === 0;
@@ -473,32 +435,40 @@ export class IAPService {
     }
   }
 
-  // 현재 구독 상태 확인
+  // 현재 구독 상태 확인 (구독 모달에서만 호출)
   static async checkSubscriptionStatus(): Promise<void> {
     try {
       // If IAP is not available, set to free plan
       if (!this.isAvailable) {
         console.log('IAP not available - setting to free plan');
+        this.setAppleIDLoginState(false);
         await SubscriptionService.setSubscription('free', true);
         return;
       }
 
       // Ensure IAP is initialized before checking purchases
       if (!this.isInitialized) {
-        console.log('IAP not initialized - setting to free plan');
-        await SubscriptionService.setSubscription('free', true);
-        return;
+        console.log('IAP not initialized - initializing now...');
+        const initialized = await this.initialize();
+        if (!initialized) {
+          this.setAppleIDLoginState(false);
+          await SubscriptionService.setSubscription('free', true);
+          return;
+        }
       }
 
       console.log('Checking subscription status...');
 
       let restored: Purchase[] = [];
       try {
-        restored = await getAvailablePurchases();
+        restored = await getAvailablePurchases(); //  이 함수가 Apple ID 로그인 팝업을 트리거
         console.log('Available purchases retrieved:', restored.length);
+        // Successfully accessed purchases means Apple ID is logged in
+        this.setAppleIDLoginState(true);
       } catch (purchaseError) {
         console.warn('Failed to get available purchases:', purchaseError);
-        // If we can't get purchases, default to free plan
+        // Failed to access purchases likely means not logged in to Apple ID
+        this.setAppleIDLoginState(false);
         await SubscriptionService.setSubscription('free', true);
         return;
       }
@@ -518,14 +488,6 @@ export class IAPService {
 
       console.log('Latest purchase found:', latestPurchase?.productId);
 
-      // Skip validation in development/testing environments
-      // and just check if the purchase exists
-      if (__DEV__) {
-        console.log('Development mode - skipping receipt validation');
-        await this.handleSuccessfulPurchase(latestPurchase);
-        return;
-      }
-
       // Validate purchase in production
       try {
         const isValid = await this.validatePurchase(latestPurchase);
@@ -539,11 +501,7 @@ export class IAPService {
         console.warn('Purchase validation error:', validationError);
         // If validation fails, still activate the subscription in dev mode
         // but fall back to free in production
-        if (__DEV__) {
-          await this.handleSuccessfulPurchase(latestPurchase);
-        } else {
-          await SubscriptionService.setSubscription('free', true);
-        }
+        await SubscriptionService.setSubscription('free', true);
       }
     } catch (error) {
       console.error('Failed to check subscription status:', error);

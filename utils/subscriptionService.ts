@@ -11,32 +11,32 @@ export class SubscriptionService {
     try {
       const subscriptionData = await AsyncStorage.getItem(SUBSCRIPTION_KEY);
 
-      // console.log(
-      //   '🔍 getCurrentSubscription: Raw subscription data:',
-      //   subscriptionData
-      // );
-
       if (subscriptionData) {
         const subscription = JSON.parse(subscriptionData);
-        // console.log(
-        //   '🔍 getCurrentSubscription: Parsed subscription:',
-        //   subscription
-        // );
 
-        // 구독 만료 확인
-        if (subscription.endDate && Date.now() > subscription.endDate) {
-          // console.log(
-          //   '🔍 getCurrentSubscription: Subscription expired, setting to free'
-          // );
-          // 만료된 구독은 Free로 변경
+        // Apple ID 로그인 상태 확인 (개발 모드에서는 우회)
+        if (!__DEV__) {
+          const { IAPService } = await import('./iapService');
+          const isLoggedIn = IAPService.getAppleIDLoginState();
+
+          // Apple ID 로그인하지 않은 경우 무조건 Free 플랜으로 제한
+          if (!isLoggedIn && subscription.planId !== 'free') {
+            console.log('🔒 Not logged in to Apple ID - enforcing free plan');
+            await this.setSubscription('free');
+            return this.getDefaultSubscription();
+          }
+        }
+
+        const isSubscriptionExpired =
+          subscription.endDate && Date.now() > subscription.endDate;
+
+        if (isSubscriptionExpired) {
           await this.setSubscription('free');
           return this.getDefaultSubscription();
         }
         return subscription;
       }
-      console.log(
-        '🔍 getCurrentSubscription: No subscription data found, returning default'
-      );
+
       return this.getDefaultSubscription();
     } catch (error) {
       console.error('Error getting subscription:', error);
@@ -50,13 +50,22 @@ export class SubscriptionService {
     isActive: boolean = true
   ): Promise<void> {
     try {
+      // Apple ID 로그인 상태 확인 (개발 모드에서는 우회)
+      if (!__DEV__) {
+        const { IAPService } = await import('./iapService');
+        const isLoggedIn = IAPService.getAppleIDLoginState();
+
+        // Apple ID 로그인하지 않은 경우 유료 플랜 설정 방지
+        if (!isLoggedIn) {
+          planId = 'free';
+        }
+      }
+
       const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
       if (!plan) {
         console.error('🔍 setSubscription: Invalid plan ID:', planId);
         throw new Error('Invalid plan ID');
       }
-
-      console.log('🔍 setSubscription: Setting subscription to plan:', plan);
 
       const now = Date.now();
       const endDate =
@@ -76,16 +85,10 @@ export class SubscriptionService {
         isTrialUsed: false,
       };
 
-      console.log('set subscription????', subscription);
-
-      console.log('🔍 setSubscription: Saving subscription:', subscription);
-
       await AsyncStorage.setItem(
         SUBSCRIPTION_KEY,
         JSON.stringify(subscription)
       );
-
-      console.log('🔍 setSubscription: Subscription saved successfully');
     } catch (error) {
       console.error('Error setting subscription:', error);
       throw error;
@@ -114,9 +117,10 @@ export class SubscriptionService {
       if (!subscription) return false;
 
       const today = new Date().toDateString();
+      const resetRequired = subscription.dailyUsage.date !== today;
 
       // 날짜가 바뀌면 카운트 리셋
-      if (subscription.dailyUsage.date !== today) {
+      if (resetRequired) {
         subscription.dailyUsage = {
           date: today,
           count: 0,
@@ -131,11 +135,9 @@ export class SubscriptionService {
       const plan = SUBSCRIPTION_PLANS.find((p) => p.id === subscription.planId);
       if (!plan) return false;
 
-      // 언어 수에 따른 사용량 계산
       const maxLanguages = plan.maxLanguages;
       const usageIncrement = languageCount / maxLanguages;
 
-      // 일일 한도 확인 (사용량은 증가시키지 않음)
       return (
         subscription.dailyUsage.count + usageIncrement <= plan.dailyTranslations
       );
@@ -154,9 +156,9 @@ export class SubscriptionService {
       if (!subscription) return false;
 
       const today = new Date().toDateString();
+      const resetRequired = subscription.dailyUsage.date !== today;
 
-      // 날짜가 바뀌면 카운트 리셋
-      if (subscription.dailyUsage.date !== today) {
+      if (resetRequired) {
         subscription.dailyUsage = {
           date: today,
           count: 0,
@@ -166,30 +168,27 @@ export class SubscriptionService {
       const plan = SUBSCRIPTION_PLANS.find((p) => p.id === subscription.planId);
       if (!plan) return false;
 
-      // 언어 수에 따른 사용량 계산 (모든 플랜 공통)
-      // Free: 최대 2개 언어 기준으로 100회
-      // Pro/Pro Max/Premium: 최대 5개 언어 기준으로 각각의 한도
+      /**
+       * @description 언어 수에 따른 사용량 계산 (모든 플랜 공통)
+       * Free: 최대 2개 언어 기준으로 100회
+       * Pro/Pro Max/Premium: 최대 5개 언어 기준으로 각각의 한도
+       */
       const maxLanguages = plan.maxLanguages;
       const usageIncrement = languageCount / maxLanguages;
 
-      // 일일 한도 확인
-      if (
-        subscription.dailyUsage.count + usageIncrement >
-        plan.dailyTranslations
-      ) {
+      const usedOverDailyTranslation =
+        subscription.dailyUsage.count + usageIncrement > plan.dailyTranslations;
+
+      if (usedOverDailyTranslation) {
         return false; // 한도 초과
       }
 
-      // 사용량 증가
       subscription.dailyUsage.count += usageIncrement;
       await AsyncStorage.setItem(
         SUBSCRIPTION_KEY,
         JSON.stringify(subscription)
       );
 
-      console.log(
-        `Daily usage incremented by ${usageIncrement} (${languageCount} languages)`
-      );
       return true;
     } catch (error) {
       console.error('Error incrementing daily usage:', error);
@@ -203,35 +202,22 @@ export class SubscriptionService {
     limit: number;
     remaining: number;
   }> {
+    const freeUsage = { used: 0, limit: 100, remaining: 100 };
     try {
       const subscription = await this.getCurrentSubscription();
 
       if (!subscription) {
-        // console.log(
-        //   '🔍 getDailyUsage: No subscription found, returning free defaults'
-        // );
-        return { used: 0, limit: 100, remaining: 100 };
+        return freeUsage;
       }
 
       const plan = SUBSCRIPTION_PLANS.find((p) => p.id === subscription.planId);
       if (!plan) {
-        // console.log(
-        //   '🔍 getDailyUsage: No plan found for planId:',
-        //   subscription.planId
-        // );
-        return { used: 0, limit: 100, remaining: 100 };
+        return freeUsage;
       }
-
-      // console.log('🔍 getDailyUsage: Found plan:', plan);
-      // console.log(
-      //   '🔍 getDailyUsage: Plan daily translations:',
-      //   plan.dailyTranslations
-      // );
 
       const today = new Date().toDateString();
       let used = 0;
 
-      // 오늘 날짜가 맞으면 사용량 가져오기
       if (subscription.dailyUsage.date === today) {
         used = subscription.dailyUsage.count;
       }
@@ -242,11 +228,10 @@ export class SubscriptionService {
         remaining: Math.max(0, plan.dailyTranslations - used),
       };
 
-      // console.log('🔍 getDailyUsage: Returning result:', result);
       return result;
     } catch (error) {
       console.error('Error getting daily usage:', error);
-      return { used: 0, limit: 100, remaining: 100 };
+      return freeUsage;
     }
   }
 
@@ -291,76 +276,6 @@ export class SubscriptionService {
     }
   }
 
-  // 개발 모드 전용: 일일 사용량 리셋
-  static async resetDailyUsage(): Promise<void> {
-    if (!__DEV__) return;
-
-    try {
-      const subscription = await this.getCurrentSubscription();
-      if (!subscription) return;
-
-      subscription.dailyUsage = {
-        date: new Date().toDateString(),
-        count: 0,
-      };
-
-      await AsyncStorage.setItem(
-        SUBSCRIPTION_KEY,
-        JSON.stringify(subscription)
-      );
-
-      console.log('Daily usage reset for testing');
-    } catch (error) {
-      console.error('Error resetting daily usage:', error);
-    }
-  }
-
-  // 개발 모드 전용: 일일 사용량 수동 설정
-  static async setDailyUsage(count: number): Promise<void> {
-    if (!__DEV__) return;
-
-    try {
-      const subscription = await this.getCurrentSubscription();
-      if (!subscription) return;
-
-      subscription.dailyUsage = {
-        date: new Date().toDateString(),
-        count: Math.max(0, count),
-      };
-
-      await AsyncStorage.setItem(
-        SUBSCRIPTION_KEY,
-        JSON.stringify(subscription)
-      );
-
-      console.log(`Daily usage set to ${count} for testing`);
-    } catch (error) {
-      console.error('Error setting daily usage:', error);
-    }
-  }
-
-  // 개발 모드 전용: 테스트용 낮은 한도 플랜 생성
-  static async setTestLowLimit(): Promise<void> {
-    if (!__DEV__) return;
-
-    try {
-      const subscription = await this.getCurrentSubscription();
-      if (!subscription) return;
-
-      // 임시로 SUBSCRIPTION_PLANS 수정 (개발 모드에서만)
-      const originalPlan = SUBSCRIPTION_PLANS.find(
-        (p) => p.id === subscription.planId
-      );
-      if (originalPlan) {
-        (originalPlan as any).dailyTranslations = 3;
-      }
-
-      console.log('Test mode: Daily limit set to 3 for easy testing');
-    } catch (error) {
-      console.error('Error setting test low limit:', error);
-    }
-  }
-
   // 플랜에 맞는 기본 언어 선택 반환 (Free: 3개, 유료: 6개)
   static async getDefaultLanguageSelection(): Promise<string[]> {
     try {
@@ -387,20 +302,11 @@ export class SubscriptionService {
     isActive: boolean = true
   ): Promise<void> {
     try {
-      // 먼저 구독 설정
       await this.setSubscription(planId, isActive);
-
-      // 플랜에 맞는 기본 언어 선택 가져오기
       const defaultLanguages = await this.getDefaultLanguageSelection();
 
-      // 언어 설정 초기화
       const { StorageService } = await import('./storage');
       await StorageService.saveSelectedLanguages(defaultLanguages);
-
-      console.log(
-        `🔄 Language selection reset for plan ${planId}:`,
-        defaultLanguages
-      );
     } catch (error) {
       console.error('Error setting subscription with language reset:', error);
       throw error;

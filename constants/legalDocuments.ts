@@ -105,7 +105,7 @@ This Privacy Policy is designed to comply with:
 
 ---
 
-Last Updated: January 2025`;
+Last Updated: July 2025`;
 
 export const TERMS_OF_SERVICE_CONTENT = `# Terms of Service
 
@@ -293,4 +293,4 @@ These Terms, together with our Privacy Policy, constitute the entire agreement b
 
 ---
 
-Last Updated: January 2025`;
+Last Updated: July 2025`;

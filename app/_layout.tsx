@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack , SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import {
@@ -8,7 +8,6 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
-import { SplashScreen } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect, useState } from 'react';
 import mobileAds from 'react-native-google-mobile-ads';
@@ -16,6 +15,8 @@ import mobileAds from 'react-native-google-mobile-ads';
 import '../i18n';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import CustomSplashScreen from '../components/SplashScreen';
+import { IAPService } from '@/utils/iapService';
+import { SubscriptionService } from '@/utils/subscriptionService';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -51,6 +52,31 @@ export default function RootLayout() {
         console.error('Failed to initialize Google Mobile Ads:', error);
       });
   }, []);
+
+  const handleInitializeIAP = async () => {
+    try {
+      const initPromise = IAPService.initialize();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('IAP initialization timeout')), 5000)
+      );
+
+      await Promise.race([initPromise, timeoutPromise]);
+      console.log('IAP service initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize IAP service:', error);
+      // Ensure we have a fallback subscription
+      try {
+        await SubscriptionService.setSubscription('free', true);
+      } catch (fallbackError) {
+        console.error('Failed to set fallback subscription:', fallbackError);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (showCustomSplash) return;
+    handleInitializeIAP();
+  }, [showCustomSplash]);
 
   if (!fontsLoaded && !fontError) {
     return null;

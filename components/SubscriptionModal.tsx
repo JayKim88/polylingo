@@ -71,31 +71,19 @@ export default function SubscriptionModal({
     }
   };
 
+  const updateSubscriptionStatus = async () => {
+    await loadSubscriptionData();
+    refreshSubscription(); // Refresh global subscription state
+    onSubscriptionChange?.();
+  };
+
   const handlePurchase = async (productId: string, planId: string) => {
     setPurchaseLoading(planId);
 
-    try {
-      if (__DEV__ || !iapAvailable) {
-        // Development mode or IAP not available - use direct subscription setting
-        await SubscriptionService.setSubscriptionWithLanguageReset(
-          planId,
-          true
-        );
-      } else {
-        // Production mode - use actual IAP
-        const success = await IAPService.purchaseSubscription(productId);
-        if (!success) {
-          throw new Error('Purchase failed');
-        }
-        // After successful purchase, reset language settings for the new plan
-        await SubscriptionService.setSubscriptionWithLanguageReset(
-          planId,
-          true
-        );
-      }
-
-      await loadSubscriptionData();
-      onSubscriptionChange?.();
+    if (__DEV__) {
+      // Development mode - direct subscription setting
+      await SubscriptionService.setSubscriptionWithLanguageReset(planId, true);
+      await updateSubscriptionStatus();
 
       // Show success message
       const planName = getPlanDisplayName(planId);
@@ -109,9 +97,112 @@ export default function SubscriptionModal({
           },
         ]
       );
-    } catch (error) {
+      return;
+    }
+
+    const isLoggedIn = IAPService.getAppleIDLoginState();
+
+    try {
+      if (!isLoggedIn) {
+        Alert.alert(
+          t('subscription.loginRequired'),
+          t('subscription.appleIDRequiredMessage'),
+          [
+            { text: t('alert.cancel'), style: 'cancel' },
+            {
+              text: t('subscription.loginAndTryAgain'),
+              onPress: async () => {
+                try {
+                  await IAPService.checkSubscriptionStatus();
+                  const currentSub =
+                    await SubscriptionService.getCurrentSubscription();
+
+                  // Check if user already has a paid subscription after login
+                  const isCurrentPaidSub =
+                    currentSub &&
+                    currentSub.planId !== 'free' &&
+                    currentSub.isActive;
+
+                  if (isCurrentPaidSub) {
+                    await updateSubscriptionStatus();
+                    Alert.alert(
+                      t('subscription.restoreSuccess'),
+                      t('subscription.restoreSuccessMessage'),
+                      [{ text: t('alert.confirm'), onPress: () => onClose() }]
+                    );
+                    return;
+                  }
+
+                  // If no paid subscription found, proceed with purchase
+                  // This will re-trigger handlePurchase with updated login state
+                  setTimeout(() => handlePurchase(productId, planId), 100);
+                } catch (error) {
+                  console.error('Apple ID login failed:', error);
+                }
+              },
+            },
+          ]
+        );
+      } else {
+        await IAPService.checkSubscriptionStatus();
+        const currentSub = await SubscriptionService.getCurrentSubscription();
+
+        const isCurrentPaidSub =
+          currentSub && currentSub.planId !== 'free' && currentSub.isActive;
+
+        if (isCurrentPaidSub) {
+          await updateSubscriptionStatus();
+          Alert.alert(
+            t('subscription.restoreSuccess'),
+            t('subscription.restoreSuccessMessage'),
+            [{ text: t('alert.confirm'), onPress: () => onClose() }]
+          );
+          return;
+        }
+      }
+
+      /**
+       * @description 이전 구독 구입 내용이 없을 경우, 구입 진행
+       */
+      const success = await IAPService.purchaseSubscription(productId);
+      if (!success) {
+        throw new Error('Purchase failed');
+      }
+      await SubscriptionService.setSubscriptionWithLanguageReset(planId, true);
+
+      await updateSubscriptionStatus();
+
+      const planName = getPlanDisplayName(planId);
+      Alert.alert(
+        t('subscription.subscriptionSuccess'),
+        t('subscription.subscriptionSuccessMessage', { planName }),
+        [{ text: t('alert.confirm'), onPress: () => onClose() }]
+      );
+    } catch (error: any) {
       console.error('Purchase failed:', error);
-      Alert.alert(t('alert.error'), '구매 중 오류가 발생했습니다.');
+
+      const userCancelLogin =
+        error?.code === 'E_USER_CANCELLED' ||
+        error?.message?.includes('cancel');
+
+      if (userCancelLogin) {
+        Alert.alert(
+          t('subscription.loginRequired'),
+          t('subscription.loginRequiredMessage'),
+          [
+            { text: t('alert.cancel'), style: 'cancel' },
+            {
+              text: t('subscription.tryAgain'),
+              onPress: () => handlePurchase(productId, planId),
+            },
+          ]
+        );
+      } else {
+        Alert.alert(
+          t('alert.error'),
+          error?.message || t('subscription.purchaseError')
+        );
+      }
     } finally {
       setPurchaseLoading(null);
     }
@@ -143,12 +234,31 @@ export default function SubscriptionModal({
           t('subscription.restoreErrorMessage')
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Restore failed:', error);
-      Alert.alert(
-        t('subscription.restoreError'),
-        t('subscription.restoreErrorMessage')
-      );
+
+      // Handle Apple ID login cancellation for restore
+      if (
+        error?.code === 'E_USER_CANCELLED' ||
+        error?.message?.includes('cancel')
+      ) {
+        Alert.alert(
+          t('subscription.loginRequired'),
+          t('subscription.restoreLoginRequiredMessage'),
+          [
+            { text: t('alert.cancel'), style: 'cancel' },
+            {
+              text: t('subscription.tryAgain'),
+              onPress: () => handleRestore(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert(
+          t('subscription.restoreError'),
+          error?.message || t('subscription.restoreErrorMessage')
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -357,12 +467,12 @@ export default function SubscriptionModal({
             className="flex-1 px-6"
             showsVerticalScrollIndicator={false}
           >
-            <View className="py-6">
+            <View className="py-2">
               {SUBSCRIPTION_PLANS.map(renderPlanCard)}
             </View>
 
             {/* Restore Button */}
-            <View className="pb-6">
+            <View className="mb-10">
               <TouchableOpacity
                 className="py-4 px-6 rounded-xl border"
                 style={{ borderColor: colors.border }}

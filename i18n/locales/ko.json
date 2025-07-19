@@ -324,7 +324,14 @@
     "restoreSuccess": "구매 복원 완료! ✅",
     "restoreSuccessMessage": "\n이전 구매가 성공적으로 복원되었습니다.\n\n모든 프리미엄 기능을 이제 사용할 수 있습니다.",
     "restoreError": "복원 실패",
-    "restoreErrorMessage": "\n이전 구매를 찾을 수 없거나 복원에 실패했습니다.\n\n다시 시도하거나 문제가 지속되면 지원팀에 문의하세요."
+    "restoreErrorMessage": "\n이전 구매를 찾을 수 없거나 복원에 실패했습니다.\n\n다시 시도하거나 문제가 지속되면 지원팀에 문의하세요.",
+    "loginRequired": "Apple ID 로그인 필요",
+    "appleIDRequiredMessage": "구독을 구매하려면 Apple ID로 로그인해야 합니다. 이는 안전한 구매 처리와 구독 관리를 위해 필요합니다.",
+    "loginAndTryAgain": "로그인 후 재시도",
+    "loginRequiredMessage": "구매를 완료하려면 Apple ID 로그인이 필요합니다. 다시 시도해주세요.",
+    "restoreLoginRequiredMessage": "구매를 복원하려면 Apple ID 로그인이 필요합니다. 다시 시도해주세요.",
+    "tryAgain": "다시 시도",
+    "purchaseError": "구매에 실패했습니다. 다시 시도해주세요."
   },
   "consent": {
     "title": "PolyLingo에 오신 것을 환영합니다",
