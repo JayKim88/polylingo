@@ -331,7 +331,10 @@
     "loginRequiredMessage": "需要Apple ID登录才能完成此购买。请重试。",
     "restoreLoginRequiredMessage": "需要Apple ID登录才能恢复您的购买。请重试。",
     "tryAgain": "重试",
-    "purchaseError": "购买失败。请重试。"
+    "purchaseError": "购买失败。请重试。",
+    "changeSubscription": "更改订阅",
+    "changeSubscriptionMessage": "是否要从{{currentPlan}}更改为{{newPlan}}？",
+    "change": "更改"
   },
   "consent": {
     "title": "欢迎使用PolyLingo",

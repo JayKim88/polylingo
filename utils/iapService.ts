@@ -14,8 +14,14 @@ import {
   Subscription,
 } from 'react-native-iap';
 import { Platform, Alert } from 'react-native';
+import appleAuth, {
+  AppleRequestOperation,
+  AppleRequestScope,
+  AppleCredentialState,
+} from '@invertase/react-native-apple-authentication';
 
 import { SubscriptionService } from './subscriptionService';
+import { UserService } from './userService';
 import { IAP_PRODUCT_IDS } from '../types/subscription';
 
 export class IAPService {
@@ -24,6 +30,7 @@ export class IAPService {
   private static isInitialized = false;
   private static isAvailable = false;
   private static isAppleIDLoggedIn = false;
+  private static currentAppleUser: string | null = null;
 
   // IAP 서비스 초기화
   static async initialize(): Promise<boolean> {
@@ -38,6 +45,10 @@ export class IAPService {
       this.isInitialized = true;
       this.isAvailable = true;
       this.setupPurchaseListeners();
+
+      // 저장된 Apple User ID 복원
+      await this.restoreAppleUserSession();
+
       console.log('IAP service initialized successfully');
       return true;
     } catch (error) {
@@ -93,8 +104,131 @@ export class IAPService {
     return this.isAppleIDLoggedIn;
   }
 
-  private static setAppleIDLoginState(isLoggedIn: boolean): void {
+  static getCurrentAppleUser(): string | null {
+    return this.currentAppleUser;
+  }
+
+  private static setAppleIDLoginState(
+    isLoggedIn: boolean,
+    appleUser?: string
+  ): void {
     this.isAppleIDLoggedIn = isLoggedIn;
+    if (appleUser) {
+      this.currentAppleUser = appleUser;
+    } else if (!isLoggedIn) {
+      this.currentAppleUser = null;
+    }
+  }
+
+  // 실제 Apple ID로 사용자 인증
+  static async authenticateWithAppleID(): Promise<string | null> {
+    try {
+      if (Platform.OS !== 'ios') {
+        console.log('Apple Authentication is only available on iOS');
+        return null;
+      }
+
+      // Apple Authentication이 사용 가능한지 확인
+      const isSupported = appleAuth.isSupported;
+      if (!isSupported) {
+        console.log('Apple Authentication is not supported on this device');
+        return null;
+      }
+
+      // Apple ID로 로그인 요청
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: AppleRequestOperation.LOGIN,
+        requestedScopes: [AppleRequestScope.EMAIL, AppleRequestScope.FULL_NAME],
+      });
+
+      // 크리덴셜 상태 확인
+      const credentialState = await appleAuth.getCredentialStateForUser(
+        appleAuthRequestResponse.user
+      );
+
+      if (credentialState === AppleCredentialState.AUTHORIZED) {
+        const appleUserID = appleAuthRequestResponse.user;
+        console.log('Apple ID authentication successful:', appleUserID);
+
+        this.setAppleIDLoginState(true, appleUserID);
+
+        // Supabase에 사용자 정보 동기화 및 로컬 저장
+        await UserService.authenticateWithAppleID(appleUserID);
+        await UserService.saveAppleUserID(appleUserID);
+
+        return appleUserID;
+      } else {
+        console.log(
+          'Apple ID authentication failed - credential state:',
+          credentialState
+        );
+        this.setAppleIDLoginState(false);
+        return null;
+      }
+    } catch (error) {
+      console.error('Apple ID authentication error:', error);
+      this.setAppleIDLoginState(false);
+      return null;
+    }
+  }
+
+  // 저장된 Apple ID 크리덴셜 확인
+  static async checkExistingAppleCredentials(): Promise<boolean> {
+    try {
+      if (Platform.OS !== 'ios') {
+        return false;
+      }
+
+      const isSupported = appleAuth.isSupported;
+      if (!isSupported) {
+        return false;
+      }
+
+      // 저장된 사용자가 있는지 확인
+      if (this.currentAppleUser) {
+        const credentialState = await appleAuth.getCredentialStateForUser(
+          this.currentAppleUser
+        );
+
+        if (credentialState === AppleCredentialState.AUTHORIZED) {
+          this.setAppleIDLoginState(true, this.currentAppleUser);
+          return true;
+        } else {
+          this.setAppleIDLoginState(false);
+          return false;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error checking Apple credentials:', error);
+      this.setAppleIDLoginState(false);
+      return false;
+    }
+  }
+
+  // 저장된 Apple User 세션 복원
+  private static async restoreAppleUserSession(): Promise<void> {
+    try {
+      const storedAppleUserID = await UserService.restoreAppleUserID();
+
+      if (storedAppleUserID) {
+        this.currentAppleUser = storedAppleUserID;
+        console.log('Restored Apple User ID:', storedAppleUserID);
+
+        // 크리덴셜이 여전히 유효한지 확인
+        const isValid = await this.checkExistingAppleCredentials();
+        if (isValid) {
+          // Supabase 사용자 정보도 복원
+          await UserService.authenticateWithAppleID(storedAppleUserID);
+          console.log('Apple user session restored successfully');
+        } else {
+          console.log('Stored Apple credentials are no longer valid');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to restore Apple user session:', error);
+    }
   }
 
   // TestFlight/Sandbox 환경 감지
@@ -435,8 +569,11 @@ export class IAPService {
     }
   }
 
-  // 현재 구독 상태 확인 (구독 모달에서만 호출)
-  static async checkSubscriptionStatus(): Promise<void> {
+  /**
+   * @description 현재 구독 상태 확인 (구독 모달에서만 호출) 후,
+   * 구독 상태 업데이트 (Supabase 동기화 포함)
+   */
+  static async checkSubscriptionStatusAndUpdate(): Promise<void> {
     try {
       // If IAP is not available, set to free plan
       if (!this.isAvailable) {
@@ -461,10 +598,21 @@ export class IAPService {
 
       let restored: Purchase[] = [];
       try {
-        restored = await getAvailablePurchases(); //  이 함수가 Apple ID 로그인 팝업을 트리거
-        console.log('Available purchases retrieved:', restored.length);
-        // Successfully accessed purchases means Apple ID is logged in
-        this.setAppleIDLoginState(true);
+        // 먼저 Apple ID 인증 확인/수행
+        let isAuthenticated = await this.checkExistingAppleCredentials();
+
+        if (!isAuthenticated) {
+          const appleUserID = await this.authenticateWithAppleID();
+          if (!appleUserID) {
+            throw new Error('Apple ID authentication required');
+          }
+          isAuthenticated = true;
+        }
+
+        // Apple ID 인증 후 구매 복원
+        restored = await getAvailablePurchases();
+        this.setAppleIDLoginState(true, this.currentAppleUser || undefined);
+        console.log('User authenticated with Apple ID:', this.currentAppleUser);
       } catch (purchaseError) {
         console.warn('Failed to get available purchases:', purchaseError);
         // Failed to access purchases likely means not logged in to Apple ID
@@ -474,8 +622,6 @@ export class IAPService {
       }
 
       if (restored.length === 0) {
-        // 구독이 없으면 Free 플랜으로 설정
-        console.log('No purchases found - setting to free plan');
         await SubscriptionService.setSubscription('free', true);
         return;
       }
@@ -485,8 +631,6 @@ export class IAPService {
         (a: Purchase, b: Purchase) =>
           (b.transactionDate || 0) - (a.transactionDate || 0)
       )[0];
-
-      console.log('Latest purchase found:', latestPurchase?.productId);
 
       // Validate purchase in production
       try {

@@ -113,27 +113,7 @@ export default function SubscriptionModal({
               text: t('subscription.loginAndTryAgain'),
               onPress: async () => {
                 try {
-                  await IAPService.checkSubscriptionStatus();
-                  const currentSub =
-                    await SubscriptionService.getCurrentSubscription();
-
-                  // Check if user already has a paid subscription after login
-                  const isCurrentPaidSub =
-                    currentSub &&
-                    currentSub.planId !== 'free' &&
-                    currentSub.isActive;
-
-                  if (isCurrentPaidSub) {
-                    await updateSubscriptionStatus();
-                    Alert.alert(
-                      t('subscription.restoreSuccess'),
-                      t('subscription.restoreSuccessMessage'),
-                      [{ text: t('alert.confirm'), onPress: () => onClose() }]
-                    );
-                    return;
-                  }
-
-                  // If no paid subscription found, proceed with purchase
+                  await IAPService.checkSubscriptionStatusAndUpdate();
                   // This will re-trigger handlePurchase with updated login state
                   setTimeout(() => handlePurchase(productId, planId), 100);
                 } catch (error) {
@@ -143,21 +123,35 @@ export default function SubscriptionModal({
             },
           ]
         );
-      } else {
-        await IAPService.checkSubscriptionStatus();
-        const currentSub = await SubscriptionService.getCurrentSubscription();
+        setPurchaseLoading(null);
+        return; // 로그인이 필요한 경우 함수 종료
+      }
 
-        const isCurrentPaidSub =
-          currentSub && currentSub.planId !== 'free' && currentSub.isActive;
+      await IAPService.checkSubscriptionStatusAndUpdate();
+      const currentSub = await SubscriptionService.getCurrentSubscription();
 
-        if (isCurrentPaidSub) {
-          await updateSubscriptionStatus();
+      if (currentSub) {
+        const shouldProceed = await new Promise<boolean>((resolve) => {
           Alert.alert(
-            t('subscription.restoreSuccess'),
-            t('subscription.restoreSuccessMessage'),
-            [{ text: t('alert.confirm'), onPress: () => onClose() }]
+            t('subscription.changeSubscription'),
+            t('subscription.changeSubscriptionMessage', {
+              currentPlan: getPlanDisplayName(currentSub.planId),
+              newPlan: getPlanDisplayName(planId),
+            }),
+            [
+              {
+                text: t('alert.cancel'),
+                style: 'cancel',
+                onPress: () => resolve(false),
+              },
+              { text: t('subscription.change'), onPress: () => resolve(true) },
+            ]
           );
-          return;
+        });
+
+        if (!shouldProceed) {
+          setPurchaseLoading(null);
+          return; // 사용자가 취소한 경우
         }
       }
 
@@ -213,9 +207,7 @@ export default function SubscriptionModal({
     try {
       const success = await IAPService.restorePurchases();
       if (success) {
-        await loadSubscriptionData();
-        refreshSubscription(); // Refresh global subscription state
-        onSubscriptionChange?.();
+        await updateSubscriptionStatus();
 
         // Show success message
         Alert.alert(
@@ -237,11 +229,11 @@ export default function SubscriptionModal({
     } catch (error: any) {
       console.error('Restore failed:', error);
 
-      // Handle Apple ID login cancellation for restore
-      if (
+      const userCancelLogin =
         error?.code === 'E_USER_CANCELLED' ||
-        error?.message?.includes('cancel')
-      ) {
+        error?.message?.includes('cancel');
+
+      if (userCancelLogin) {
         Alert.alert(
           t('subscription.loginRequired'),
           t('subscription.restoreLoginRequiredMessage'),

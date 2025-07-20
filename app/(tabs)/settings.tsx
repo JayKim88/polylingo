@@ -48,6 +48,7 @@ import {
 } from '../../constants/legalDocuments';
 import { StorageService } from '../../utils/storage';
 import { TranslationAPI } from '../../utils/translationAPI';
+import { UserService } from '../../utils/userService';
 
 type SettingItemProps = {
   icon: React.ReactNode;
@@ -128,6 +129,71 @@ export default function SettingsTab() {
 
   const handleTermsOfService = () => {
     setShowTermsModal(true);
+  };
+
+  // 실제 Apple ID로 Supabase 테스트
+  const handleSupabaseTest = async () => {
+    // 사용자에게 Apple ID 입력 받기
+    Alert.prompt(
+      'Apple ID 입력',
+      '실제 Apple ID를 입력하여 Supabase 테스트를 진행합니다',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '테스트',
+          onPress: async (appleId) => {
+            if (!appleId || !appleId.includes('@')) {
+              Alert.alert('오류', '올바른 Apple ID를 입력하세요');
+              return;
+            }
+
+            try {
+              console.log('Starting Supabase test with Apple ID:', appleId);
+
+              // 1. 실제 Apple ID로 사용자 인증
+              const user = await UserService.authenticateWithAppleID(appleId);
+              console.log('User created:', user);
+
+              if (user) {
+                // 2. 구독 동기화 테스트
+                const syncResult = await UserService.syncSubscription(
+                  'premium_monthly',
+                  true
+                );
+                console.log('Subscription sync result:', syncResult);
+
+                // 3. 사용량 동기화 테스트
+                const today = new Date().toISOString().split('T')[0];
+                const usageResult = await UserService.syncDailyUsage(today, 5);
+                console.log('Usage sync result:', usageResult);
+
+                Alert.alert(
+                  '테스트 완료',
+                  `✅ 사용자 생성: ${user.appleId}\n✅ 구독 동기화: ${
+                    syncResult ? '성공' : '실패'
+                  }\n✅ 사용량 동기화: ${
+                    usageResult ? '성공' : '실패'
+                  }\n\n🔗 Supabase Dashboard에서 데이터를 확인하세요:\nhttps://ebmquokitoxofuznlacz.supabase.co`
+                );
+              } else {
+                Alert.alert('테스트 실패', '사용자 생성에 실패했습니다');
+              }
+            } catch (error) {
+              console.error('Supabase test error:', error);
+              const errorMessage =
+                error instanceof Error ? error.message : String(error);
+              Alert.alert(
+                '테스트 에러',
+                `오류: ${errorMessage}\n\n콘솔에서 상세 내용을 확인하세요`
+              );
+            }
+          },
+        },
+      ],
+      'plain-text',
+      '',
+      'email-address'
+    );
   };
 
   const handleDeleteAllData = () => {
@@ -583,9 +649,9 @@ export default function SettingsTab() {
             {/* {__DEV__ && (
               <SettingItem
                 icon={<Settings size={20} color="#F59E0B" />}
-                title="구독 테스트 (개발 모드)"
-                subtitle="개발 모드에서 구독 상태 테스트"
-                onPress={handleDevSubscriptionTest}
+                title="Supabase 테스트 (개발 모드)"
+                subtitle="Supabase 연결 및 동기화 테스트"
+                onPress={handleSupabaseTest}
                 iconColor="#F59E0B"
                 backgroundColor="#FEF3C7"
               />

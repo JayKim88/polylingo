@@ -330,7 +330,10 @@
     "loginRequiredMessage": "Apple ID login is required to complete this purchase. Please try again.",
     "restoreLoginRequiredMessage": "Apple ID login is required to restore your purchases. Please try again.",
     "tryAgain": "Try Again",
-    "purchaseError": "Purchase failed. Please try again."
+    "purchaseError": "Purchase failed. Please try again.",
+    "changeSubscription": "Change Subscription",
+    "changeSubscriptionMessage": "Would you like to change from {{currentPlan}} to {{newPlan}}?",
+    "change": "Change"
   },
   "consent": {
     "title": "Welcome to PolyLingo",
