@@ -175,8 +175,6 @@ export default function SearchTab() {
 
     setIsHeaderVisible(true);
 
-    
-
     // Check if ads should be shown
     const shouldShow = await SubscriptionService.shouldShowAds();
     setShouldShowAds(shouldShow);

@@ -14,6 +14,9 @@ export interface DeviceUsageData {
   lastUsageDate: string;
 }
 
+/**
+ * @description use in device without apple id
+ */
 export class DeviceUsageService {
   private static deviceId: string | null = null;
 
@@ -174,9 +177,6 @@ export class DeviceUsageService {
     }
   }
 
-  /**
-   * 현재 사용량 현황 조회 (일일만)
-   */
   static async getCurrentUsageStats(): Promise<{
     daily: { used: number; limit: number; remaining: number };
     total: number;

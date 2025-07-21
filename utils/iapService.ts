@@ -15,8 +15,6 @@ import {
 } from 'react-native-iap';
 import { Platform, Alert } from 'react-native';
 import appleAuth, {
-  AppleRequestOperation,
-  AppleRequestScope,
   AppleCredentialState,
 } from '@invertase/react-native-apple-authentication';
 
@@ -137,8 +135,8 @@ export class IAPService {
 
       // Apple ID로 로그인 요청
       const appleAuthRequestResponse = await appleAuth.performRequest({
-        requestedOperation: AppleRequestOperation.LOGIN,
-        requestedScopes: [AppleRequestScope.EMAIL, AppleRequestScope.FULL_NAME],
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
       });
 
       // 크리덴셜 상태 확인

@@ -111,12 +111,10 @@ export class SubscriptionService {
     isActive: boolean = true
   ): Promise<void> {
     try {
-      // Apple ID 로그인 상태 확인 (개발 모드에서는 우회)
       if (!__DEV__) {
         const { IAPService } = await import('./iapService');
         const isLoggedIn = IAPService.getAppleIDLoginState();
 
-        // Apple ID 로그인하지 않은 경우 유료 플랜 설정 방지
         if (!isLoggedIn) {
           planId = 'free';
         }
@@ -138,15 +136,19 @@ export class SubscriptionService {
 
       const today = new Date().toDateString();
 
-      // 기존 사용량 보존 (같은 날짜인 경우만)
       let preservedUsage = {
         date: today,
         count: 0,
       };
 
       const existingDailyUsage = existingSubscription?.dailyUsage;
+      const isChangePlan = existingSubscription?.planId !== planId;
 
-      if (existingDailyUsage && existingDailyUsage.date === today) {
+      if (
+        !isChangePlan &&
+        existingDailyUsage &&
+        existingDailyUsage.date === today
+      ) {
         preservedUsage = existingDailyUsage;
       }
 
@@ -165,9 +167,14 @@ export class SubscriptionService {
         JSON.stringify(subscription)
       );
 
-      // 서버에 동기화 (백그라운드에서 실행, 실패해도 에러 던지지 않음)
       UserService.syncSubscription(planId, isActive).catch((error) => {
         console.warn('Failed to sync subscription to server:', error);
+      });
+      UserService.syncDailyUsage(
+        preservedUsage.date,
+        preservedUsage.count
+      ).catch((error) => {
+        console.warn('Failed to sync daily usage to server:', error);
       });
 
       console.log('Subscription set:', planId, isActive);
@@ -270,7 +277,7 @@ export class SubscriptionService {
       // Apple ID 없는 무료 사용자의 경우 디바이스 기반 사용량 관리
       if (subscription.planId === 'free') {
         const { IAPService } = await import('./iapService');
-        const isLoggedIn = !__DEV__ ? IAPService.getAppleIDLoginState() : true;
+        const isLoggedIn = __DEV__ ? true : IAPService.getAppleIDLoginState();
 
         if (!isLoggedIn) {
           const plan = SUBSCRIPTION_PLANS.find((p) => p.id === 'free');
@@ -279,7 +286,6 @@ export class SubscriptionService {
           const maxLanguages = plan.maxLanguages;
           const usageIncrement = languageCount / maxLanguages;
 
-          // 디바이스 기반 사용량 증가 및 제한 검사
           const result = await DeviceUsageService.incrementUsageWithLimits(
             usageIncrement
           );
@@ -289,12 +295,6 @@ export class SubscriptionService {
             return false;
           }
 
-          console.log(
-            'Device usage incremented:',
-            usageIncrement,
-            'remaining daily:',
-            result.remainingDaily
-          );
           return true;
         }
       }
@@ -329,24 +329,17 @@ export class SubscriptionService {
 
       subscription.dailyUsage.count += usageIncrement;
 
-      // 로컬 저장
       await AsyncStorage.setItem(
         SUBSCRIPTION_KEY,
         JSON.stringify(subscription)
       );
 
-      // 서버에 증분 동기화 (백그라운드에서 실행)
-      this.syncDailyUsageIncremental(today, subscription.dailyUsage.count).catch(
+      UserService.syncDailyUsage(today, subscription.dailyUsage.count).catch(
         (error) => {
           console.warn('Failed to sync daily usage to server:', error);
         }
       );
 
-      console.log(
-        'Daily usage incremented:',
-        today,
-        subscription.dailyUsage.count
-      );
       return true;
     } catch (error) {
       console.error('Error incrementing daily usage:', error);
@@ -364,14 +357,12 @@ export class SubscriptionService {
     try {
       const subscription = await this.getCurrentSubscription();
 
-      if (!subscription) {
-        return freeUsage;
-      }
+      if (!subscription) return freeUsage;
 
       // Apple ID 없는 무료 사용자의 경우 디바이스 기반 사용량 반환
       if (subscription.planId === 'free') {
         const { IAPService } = await import('./iapService');
-        const isLoggedIn = !__DEV__ ? IAPService.getAppleIDLoginState() : true;
+        const isLoggedIn = __DEV__ ? true : IAPService.getAppleIDLoginState();
 
         if (!isLoggedIn) {
           const deviceStats = await DeviceUsageService.getCurrentUsageStats();
@@ -466,7 +457,6 @@ export class SubscriptionService {
     }
   }
 
-
   // 구독 설정과 함께 언어 설정 초기화
   static async setSubscriptionWithLanguageReset(
     planId: string,
@@ -480,69 +470,6 @@ export class SubscriptionService {
       await StorageService.saveSelectedLanguages(defaultLanguages);
     } catch (error) {
       console.error('Error setting subscription with language reset:', error);
-      throw error;
-    }
-  }
-
-  // 마지막 동기화된 사용량 조회
-  private static async getLastSyncedUsage(date: string): Promise<number> {
-    try {
-      const syncData = await AsyncStorage.getItem(LAST_SYNC_KEY);
-      if (!syncData) return 0;
-
-      const parsed = JSON.parse(syncData);
-      return parsed[date] || 0;
-    } catch (error) {
-      console.error('Error getting last synced usage:', error);
-      return 0;
-    }
-  }
-
-  // 마지막 동기화된 사용량 저장
-  private static async setLastSyncedUsage(date: string, count: number): Promise<void> {
-    try {
-      const syncData = await AsyncStorage.getItem(LAST_SYNC_KEY);
-      const parsed = syncData ? JSON.parse(syncData) : {};
-      
-      parsed[date] = count;
-      
-      // 30일 이전 데이터 정리
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const cutoffDate = thirtyDaysAgo.toISOString().split('T')[0];
-      
-      Object.keys(parsed).forEach(syncDate => {
-        if (syncDate < cutoffDate) {
-          delete parsed[syncDate];
-        }
-      });
-
-      await AsyncStorage.setItem(LAST_SYNC_KEY, JSON.stringify(parsed));
-    } catch (error) {
-      console.error('Error setting last synced usage:', error);
-    }
-  }
-
-  // 증분 방식으로 일일 사용량 동기화
-  private static async syncDailyUsageIncremental(
-    date: string,
-    currentUsageCount: number
-  ): Promise<void> {
-    try {
-      const lastSyncedCount = await this.getLastSyncedUsage(date);
-      
-      const success = await UserService.syncDailyUsageIncremental(
-        date,
-        currentUsageCount,
-        lastSyncedCount
-      );
-
-      if (success) {
-        // 동기화 성공 시 마지막 동기화된 사용량 업데이트
-        await this.setLastSyncedUsage(date, currentUsageCount);
-        console.log(`Incremental sync completed for ${date}: ${currentUsageCount} (increment: ${currentUsageCount - lastSyncedCount})`);
-      }
-    } catch (error) {
-      console.error('Incremental sync failed:', error);
       throw error;
     }
   }

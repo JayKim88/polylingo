@@ -7,7 +7,6 @@ import {
 } from './supabase';
 
 const USER_CACHE_KEY = 'cached_user_data';
-const LAST_SYNC_KEY = 'last_sync_timestamp';
 const APPLE_USER_KEY = 'apple_user_id';
 
 export interface CachedUserData {
@@ -97,7 +96,7 @@ export class UserService {
 
       this.currentUser = cachedUser;
       await this.saveCachedUser(cachedUser);
-      
+
       // Apple User ID도 별도 저장
       await this.saveAppleUserID(appleId);
 
@@ -132,7 +131,6 @@ export class UserService {
   private static async saveCachedUser(user: CachedUserData): Promise<void> {
     try {
       await AsyncStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
-      await AsyncStorage.setItem(LAST_SYNC_KEY, user.lastSync.toString());
     } catch (error) {
       console.error('Failed to save cached user:', error);
     }
@@ -241,80 +239,6 @@ export class UserService {
     }
   }
 
-  // 증분 방식으로 일일 사용량 동기화
-  static async syncDailyUsageIncremental(
-    date: string,
-    localUsageCount: number,
-    lastSyncedCount: number = 0
-  ): Promise<boolean> {
-    const user = await this.getCurrentUser();
-    if (!user || !isSupabaseAvailable()) {
-      return false;
-    }
-
-    try {
-      const increment = localUsageCount - lastSyncedCount;
-      
-      // 증분이 0이하면 동기화할 필요 없음
-      if (increment <= 0) {
-        console.log('No usage increment to sync');
-        return true;
-      }
-
-      const now = new Date().toISOString();
-
-      // 1. 먼저 기존 레코드 조회
-      const { data: existingUsage } = await supabase!
-        .from('daily_usage')
-        .select('usage_count')
-        .eq('user_id', user.userId)
-        .eq('date', date)
-        .single();
-
-      if (existingUsage) {
-        // 2. 기존 레코드가 있으면 증분 업데이트
-        const { error } = await supabase!
-          .from('daily_usage')
-          .update({
-            usage_count: existingUsage.usage_count + increment,
-            updated_at: now,
-          })
-          .eq('user_id', user.userId)
-          .eq('date', date);
-
-        if (error) {
-          console.error('Failed to increment daily usage:', error);
-          return false;
-        }
-
-        console.log(`Daily usage incremented by ${increment} for ${date}`);
-      } else {
-        // 3. 새 날짜 레코드 생성 (전체 로컬 사용량으로)
-        const { error } = await supabase!.from('daily_usage').insert([
-          {
-            user_id: user.userId,
-            date,
-            usage_count: localUsageCount,
-            updated_at: now,
-          },
-        ]);
-
-        if (error) {
-          console.error('Failed to create new daily usage record:', error);
-          return false;
-        }
-
-        console.log(`New daily usage record created for ${date}: ${localUsageCount}`);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Daily usage incremental sync error:', error);
-      return false;
-    }
-  }
-
-  // 레거시 UPSERT 방식 (하위 호환성)
   static async syncDailyUsage(
     date: string,
     usageCount: number
@@ -387,22 +311,10 @@ export class UserService {
     try {
       this.currentUser = null;
       await AsyncStorage.removeItem(USER_CACHE_KEY);
-      await AsyncStorage.removeItem(LAST_SYNC_KEY);
       await AsyncStorage.removeItem(APPLE_USER_KEY);
       console.log('User logged out and cache cleared');
     } catch (error) {
       console.error('Logout error:', error);
-    }
-  }
-
-  // 마지막 동기화 시간 확인
-  static async getLastSyncTime(): Promise<number> {
-    try {
-      const lastSync = await AsyncStorage.getItem(LAST_SYNC_KEY);
-      return lastSync ? parseInt(lastSync, 10) : 0;
-    } catch (error) {
-      console.error('Failed to get last sync time:', error);
-      return 0;
     }
   }
 }
