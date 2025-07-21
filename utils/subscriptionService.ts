@@ -9,11 +9,19 @@ const DAILY_USAGE_KEY = 'daily_usage';
 const LAST_SYNC_KEY = 'last_synced_usage';
 
 export class SubscriptionService {
+  private static isUpdating = false;
   /**
    * @description 현재 구독 정보 가져오기 (Supabase 동기화 포함)
    */
   static async getCurrentSubscription(): Promise<UserSubscription | null> {
     try {
+      if (this.isUpdating) {
+        console.log(
+          'Subscription update in progress. Returning local data to avoid race condition.'
+        );
+        const localData = await this.getExistingSubscriptionInLocal();
+        return localData || this.getDefaultSubscription();
+      }
       // Apple ID 로그인 상태 확인 (개발 모드에서는 우회)
       if (!__DEV__) {
         const { IAPService } = await import('./iapService');
@@ -57,6 +65,7 @@ export class SubscriptionService {
         // 일일 사용량 로드
         const today = new Date().toDateString();
         const dailyUsageCount = await UserService.getDailyUsage(today);
+
         subscription.dailyUsage = {
           date: today,
           count: dailyUsageCount,
@@ -67,6 +76,7 @@ export class SubscriptionService {
           SUBSCRIPTION_KEY,
           JSON.stringify(subscription)
         );
+
         return subscription;
       }
 
@@ -110,6 +120,12 @@ export class SubscriptionService {
     planId: string,
     isActive: boolean = true
   ): Promise<void> {
+    if (this.isUpdating) {
+      console.log('Subscription update already in progress. Skipping.');
+      return;
+    }
+    this.isUpdating = true;
+
     try {
       if (!__DEV__) {
         const { IAPService } = await import('./iapService');
@@ -167,20 +183,19 @@ export class SubscriptionService {
         JSON.stringify(subscription)
       );
 
-      UserService.syncSubscription(planId, isActive).catch((error) => {
-        console.warn('Failed to sync subscription to server:', error);
-      });
-      UserService.syncDailyUsage(
-        preservedUsage.date,
-        preservedUsage.count
-      ).catch((error) => {
-        console.warn('Failed to sync daily usage to server:', error);
+      await Promise.all([
+        UserService.syncSubscription(planId, isActive),
+        UserService.syncDailyUsage(preservedUsage.date, preservedUsage.count),
+      ]).catch((error) => {
+        console.warn('Failed to sync subscription/usage to server:', error);
       });
 
       console.log('Subscription set:', planId, isActive);
     } catch (error) {
       console.error('Error setting subscription:', error);
       throw error;
+    } finally {
+      this.isUpdating = false;
     }
   }
 
@@ -438,13 +453,9 @@ export class SubscriptionService {
   }
 
   // 플랜에 맞는 기본 언어 선택 반환 (Free: 3개, 유료: 6개)
-  static async getDefaultLanguageSelection(): Promise<string[]> {
+  static async getDefaultLanguageSelection(planId: string): Promise<string[]> {
     try {
-      const subscription = await this.getCurrentSubscription();
-      if (!subscription)
-        return SUPPORTED_LANGUAGES.slice(0, 3).map((lang) => lang.code);
-
-      const plan = SUBSCRIPTION_PLANS.find((p) => p.id === subscription.planId);
+      const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
       const maxLanguages = plan?.maxLanguages || 2;
 
       // 소스 언어 1개 + 타겟 언어들
@@ -464,7 +475,7 @@ export class SubscriptionService {
   ): Promise<void> {
     try {
       await this.setSubscription(planId, isActive);
-      const defaultLanguages = await this.getDefaultLanguageSelection();
+      const defaultLanguages = await this.getDefaultLanguageSelection(planId);
 
       const { StorageService } = await import('./storage');
       await StorageService.saveSelectedLanguages(defaultLanguages);

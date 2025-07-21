@@ -144,7 +144,7 @@ export class IAPService {
         appleAuthRequestResponse.user
       );
 
-      if (credentialState === AppleCredentialState.AUTHORIZED) {
+      if (credentialState === appleAuth.State.AUTHORIZED) {
         const appleUserID = appleAuthRequestResponse.user;
         console.log('Apple ID authentication successful:', appleUserID);
 
@@ -164,7 +164,7 @@ export class IAPService {
         return null;
       }
     } catch (error) {
-      console.error('Apple ID authentication error:', error);
+      console.warn('Apple ID authentication error:', error);
       this.setAppleIDLoginState(false);
       return null;
     }
@@ -188,7 +188,7 @@ export class IAPService {
           this.currentAppleUser
         );
 
-        if (credentialState === AppleCredentialState.AUTHORIZED) {
+        if (credentialState === appleAuth.State.AUTHORIZED) {
           this.setAppleIDLoginState(true, this.currentAppleUser);
           return true;
         } else {
@@ -279,7 +279,7 @@ export class IAPService {
             Alert.alert('구매 실패', '구매 검증에 실패했습니다.');
           }
         } catch (error) {
-          console.error('Purchase validation error:', error);
+          console.error('Purchase validation error1:', error);
           Alert.alert('구매 오류', '구매 처리 중 오류가 발생했습니다.');
         }
       }
@@ -513,7 +513,7 @@ export class IAPService {
 
       return await Promise.race([validationPromise, timeoutPromise]);
     } catch (error) {
-      console.error('Purchase validation error:', error);
+      console.error('Purchase validation error2:', error);
 
       // In development or if validation service is unavailable,
       // we can be more lenient and just check if purchase exists
@@ -619,11 +619,6 @@ export class IAPService {
         return;
       }
 
-      if (restored.length === 0) {
-        await SubscriptionService.setSubscription('free', true);
-        return;
-      }
-
       // 가장 최근 구매 찾기
       const latestPurchase = restored.sort(
         (a: Purchase, b: Purchase) =>
@@ -640,7 +635,7 @@ export class IAPService {
           await SubscriptionService.setSubscription('free', true);
         }
       } catch (validationError) {
-        console.warn('Purchase validation error:', validationError);
+        console.warn('Purchase validation error3:', validationError);
         // If validation fails, still activate the subscription in dev mode
         // but fall back to free in production
         await SubscriptionService.setSubscription('free', true);
