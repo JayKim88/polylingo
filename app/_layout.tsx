@@ -67,12 +67,9 @@ export default function RootLayout() {
       await syncSubscriptionStatus();
     } catch (error) {
       console.error('Failed to initialize IAP service:', error);
-      // IAP 실패 시에도 서버와 동기화 시도
-      await syncSubscriptionStatus();
-
       // Ensure we have a fallback subscription
       try {
-        await SubscriptionService.setSubscription('free', true);
+        await SubscriptionService.setSubscription('free', true, true);
       } catch (fallbackError) {
         console.error('Failed to set fallback subscription:', fallbackError);
       }
@@ -99,12 +96,12 @@ export default function RootLayout() {
         );
       } else {
         console.log('No subscription found, setting to free plan');
-        await SubscriptionService.setSubscription('free', true);
+        await SubscriptionService.setSubscription('free', true, true);
       }
     } catch (error) {
       console.error('Failed to sync subscription status:', error);
       try {
-        await SubscriptionService.setSubscription('free', true);
+        await SubscriptionService.setSubscription('free', true, true);
       } catch (fallbackError) {
         console.error('Failed to set fallback subscription:', fallbackError);
       }

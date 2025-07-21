@@ -577,7 +577,7 @@ export class IAPService {
       if (!this.isAvailable) {
         console.log('IAP not available - setting to free plan');
         this.setAppleIDLoginState(false);
-        await SubscriptionService.setSubscription('free', true);
+        await SubscriptionService.setSubscription('free', true, true);
         return;
       }
 
@@ -587,7 +587,7 @@ export class IAPService {
         const initialized = await this.initialize();
         if (!initialized) {
           this.setAppleIDLoginState(false);
-          await SubscriptionService.setSubscription('free', true);
+          await SubscriptionService.setSubscription('free', true, true);
           return;
         }
       }
@@ -615,7 +615,7 @@ export class IAPService {
         console.warn('Failed to get available purchases:', purchaseError);
         // Failed to access purchases likely means not logged in to Apple ID
         this.setAppleIDLoginState(false);
-        await SubscriptionService.setSubscription('free', true);
+        await SubscriptionService.setSubscription('free', true, true);
         return;
       }
 
@@ -632,17 +632,17 @@ export class IAPService {
           await this.handleSuccessfulPurchase(latestPurchase);
         } else {
           console.log('Purchase validation failed - setting to free plan');
-          await SubscriptionService.setSubscription('free', true);
+          await SubscriptionService.setSubscription('free', true, true);
         }
       } catch (validationError) {
         console.warn('Purchase validation error3:', validationError);
         // If validation fails, still activate the subscription in dev mode
         // but fall back to free in production
-        await SubscriptionService.setSubscription('free', true);
+        await SubscriptionService.setSubscription('free', true, true);
       }
     } catch (error) {
       console.error('Failed to check subscription status:', error);
-      await SubscriptionService.setSubscription('free', true);
+      await SubscriptionService.setSubscription('free', true, true);
     }
   }
 

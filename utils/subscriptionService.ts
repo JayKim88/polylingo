@@ -118,7 +118,8 @@ export class SubscriptionService {
    */
   static async setSubscription(
     planId: string,
-    isActive: boolean = true
+    isActive: boolean = true,
+    preserveUsage: boolean = false
   ): Promise<void> {
     if (this.isUpdating) {
       console.log('Subscription update already in progress. Skipping.');
@@ -161,7 +162,7 @@ export class SubscriptionService {
       const isChangePlan = existingSubscription?.planId !== planId;
 
       if (
-        !isChangePlan &&
+        (!isChangePlan || preserveUsage) &&
         existingDailyUsage &&
         existingDailyUsage.date === today
       ) {
