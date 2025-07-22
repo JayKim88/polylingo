@@ -69,7 +69,7 @@ export default function RootLayout() {
       console.error('Failed to initialize IAP service:', error);
       // Ensure we have a fallback subscription
       try {
-        await SubscriptionService.setSubscription('free', true, true);
+        await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
       } catch (fallbackError) {
         console.error('Failed to set fallback subscription:', fallbackError);
       }
@@ -92,16 +92,16 @@ export default function RootLayout() {
       if (currentSubscription) {
         await SubscriptionService.setSubscription(
           currentSubscription.planId,
-          currentSubscription.isActive
+          { isActive: currentSubscription.isActive }
         );
       } else {
         console.log('No subscription found, setting to free plan');
-        await SubscriptionService.setSubscription('free', true, true);
+        await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
       }
     } catch (error) {
       console.error('Failed to sync subscription status:', error);
       try {
-        await SubscriptionService.setSubscription('free', true, true);
+        await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
       } catch (fallbackError) {
         console.error('Failed to set fallback subscription:', fallbackError);
       }

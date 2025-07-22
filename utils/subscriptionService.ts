@@ -4,194 +4,172 @@ import { SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { UserService } from './userService';
 import { DeviceUsageService } from './deviceUsageService';
 
-export const SUBSCRIPTION_KEY = 'user_subscription';
-const DAILY_USAGE_KEY = 'daily_usage';
-const LAST_SYNC_KEY = 'last_synced_usage';
+const STORAGE_KEYS = {
+  SUBSCRIPTION: 'user_subscription',
+  DAILY_USAGE: 'daily_usage',
+  LAST_SYNC: 'last_synced_usage',
+} as const;
+
+type SubscriptionUpdateOptions = {
+  isActive?: boolean;
+  preserveUsage?: boolean;
+};
 
 export class SubscriptionService {
   private static isUpdating = false;
-  /**
-   * @description 현재 구독 정보 가져오기 (Supabase 동기화 포함)
-   */
-  static async getCurrentSubscription(): Promise<UserSubscription | null> {
-    try {
-      if (this.isUpdating) {
-        console.log(
-          'Subscription update in progress. Returning local data to avoid race condition.'
-        );
-        const localData = await this.getExistingSubscriptionInLocal();
-        return localData || this.getDefaultSubscription();
-      }
-      // Apple ID 로그인 상태 확인 (개발 모드에서는 우회)
-      if (!__DEV__) {
-        const { IAPService } = await import('./iapService');
-        const isLoggedIn = IAPService.getAppleIDLoginState();
 
-        if (!isLoggedIn) {
-          console.log('🔒 Not logged in to Apple ID - enforcing free plan');
-          return this.getDefaultSubscription();
-        }
+  static async getCurrentSubscription(): Promise<UserSubscription | null> {
+    if (this.isUpdating) {
+      console.log(
+        'Subscription update in progress. Returning local data to avoid race condition.'
+      );
+      const localData = await this.getExistingSubscriptionInLocal();
+      return localData || this.getDefaultSubscription();
+    }
+
+    try {
+      if (!(await this.isAppleIDLoggedIn())) {
+        return this.getDefaultSubscription();
       }
 
       const serverSubscription =
         await UserService.getLatestSubscriptionFromServer();
-
       if (serverSubscription) {
-        // 서버 구독 정보가 있으면 로컬과 동기화
-        const subscription: UserSubscription = {
-          planId: serverSubscription.plan_id,
-          isActive: serverSubscription.is_active,
-          startDate: new Date(serverSubscription.start_date).getTime(),
-          endDate: serverSubscription.end_date
-            ? new Date(serverSubscription.end_date).getTime()
-            : 0,
-          dailyUsage: {
-            date: new Date().toDateString(),
-            count: 0, // 하단의 일일 사용량 업데이트에서 로드
-          },
-          isTrialUsed: false,
-        };
-
-        // 만료 확인
-        const isExpired =
-          subscription.endDate && Date.now() > subscription.endDate;
-        if (isExpired) {
-          subscription.planId = 'free';
-          subscription.isActive = false;
-          subscription.endDate = 0;
-          await this.setSubscription('free');
-        }
-
-        // 일일 사용량 로드
-        const today = new Date().toDateString();
-        const dailyUsageCount = await UserService.getDailyUsage(today);
-
-        subscription.dailyUsage = {
-          date: today,
-          count: dailyUsageCount,
-        };
-
-        // 로컬 캐시 업데이트
-        await AsyncStorage.setItem(
-          SUBSCRIPTION_KEY,
-          JSON.stringify(subscription)
-        );
-
-        return subscription;
+        return await this.processServerSubscription(serverSubscription);
       }
 
-      // 서버 정보가 없으면 로컬 데이터 사용
-      const subscriptionData = await AsyncStorage.getItem(SUBSCRIPTION_KEY);
-      if (subscriptionData) {
-        const subscription = JSON.parse(subscriptionData);
-
-        const isSubscriptionExpired =
-          subscription.endDate && Date.now() > subscription.endDate;
-
-        if (isSubscriptionExpired) {
-          await this.setSubscription('free');
-          return this.getDefaultSubscription();
-        }
-        return subscription;
-      }
-
-      return this.getDefaultSubscription();
+      return await this.getLocalSubscriptionOrDefault();
     } catch (error) {
-      console.error('Error getting subscription:', error);
-
-      // 에러 시 로컬 데이터 폴백
-      try {
-        const subscriptionData = await AsyncStorage.getItem(SUBSCRIPTION_KEY);
-        if (subscriptionData) {
-          return JSON.parse(subscriptionData);
-        }
-      } catch (fallbackError) {
-        console.error('Fallback error:', fallbackError);
-      }
-
-      return this.getDefaultSubscription();
+      return await this.handleSubscriptionError(error);
     }
   }
 
-  /**
-   * @description Supabase 동기화하여 구독 설정
-   */
+  private static async isAppleIDLoggedIn(): Promise<boolean> {
+    if (__DEV__) return true;
+
+    try {
+      const { IAPService } = await import('./iapService');
+      const isLoggedIn = IAPService.getAppleIDLoginState();
+      if (!isLoggedIn) {
+        console.log('🔒 Not logged in to Apple ID - enforcing free plan');
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error checking Apple ID login state:', error);
+      return false;
+    }
+  }
+
+  private static async processServerSubscription(
+    serverSubscription: any
+  ): Promise<UserSubscription> {
+    const subscription: UserSubscription = {
+      planId: serverSubscription.plan_id,
+      isActive: serverSubscription.is_active,
+      startDate: new Date(serverSubscription.start_date).getTime(),
+      endDate: serverSubscription.end_date
+        ? new Date(serverSubscription.end_date).getTime()
+        : 0,
+      dailyUsage: { date: new Date().toDateString(), count: 0 },
+      isTrialUsed: false,
+    };
+
+    if (this.isSubscriptionExpired(subscription)) {
+      subscription.planId = 'free';
+      subscription.isActive = false;
+      subscription.endDate = 0;
+      await this.setSubscription('free');
+    }
+
+    await this.updateDailyUsage(subscription);
+    await this.cacheSubscription(subscription);
+    return subscription;
+  }
+
+  private static isSubscriptionExpired(
+    subscription: UserSubscription
+  ): boolean {
+    return subscription.endDate > 0 && Date.now() > subscription.endDate;
+  }
+
+  private static async updateDailyUsage(
+    subscription: UserSubscription
+  ): Promise<void> {
+    const today = new Date().toDateString();
+    const dailyUsageCount = await UserService.getDailyUsage(today);
+    subscription.dailyUsage = { date: today, count: dailyUsageCount };
+  }
+
+  private static async cacheSubscription(
+    subscription: UserSubscription
+  ): Promise<void> {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.SUBSCRIPTION,
+      JSON.stringify(subscription)
+    );
+  }
+
+  private static async getLocalSubscriptionOrDefault(): Promise<UserSubscription> {
+    const subscriptionData = await AsyncStorage.getItem(
+      STORAGE_KEYS.SUBSCRIPTION
+    );
+    if (!subscriptionData) {
+      return this.getDefaultSubscription();
+    }
+
+    const subscription = JSON.parse(subscriptionData);
+    if (this.isSubscriptionExpired(subscription)) {
+      await this.setSubscription('free');
+      return this.getDefaultSubscription();
+    }
+
+    return subscription;
+  }
+
+  private static async handleSubscriptionError(
+    error: unknown
+  ): Promise<UserSubscription> {
+    console.error('Error getting subscription:', error);
+
+    try {
+      const subscriptionData = await AsyncStorage.getItem(
+        STORAGE_KEYS.SUBSCRIPTION
+      );
+      if (subscriptionData) {
+        return JSON.parse(subscriptionData);
+      }
+    } catch (fallbackError) {
+      console.error('Fallback error:', fallbackError);
+    }
+
+    return this.getDefaultSubscription();
+  }
+
   static async setSubscription(
     planId: string,
-    isActive: boolean = true,
-    preserveUsage: boolean = false
+    options: SubscriptionUpdateOptions = {}
   ): Promise<void> {
     if (this.isUpdating) {
       console.log('Subscription update already in progress. Skipping.');
       return;
     }
+
     this.isUpdating = true;
-
     try {
-      if (!__DEV__) {
-        const { IAPService } = await import('./iapService');
-        const isLoggedIn = IAPService.getAppleIDLoginState();
+      const finalPlanId = await this.validateAndAdjustPlanId(planId);
+      const plan = this.validatePlan(finalPlanId);
 
-        if (!isLoggedIn) {
-          planId = 'free';
-        }
-      }
-
-      const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
-      if (!plan) {
-        console.error('🔍 setSubscription: Invalid plan ID:', planId);
-        throw new Error('Invalid plan ID');
-      }
-
-      const existingSubscription = await this.getExistingSubscriptionInLocal();
-
-      const now = Date.now();
-      const endDate =
-        plan.period === 'yearly'
-          ? now + 365 * 24 * 60 * 60 * 1000 // 1년
-          : now + 30 * 24 * 60 * 60 * 1000; // 1개월
-
-      const today = new Date().toDateString();
-
-      let preservedUsage = {
-        date: today,
-        count: 0,
-      };
-
-      const existingDailyUsage = existingSubscription?.dailyUsage;
-      const isChangePlan = existingSubscription?.planId !== planId;
-
-      if (
-        (!isChangePlan || preserveUsage) &&
-        existingDailyUsage &&
-        existingDailyUsage.date === today
-      ) {
-        preservedUsage = existingDailyUsage;
-      }
-
-      const subscription: UserSubscription = {
-        planId,
-        isActive,
-        startDate: now,
-        endDate: planId === 'free' ? 0 : endDate,
-        dailyUsage: preservedUsage,
-        isTrialUsed: existingSubscription?.isTrialUsed || false,
-      };
-
-      // 로컬 저장
-      await AsyncStorage.setItem(
-        SUBSCRIPTION_KEY,
-        JSON.stringify(subscription)
+      const subscription = await this.buildSubscription(
+        finalPlanId,
+        plan,
+        options
       );
 
-      await Promise.all([
-        UserService.syncSubscription(planId, isActive),
-        UserService.syncDailyUsage(preservedUsage.date, preservedUsage.count),
-      ]).catch((error) => {
-        console.warn('Failed to sync subscription/usage to server:', error);
-      });
+      await this.saveSubscription(subscription);
+      await this.syncToServer(subscription);
 
-      console.log('Subscription set:', planId, isActive);
+      console.log('Subscription set:', finalPlanId, options.isActive ?? true);
     } catch (error) {
       console.error('Error setting subscription:', error);
       throw error;
@@ -200,11 +178,107 @@ export class SubscriptionService {
     }
   }
 
-  // 로컬에서 기존 구독 정보 가져오기 (getCurrentSubscription과 달리 서버 동기화 없음)
+  private static async validateAndAdjustPlanId(
+    planId: string
+  ): Promise<string> {
+    if (__DEV__) return planId;
+
+    const isLoggedIn = await this.isAppleIDLoggedIn();
+    return isLoggedIn ? planId : 'free';
+  }
+
+  private static validatePlan(planId: string) {
+    const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
+    if (!plan) {
+      console.error('🔍 setSubscription: Invalid plan ID:', planId);
+      throw new Error('Invalid plan ID');
+    }
+    return plan;
+  }
+
+  private static async buildSubscription(
+    planId: string,
+    plan: any,
+    options: SubscriptionUpdateOptions
+  ): Promise<UserSubscription> {
+    const existingSubscription = await this.getExistingSubscriptionInLocal();
+    const now = Date.now();
+    const endDate = this.calculateEndDate(plan, now);
+    const preservedUsage = this.calculatePreservedUsage(
+      existingSubscription,
+      planId,
+      options.preserveUsage
+    );
+
+    return {
+      planId,
+      isActive: options.isActive ?? true,
+      startDate: now,
+      endDate: planId === 'free' ? 0 : endDate,
+      dailyUsage: preservedUsage,
+      isTrialUsed: existingSubscription?.isTrialUsed || false,
+    };
+  }
+
+  private static calculateEndDate(plan: any, now: number): number {
+    const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+    const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+    return plan.period === 'yearly' ? now + YEAR_MS : now + MONTH_MS;
+  }
+
+  private static calculatePreservedUsage(
+    existingSubscription: UserSubscription | null,
+    newPlanId: string,
+    preserveUsage?: boolean
+  ) {
+    const today = new Date().toDateString();
+    const defaultUsage = { date: today, count: 0 };
+
+    if (!existingSubscription?.dailyUsage) {
+      return defaultUsage;
+    }
+
+    const existingDailyUsage = existingSubscription.dailyUsage;
+    const isChangePlan = existingSubscription.planId !== newPlanId;
+    const shouldPreserve =
+      (!isChangePlan || preserveUsage) && existingDailyUsage.date === today;
+
+    return shouldPreserve ? existingDailyUsage : defaultUsage;
+  }
+
+  private static async saveSubscription(
+    subscription: UserSubscription
+  ): Promise<void> {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.SUBSCRIPTION,
+      JSON.stringify(subscription)
+    );
+  }
+
+  private static async syncToServer(
+    subscription: UserSubscription
+  ): Promise<void> {
+    try {
+      await Promise.all([
+        UserService.syncSubscription(
+          subscription.planId,
+          subscription.isActive
+        ),
+        UserService.syncDailyUsage(
+          subscription.dailyUsage.date,
+          subscription.dailyUsage.count
+        ),
+      ]);
+    } catch (error) {
+      console.warn('Failed to sync subscription/usage to server:', error);
+    }
+  }
+
   private static async getExistingSubscriptionInLocal(): Promise<UserSubscription | null> {
     try {
-      const subscriptionData = await AsyncStorage.getItem(SUBSCRIPTION_KEY);
-
+      const subscriptionData = await AsyncStorage.getItem(
+        STORAGE_KEYS.SUBSCRIPTION
+      );
       return subscriptionData ? JSON.parse(subscriptionData) : null;
     } catch (error) {
       console.error('Error getting existing subscription:', error);
@@ -212,7 +286,6 @@ export class SubscriptionService {
     }
   }
 
-  // 기본 구독 (Free) 반환
   static getDefaultSubscription(): UserSubscription {
     return {
       planId: 'free',
@@ -262,7 +335,7 @@ export class SubscriptionService {
         };
         // 날짜가 바뀐 경우 저장
         await AsyncStorage.setItem(
-          SUBSCRIPTION_KEY,
+          STORAGE_KEYS.SUBSCRIPTION,
           JSON.stringify(subscription)
         );
       }
@@ -346,7 +419,7 @@ export class SubscriptionService {
       subscription.dailyUsage.count += usageIncrement;
 
       await AsyncStorage.setItem(
-        SUBSCRIPTION_KEY,
+        STORAGE_KEYS.SUBSCRIPTION,
         JSON.stringify(subscription)
       );
 
@@ -475,7 +548,7 @@ export class SubscriptionService {
     isActive: boolean = true
   ): Promise<void> {
     try {
-      await this.setSubscription(planId, isActive);
+      await this.setSubscription(planId, { isActive });
       const defaultLanguages = await this.getDefaultLanguageSelection(planId);
 
       const { StorageService } = await import('./storage');
