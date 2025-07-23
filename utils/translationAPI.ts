@@ -4,7 +4,6 @@ import {
   SUPPORTED_LANGUAGES,
 } from '../types/dictionary';
 import { PronunciationService } from './pronunciationService';
-import { translateWithClaudeAPI } from './claudeAPI';
 import NetInfo from '@react-native-community/netinfo';
 
 const MYMEMORY_BASE_URL = 'https://mymemory.translated.net/api/get';
@@ -275,15 +274,41 @@ export class TranslationAPI {
         SUPPORTED_LANGUAGES.find((v) => v.code === targetLanguage)?.name ||
         targetLanguage;
 
-      const result = await translateWithClaudeAPI(
-        text,
-        sourceLangName,
-        targetLangName
-      );
+      // Use server-side API endpoint
+      const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+      const apiUrl = baseUrl ? `${baseUrl}/api/translate` : '/api/translate';
 
-      return result;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.EXPO_PUBLIC_TRANSLATE_API_KEY || '',
+        },
+        body: JSON.stringify({
+          text,
+          sourceLanguage: sourceLangName,
+          targetLanguage: targetLangName,
+          provider: 'claude',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      return {
+        translation: result.translation || '',
+        pronunciation: result.pronunciation,
+      };
     } catch (error) {
       console.log('💥 Claude API error:', error);
+
       return { translation: '' };
     }
   }

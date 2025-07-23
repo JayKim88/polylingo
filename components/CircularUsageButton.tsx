@@ -29,6 +29,7 @@ const BatteryIcon = React.memo(
       <BatteryFull size={20} color={color} />
     )
 );
+BatteryIcon.displayName = 'BatteryIcon';
 
 const CircularUsageButton = React.memo(
   ({ onPress, size = 44, refreshTrigger }: CircularUsageButtonProps) => {
@@ -134,5 +135,7 @@ const CircularUsageButton = React.memo(
     return prevProps.refreshTrigger === nextProps.refreshTrigger;
   }
 );
+
+CircularUsageButton.displayName = 'CircularUsageButton';
 
 export default CircularUsageButton;

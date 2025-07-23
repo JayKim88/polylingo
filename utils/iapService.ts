@@ -7,7 +7,6 @@ import {
   PurchaseError,
   requestPurchase,
   getSubscriptions,
-  validateReceiptIos,
   finishTransaction,
   getAvailablePurchases,
   acknowledgePurchaseAndroid,
@@ -78,18 +77,22 @@ export class IAPService {
     } catch (error) {
       console.error('IAP initialization failed:', error);
       this.isInitialized = false;
-      
+
       const errorMessage = this.getErrorMessage(error);
       if (errorMessage === ERROR_CODES.IAP_NOT_AVAILABLE) {
-        console.log('IAP not available - likely running in simulator or development build');
+        console.log(
+          'IAP not available - likely running in simulator or development build'
+        );
         return { success: false, error: errorMessage };
       }
-      
+
       return { success: false, error: errorMessage };
     }
   }
 
-  private static async retryInitialization(originalError?: string): Promise<boolean> {
+  private static async retryInitialization(
+    originalError?: string
+  ): Promise<boolean> {
     if (originalError === ERROR_CODES.IAP_NOT_AVAILABLE) {
       console.log('Subscription features will be disabled');
       return false;
@@ -108,7 +111,9 @@ export class IAPService {
       console.error('IAP initialization retry failed:', retryError);
       const errorMessage = this.getErrorMessage(retryError);
       if (errorMessage === ERROR_CODES.IAP_NOT_AVAILABLE) {
-        console.log('IAP not available - subscription features will be disabled');
+        console.log(
+          'IAP not available - subscription features will be disabled'
+        );
       }
       return false;
     }
@@ -121,7 +126,7 @@ export class IAPService {
   }
 
   private static delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   static isIAPAvailable(): boolean {
@@ -136,10 +141,15 @@ export class IAPService {
     return this.appleAuthState.currentUser;
   }
 
-  private static setAppleAuthState(isLoggedIn: boolean, currentUser?: string): void {
+  private static setAppleAuthState(
+    isLoggedIn: boolean,
+    currentUser?: string
+  ): void {
     this.appleAuthState = {
       isLoggedIn,
-      currentUser: isLoggedIn ? (currentUser || this.appleAuthState.currentUser) : null,
+      currentUser: isLoggedIn
+        ? currentUser || this.appleAuthState.currentUser
+        : null,
     };
   }
 
@@ -150,12 +160,17 @@ export class IAPService {
 
     try {
       const authResponse = await this.performAppleAuthentication();
-      const credentialState = await appleAuth.getCredentialStateForUser(authResponse.user);
+      const credentialState = await appleAuth.getCredentialStateForUser(
+        authResponse.user
+      );
 
       if (credentialState === appleAuth.State.AUTHORIZED) {
         return await this.handleSuccessfulAppleAuth(authResponse.user);
       } else {
-        console.log('Apple ID authentication failed - credential state:', credentialState);
+        console.log(
+          'Apple ID authentication failed - credential state:',
+          credentialState
+        );
         this.setAppleAuthState(false);
         return null;
       }
@@ -187,7 +202,9 @@ export class IAPService {
     });
   }
 
-  private static async handleSuccessfulAppleAuth(appleUserID: string): Promise<string> {
+  private static async handleSuccessfulAppleAuth(
+    appleUserID: string
+  ): Promise<string> {
     console.log('Apple ID authentication successful:', appleUserID);
     this.setAppleAuthState(true, appleUserID);
 
@@ -210,9 +227,11 @@ export class IAPService {
         return false;
       }
 
-      const credentialState = await appleAuth.getCredentialStateForUser(currentUser);
+      const credentialState = await appleAuth.getCredentialStateForUser(
+        currentUser
+      );
       const isAuthorized = credentialState === appleAuth.State.AUTHORIZED;
-      
+
       this.setAppleAuthState(isAuthorized, currentUser);
       return isAuthorized;
     } catch (error) {
@@ -365,14 +384,28 @@ export class IAPService {
     if (!__DEV__) return [];
 
     const simulationProducts = [
-      { productId: IAP_PRODUCT_IDS.PRO_MONTHLY, title: 'Pro Monthly Subscription', price: '2.99' },
-      { productId: IAP_PRODUCT_IDS.PRO_MAX_MONTHLY, title: 'Pro Max Monthly Subscription', price: '4.99' },
-      { productId: IAP_PRODUCT_IDS.PREMIUM_YEARLY, title: 'Premium Yearly Subscription', price: '29.99' },
+      {
+        productId: IAP_PRODUCT_IDS.PRO_MONTHLY,
+        title: 'Pro Monthly Subscription',
+        price: '2.99',
+      },
+      {
+        productId: IAP_PRODUCT_IDS.PRO_MAX_MONTHLY,
+        title: 'Pro Max Monthly Subscription',
+        price: '4.99',
+      },
+      {
+        productId: IAP_PRODUCT_IDS.PREMIUM_YEARLY,
+        title: 'Premium Yearly Subscription',
+        price: '29.99',
+      },
     ];
 
-    return simulationProducts.map(product => ({
+    return simulationProducts.map((product) => ({
       ...product,
-      description: `${product.title.split(' ')[0]} features with ${product.title.includes('Yearly') ? 'yearly' : 'monthly'} billing`,
+      description: `${product.title.split(' ')[0]} features with ${
+        product.title.includes('Yearly') ? 'yearly' : 'monthly'
+      } billing`,
       currency: 'USD',
       localizedPrice: `$${product.price}`,
       countryCode: 'US',
@@ -400,7 +433,10 @@ export class IAPService {
 
   private static ensureIAPAvailability(): boolean {
     if (!this.isAvailable) {
-      Alert.alert('IAP Unavailable', 'In-app purchases are not available in this environment');
+      Alert.alert(
+        'IAP Unavailable',
+        'In-app purchases are not available in this environment'
+      );
       return false;
     }
     return true;
@@ -410,7 +446,7 @@ export class IAPService {
     if (this.isInitialized) {
       return true;
     }
-    
+
     const initialized = await this.initialize();
     if (!initialized) {
       throw new Error('IAP service not initialized');
@@ -420,6 +456,8 @@ export class IAPService {
 
   // 구매 복원
   static async restorePurchases(): Promise<boolean> {
+    console.log('??', __DEV__, !this.isAvailable);
+
     if (__DEV__ && !this.isAvailable) {
       return this.simulateRestoreInDevelopment();
     }
@@ -457,7 +495,9 @@ export class IAPService {
     return true;
   }
 
-  private static async processRestoredPurchases(restored: Purchase[]): Promise<void> {
+  private static async processRestoredPurchases(
+    restored: Purchase[]
+  ): Promise<void> {
     for (const purchase of restored) {
       const isValid = await this.validatePurchase(purchase);
       if (isValid) {
@@ -470,7 +510,7 @@ export class IAPService {
     const message = __DEV__
       ? '실제 복원에 실패했습니다.\n\n개발 모드에서는 설정에서 구독을 직접 관리할 수 있습니다.'
       : '구매 복원 중 오류가 발생했습니다.';
-    
+
     Alert.alert('복원 실패', message, [{ text: '확인' }]);
   }
 
@@ -483,7 +523,7 @@ export class IAPService {
     try {
       const timeoutPromise = this.createTimeoutPromise();
       const validationPromise = this.performPlatformValidation(purchase);
-      
+
       return await Promise.race([validationPromise, timeoutPromise]);
     } catch (error) {
       return this.handleValidationError(error, purchase);
@@ -492,11 +532,16 @@ export class IAPService {
 
   private static createTimeoutPromise(): Promise<boolean> {
     return new Promise<boolean>((_, reject) => {
-      setTimeout(() => reject(new Error('Validation timeout')), CONSTANTS.VALIDATION_TIMEOUT);
+      setTimeout(
+        () => reject(new Error('Validation timeout')),
+        CONSTANTS.VALIDATION_TIMEOUT
+      );
     });
   }
 
-  private static async performPlatformValidation(purchase: Purchase): Promise<boolean> {
+  private static async performPlatformValidation(
+    purchase: Purchase
+  ): Promise<boolean> {
     if (Platform.OS === 'ios') {
       return await this.validateIOSPurchase(purchase);
     } else {
@@ -504,27 +549,59 @@ export class IAPService {
     }
   }
 
-  private static async validateIOSPurchase(purchase: Purchase): Promise<boolean> {
-    const sharedSecret = process.env.EXPO_PUBLIC_APPLE_SHARED_SECRET;
-    const isTestEnvironment = this.determineTestEnvironment();
+  private static async validateIOSPurchase(
+    purchase: Purchase
+  ): Promise<boolean> {
+    try {
+      // Use server-side validation API
+      const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+      const apiUrl = baseUrl ? `${baseUrl}/api/iap/verify` : '/api/iap/verify';
 
-    const result = await validateReceiptIos({
-      receiptBody: {
-        'receipt-data': purchase.transactionReceipt,
-        password: sharedSecret,
-      },
-      isTest: isTestEnvironment,
-    });
+      const isTestEnvironment = this.determineTestEnvironment();
 
-    return result.status === 0;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.EXPO_PUBLIC_IAP_API_KEY || '',
+        },
+        body: JSON.stringify({
+          receiptData: purchase.transactionReceipt,
+          isTest: isTestEnvironment,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Server validation result:', result);
+      return result.isValid;
+    } catch (error) {
+      console.error('Server validation failed:', error);
+      // In development, accept purchases with basic validation
+      if (__DEV__) {
+        console.log(
+          'Development mode - accepting purchase with basic validation'
+        );
+        return !!(purchase.productId && purchase.transactionReceipt);
+      }
+      return false;
+    }
   }
 
   private static validateAndroidPurchase(purchase: Purchase): boolean {
-    console.log('Android validation not fully implemented - accepting purchase');
+    console.log(
+      'Android validation not fully implemented - accepting purchase'
+    );
     return !!(purchase.productId && purchase.purchaseToken);
   }
 
-  private static handleValidationError(error: unknown, purchase: Purchase): boolean {
+  private static handleValidationError(
+    error: unknown,
+    purchase: Purchase
+  ): boolean {
     console.error('Purchase validation error:', error);
 
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -585,7 +662,10 @@ export class IAPService {
       if (!this.isAvailable) {
         console.log('IAP not available - setting to free plan');
         this.setAppleAuthState(false);
-        await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
+        await SubscriptionService.setSubscription('free', {
+          isActive: true,
+          preserveUsage: true,
+        });
         return;
       }
 
@@ -595,7 +675,10 @@ export class IAPService {
         const initialized = await this.initialize();
         if (!initialized) {
           this.setAppleAuthState(false);
-          await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
+          await SubscriptionService.setSubscription('free', {
+            isActive: true,
+            preserveUsage: true,
+          });
           return;
         }
       }
@@ -618,12 +701,18 @@ export class IAPService {
         // Apple ID 인증 후 구매 복원
         restored = await getAvailablePurchases();
         this.setAppleAuthState(true, this.getCurrentAppleUser() || undefined);
-        console.log('User authenticated with Apple ID:', this.getCurrentAppleUser());
+        console.log(
+          'User authenticated with Apple ID:',
+          this.getCurrentAppleUser()
+        );
       } catch (purchaseError) {
         console.warn('Failed to get available purchases:', purchaseError);
         // Failed to access purchases likely means not logged in to Apple ID
         this.setAppleAuthState(false);
-        await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
+        await SubscriptionService.setSubscription('free', {
+          isActive: true,
+          preserveUsage: true,
+        });
         return;
       }
 
@@ -640,17 +729,26 @@ export class IAPService {
           await this.handleSuccessfulPurchase(latestPurchase);
         } else {
           console.log('Purchase validation failed - setting to free plan');
-          await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
+          await SubscriptionService.setSubscription('free', {
+            isActive: true,
+            preserveUsage: true,
+          });
         }
       } catch (validationError) {
         console.warn('Purchase validation error3:', validationError);
         // If validation fails, still activate the subscription in dev mode
         // but fall back to free in production
-        await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
+        await SubscriptionService.setSubscription('free', {
+          isActive: true,
+          preserveUsage: true,
+        });
       }
     } catch (error) {
       console.error('Failed to check subscription status:', error);
-      await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
+      await SubscriptionService.setSubscription('free', {
+        isActive: true,
+        preserveUsage: true,
+      });
     }
   }
 
