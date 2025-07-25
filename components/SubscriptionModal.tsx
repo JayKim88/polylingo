@@ -100,25 +100,25 @@ export default function SubscriptionModal({
   const handlePurchase = async (productId: string, planId: string) => {
     setPurchaseLoading(planId);
 
-    // if (__DEV__) {
-    //   // Development mode - direct subscription setting
-    //   await SubscriptionService.setSubscriptionWithLanguageReset(planId, true);
-    //   await updateSubscriptionStatus();
+    if (__DEV__) {
+      // Development mode - direct subscription setting
+      await SubscriptionService.setSubscriptionWithLanguageReset(planId, true);
+      await updateSubscriptionStatus();
 
-    //   // Show success message
-    //   const planName = getPlanDisplayName(planId);
-    //   Alert.alert(
-    //     t('subscription.subscriptionSuccess'),
-    //     t('subscription.subscriptionSuccessMessage', { planName }),
-    //     [
-    //       {
-    //         text: t('alert.confirm'),
-    //         onPress: () => onClose(),
-    //       },
-    //     ]
-    //   );
-    //   return;
-    // }
+      // Show success message
+      const planName = getPlanDisplayName(planId);
+      Alert.alert(
+        t('subscription.subscriptionSuccess'),
+        t('subscription.subscriptionSuccessMessage', { planName }),
+        [
+          {
+            text: t('alert.confirm'),
+            onPress: () => onClose(),
+          },
+        ]
+      );
+      return;
+    }
 
     const isLoggedIn = IAPService.getAppleIDLoginState();
 
