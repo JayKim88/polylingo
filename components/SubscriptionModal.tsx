@@ -17,6 +17,10 @@ import { IAPService } from '../utils/iapService';
 import { SubscriptionService } from '../utils/subscriptionService';
 import { SUBSCRIPTION_PLANS, UserSubscription } from '../types/subscription';
 
+type ExtendedSubscription = Subscription & {
+  localizedPrice?: string;
+};
+
 interface SubscriptionModalProps {
   visible: boolean;
   onClose: () => void;
@@ -312,6 +316,8 @@ export default function SubscriptionModal({
 
     const product = products.find((p) => p.productId === productIdMap[plan.id]);
 
+    const typedProduct: ExtendedSubscription | undefined = product;
+
     return (
       <View
         key={plan.id}
@@ -338,7 +344,11 @@ export default function SubscriptionModal({
           </View>
           <View className="flex-row items-center">
             <Text className="text-xl font-bold" style={{ color: colors.text }}>
-              {isFreePlan ? '$0' : getProductPrice(product?.productId || '')}
+              {isFreePlan
+                ? `${
+                    (products[1] as ExtendedSubscription).localizedPrice?.[0]
+                  }0`
+                : typedProduct?.localizedPrice ?? ''}
             </Text>
             {!isFreePlan && (
               <Text
@@ -378,9 +388,11 @@ export default function SubscriptionModal({
               className="text-center font-medium"
               style={{ color: colors.background }}
             >
-              {`${t('subscription.currentPlan')} - ${t(
-                'subscription.expiryDate'
-              )} ${getFormattedEndDate()}`}
+              {`${t('subscription.currentPlan')} ${
+                isFreePlan
+                  ? ''
+                  : `- ${t('subscription.expiryDate')} ${getFormattedEndDate()}`
+              }`}
             </Text>
           </View>
         ) : isFreePlan ? (

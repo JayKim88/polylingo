@@ -531,7 +531,9 @@ export class IAPService {
         );
       });
 
-      const restorePromise = getAvailablePurchases();
+      const restorePromise = getAvailablePurchases({
+        onlyIncludeActiveItems: true,
+      });
       const restored = await Promise.race([restorePromise, timeoutPromise]);
 
       if (restored.length === 0) {
@@ -830,20 +832,10 @@ export class IAPService {
       let detectedSubscriptionPlan = 'free';
 
       try {
-        // 먼저 Apple ID 인증 확인/수행
-        let isAuthenticated = await this.checkExistingAppleCredentials();
-
-        if (!isAuthenticated) {
-          const appleUserID = await this.authenticateWithAppleID();
-          if (!appleUserID) {
-            throw new Error('Apple ID authentication required');
-          }
-          isAuthenticated = true;
-        }
-
         // Apple ID 인증 후 구매 복원
-        restored = await getAvailablePurchases();
-        this.setAppleAuthState(true, this.getCurrentAppleUser() || undefined);
+        restored = await getAvailablePurchases({
+          onlyIncludeActiveItems: true,
+        });
         console.log(`Found ${restored.length} total purchases from Apple`);
       } catch (purchaseError) {
         console.warn('Failed to get available purchases:', purchaseError);

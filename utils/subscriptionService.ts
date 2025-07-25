@@ -52,7 +52,6 @@ export class SubscriptionService {
       const { IAPService } = await import('./iapService');
       const isLoggedIn = IAPService.getAppleIDLoginState();
       if (!isLoggedIn) {
-        console.log('🔒 Not logged in to Apple ID - enforcing free plan');
         return false;
       }
       return true;
@@ -152,7 +151,6 @@ export class SubscriptionService {
     options: SubscriptionUpdateOptions = {}
   ): Promise<void> {
     if (this.isUpdating) {
-      console.log('Subscription update already in progress. Skipping.');
       return;
     }
 
@@ -191,7 +189,6 @@ export class SubscriptionService {
   private static validatePlan(planId: string) {
     const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
     if (!plan) {
-      console.error('🔍 setSubscription: Invalid plan ID:', planId);
       throw new Error('Invalid plan ID');
     }
     return plan;
@@ -381,7 +378,6 @@ export class SubscriptionService {
           );
 
           if (!result.allowed) {
-            console.log('Device usage limit exceeded:', result.reason);
             return false;
           }
 
