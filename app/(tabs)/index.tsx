@@ -227,11 +227,14 @@ export default function SearchTab() {
     onFocus: handleFocus,
   });
 
+  const handleCleanupIap = async () =>
+    await IAPService.cleanup().catch(console.error);
+
   useEffect(() => {
     checkVoiceAvailability();
 
     return () => {
-      IAPService.cleanup().catch(console.error);
+      handleCleanupIap();
     };
   }, [checkVoiceAvailability]);
 

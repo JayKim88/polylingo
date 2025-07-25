@@ -286,6 +286,7 @@
     "title": "Subscription Plans",
     "currentPlan": "Current Plan",
     "upgrade": "Upgrade",
+    "choose": "Choose",
     "manage": "Manage",
     "restore": "Restore Purchases",
     "free": "Free",
@@ -333,7 +334,8 @@
     "purchaseError": "Purchase failed. Please try again.",
     "changeSubscription": "Change Subscription",
     "changeSubscriptionMessage": "Would you like to change from {{currentPlan}} to {{newPlan}}?",
-    "change": "Change"
+    "change": "Change",
+    "expiryDate": "Expires at"
   },
   "consent": {
     "title": "Welcome to PolyLingo",

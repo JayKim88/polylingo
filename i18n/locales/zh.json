@@ -286,6 +286,7 @@
     "title": "订阅计划",
     "currentPlan": "当前计划",
     "upgrade": "升级",
+    "choose": "選擇",
     "manage": "管理",
     "restore": "恢复购买",
     "free": "免费",
@@ -334,7 +335,8 @@
     "purchaseError": "购买失败。请重试。",
     "changeSubscription": "更改订阅",
     "changeSubscriptionMessage": "是否要从{{currentPlan}}更改为{{newPlan}}？",
-    "change": "更改"
+    "change": "更改",
+    "expiryDate": "有效期限至"
   },
   "consent": {
     "title": "欢迎使用PolyLingo",

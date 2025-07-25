@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 import { Subscription } from 'react-native-iap';
 
 import { useTheme } from '../contexts/ThemeContext';
-import { useSubscription } from '../hooks/useSubscription';
 import { IAPService } from '../utils/iapService';
 import { SubscriptionService } from '../utils/subscriptionService';
 import { SUBSCRIPTION_PLANS, UserSubscription } from '../types/subscription';
@@ -29,10 +28,8 @@ export default function SubscriptionModal({
   onClose,
   onSubscriptionChange,
 }: SubscriptionModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
-  const { subscription: globalSubscription, refreshSubscription } =
-    useSubscription();
 
   const [products, setProducts] = useState<Subscription[]>([]);
   const [currentSubscription, setCurrentSubscription] =
@@ -41,11 +38,31 @@ export default function SubscriptionModal({
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null);
   const [iapAvailable, setIapAvailable] = useState(false);
 
+  const getFormattedEndDate = () => {
+    const endDate = currentSubscription?.endDate;
+    if (endDate) {
+      const date = new Date(endDate);
+      if (i18n.language === 'en') {
+        return t('favorites.dateSubtitle', {
+          month: date.getMonth() + 1,
+          day: date.getDate(),
+          year: date.getFullYear(),
+        });
+      } else {
+        return t('favorites.dateSubtitle', {
+          year: date.getFullYear(),
+          month: date.getMonth() + 1,
+          day: date.getDate(),
+        });
+      }
+    }
+    return t('favorites.allFavorites');
+  };
+
   useEffect(() => {
     if (!visible) return;
     loadSubscriptionData();
-    globalSubscription && setCurrentSubscription(globalSubscription);
-  }, [visible, globalSubscription]);
+  }, [visible]);
 
   const loadSubscriptionData = async () => {
     setLoading(true);
@@ -73,32 +90,31 @@ export default function SubscriptionModal({
 
   const updateSubscriptionStatus = async () => {
     await loadSubscriptionData();
-    refreshSubscription(); // Refresh global subscription state
     onSubscriptionChange?.();
   };
 
   const handlePurchase = async (productId: string, planId: string) => {
     setPurchaseLoading(planId);
 
-    if (__DEV__) {
-      // Development mode - direct subscription setting
-      await SubscriptionService.setSubscriptionWithLanguageReset(planId, true);
-      await updateSubscriptionStatus();
+    // if (__DEV__) {
+    //   // Development mode - direct subscription setting
+    //   await SubscriptionService.setSubscriptionWithLanguageReset(planId, true);
+    //   await updateSubscriptionStatus();
 
-      // Show success message
-      const planName = getPlanDisplayName(planId);
-      Alert.alert(
-        t('subscription.subscriptionSuccess'),
-        t('subscription.subscriptionSuccessMessage', { planName }),
-        [
-          {
-            text: t('alert.confirm'),
-            onPress: () => onClose(),
-          },
-        ]
-      );
-      return;
-    }
+    //   // Show success message
+    //   const planName = getPlanDisplayName(planId);
+    //   Alert.alert(
+    //     t('subscription.subscriptionSuccess'),
+    //     t('subscription.subscriptionSuccessMessage', { planName }),
+    //     [
+    //       {
+    //         text: t('alert.confirm'),
+    //         onPress: () => onClose(),
+    //       },
+    //     ]
+    //   );
+    //   return;
+    // }
 
     const isLoggedIn = IAPService.getAppleIDLoginState();
 
@@ -113,8 +129,7 @@ export default function SubscriptionModal({
               text: t('subscription.loginAndTryAgain'),
               onPress: async () => {
                 try {
-                  await IAPService.checkSubscriptionStatusAndUpdate();
-                  // This will re-trigger handlePurchase with updated login state
+                  await IAPService.authenticateWithAppleID();
                   setTimeout(() => handlePurchase(productId, planId), 100);
                 } catch (error) {
                   console.error('Apple ID login failed:', error);
@@ -124,13 +139,12 @@ export default function SubscriptionModal({
           ]
         );
         setPurchaseLoading(null);
-        return; // 로그인이 필요한 경우 함수 종료
+        return;
       }
 
-      await IAPService.checkSubscriptionStatusAndUpdate();
       const currentSub = await SubscriptionService.getCurrentSubscription();
 
-      if (currentSub) {
+      if (currentSub && currentSub?.isActive) {
         const shouldProceed = await new Promise<boolean>((resolve) => {
           Alert.alert(
             t('subscription.changeSubscription'),
@@ -155,13 +169,9 @@ export default function SubscriptionModal({
         }
       }
 
-      /**
-       * @description 이전 구독 구입 내용이 없을 경우, 구입 진행
-       */
       const success = await IAPService.purchaseSubscription(productId);
-      if (!success) {
-        throw new Error('Purchase failed');
-      }
+      if (!success) throw new Error('Purchase failed');
+
       await SubscriptionService.setSubscriptionWithLanguageReset(planId, true);
 
       await updateSubscriptionStatus();
@@ -173,13 +183,23 @@ export default function SubscriptionModal({
         [{ text: t('alert.confirm'), onPress: () => onClose() }]
       );
     } catch (error: any) {
-      console.error('Purchase failed:', error);
-
-      const userCancelLogin =
+      const userCancelled =
         error?.code === 'E_USER_CANCELLED' ||
-        error?.message?.includes('cancel');
+        error?.message?.includes('cancel') ||
+        error?.message?.includes('Cancel') ||
+        error?.userCancelled === true;
 
-      if (userCancelLogin) {
+      if (userCancelled) {
+        console.log('User cancelled purchase');
+        return;
+      }
+
+      const loginRequired =
+        error?.message?.includes('login') ||
+        error?.message?.includes('Apple ID') ||
+        error?.message?.includes('authentication');
+
+      if (loginRequired) {
         Alert.alert(
           t('subscription.loginRequired'),
           t('subscription.loginRequiredMessage'),
@@ -280,6 +300,8 @@ export default function SubscriptionModal({
   const renderPlanCard = (plan: any) => {
     const isCurrentPlan = currentSubscription?.planId === plan.id;
     const isFreePlan = plan.id === 'free';
+    const isOnSubscription =
+      !isFreePlan && currentSubscription?.planId !== 'free';
 
     // Map plan ID to product ID
     const productIdMap: { [key: string]: string } = {
@@ -356,7 +378,9 @@ export default function SubscriptionModal({
               className="text-center font-medium"
               style={{ color: colors.background }}
             >
-              {t('subscription.currentPlan')}
+              {`${t('subscription.currentPlan')} - ${t(
+                'subscription.expiryDate'
+              )} ${getFormattedEndDate()}`}
             </Text>
           </View>
         ) : isFreePlan ? (
@@ -393,7 +417,11 @@ export default function SubscriptionModal({
                 className="text-center font-medium"
                 style={{ color: colors.background }}
               >
-                {t('subscription.upgrade')}
+                {t(
+                  isOnSubscription
+                    ? 'subscription.choose'
+                    : 'subscription.upgrade'
+                )}
               </Text>
             )}
           </TouchableOpacity>

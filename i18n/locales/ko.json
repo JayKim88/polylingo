@@ -286,6 +286,7 @@
     "title": "구독 플랜",
     "currentPlan": "현재 플랜",
     "upgrade": "업그레이드",
+    "choose": "선택하기",
     "manage": "관리",
     "restore": "구매 복원",
     "free": "무료",
@@ -334,7 +335,8 @@
     "purchaseError": "구매에 실패했습니다. 다시 시도해주세요.",
     "changeSubscription": "구독 변경",
     "changeSubscriptionMessage": "현재 {{currentPlan}}에서 {{newPlan}}으로 변경하시겠습니까?",
-    "change": "변경"
+    "change": "변경",
+    "expiryDate": "만료일"
   },
   "consent": {
     "title": "PolyLingo에 오신 것을 환영합니다",

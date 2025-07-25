@@ -23,12 +23,13 @@ export class SubscriptionService {
       console.log(
         'Subscription update in progress. Returning local data to avoid race condition.'
       );
-      const localData = await this.getExistingSubscriptionInLocal();
-      return localData || this.getDefaultSubscription();
+      return await this.getLocalSubscriptionOrDefault();
     }
 
+    const isLoggedIn = await this.isAppleIDLoggedIn();
+
     try {
-      if (!(await this.isAppleIDLoggedIn())) {
+      if (!isLoggedIn) {
         return this.getDefaultSubscription();
       }
 

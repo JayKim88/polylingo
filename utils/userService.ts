@@ -144,11 +144,6 @@ export class UserService {
     const user = await this.getCurrentUser();
 
     if (!user || !isSupabaseAvailable()) {
-      console.log(
-        'Cannot sync subscription - no user or Supabase unavailable',
-        !user,
-        !isSupabaseAvailable()
-      );
       return false;
     }
 

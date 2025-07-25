@@ -17,6 +17,8 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import CustomSplashScreen from '../components/SplashScreen';
 import { IAPService } from '@/utils/iapService';
 import { SubscriptionService } from '@/utils/subscriptionService';
+import { AppState, AppStateStatus } from 'react-native';
+import { useSubscription } from '@/hooks/useSubscription';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,6 +26,7 @@ export default function RootLayout() {
   useFrameworkReady();
 
   const [showCustomSplash, setShowCustomSplash] = useState(true);
+  const { refreshSubscription } = useSubscription();
 
   const [fontsLoaded, fontError] = useFonts({
     'Inter-Regular': Inter_400Regular,
@@ -37,6 +40,41 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+  const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+    if (nextAppState === 'active') {
+      try {
+        if (IAPService.isIAPAvailable()) {
+          await IAPService.checkSubscriptionStatusAndUpdate();
+          await refreshSubscription();
+        }
+      } catch (error) {
+        console.error(
+          'Error checking subscription on app state change:',
+          error
+        );
+        // 에러 발생 시 안전하게 free plan으로 설정
+        try {
+          await SubscriptionService.setSubscription('free', {
+            isActive: true,
+            preserveUsage: true,
+          });
+        } catch (fallbackError) {
+          console.error('Failed to set fallback subscription:', fallbackError);
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      'change',
+      handleAppStateChange
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const handleSplashComplete = () => setShowCustomSplash(false);
 
@@ -63,45 +101,16 @@ export default function RootLayout() {
       await Promise.race([initPromise, timeoutPromise]);
       console.log('IAP service initialized successfully');
 
-      // IAP 초기화 성공 후 구독 상태 확인 및 동기화
-      await syncSubscriptionStatus();
+      await IAPService.checkSubscriptionStatusAndUpdate();
+      await refreshSubscription();
     } catch (error) {
       console.error('Failed to initialize IAP service:', error);
       // Ensure we have a fallback subscription
       try {
-        await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
-      } catch (fallbackError) {
-        console.error('Failed to set fallback subscription:', fallbackError);
-      }
-    }
-  };
-
-  // 서버와 구독 상태 동기화
-  const syncSubscriptionStatus = async () => {
-    try {
-      // 1. Apple 구독 상태 확인 (실제 구독 취소 여부 감지)
-      if (IAPService.isIAPAvailable()) {
-        console.log('Checking Apple subscription status...');
-        await IAPService.checkSubscriptionStatusAndUpdate();
-      }
-
-      // 2. 서버와 로컬 구독 상태 동기화
-      const currentSubscription =
-        await SubscriptionService.getCurrentSubscription();
-
-      if (currentSubscription) {
-        await SubscriptionService.setSubscription(
-          currentSubscription.planId,
-          { isActive: currentSubscription.isActive }
-        );
-      } else {
-        console.log('No subscription found, setting to free plan');
-        await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
-      }
-    } catch (error) {
-      console.error('Failed to sync subscription status:', error);
-      try {
-        await SubscriptionService.setSubscription('free', { isActive: true, preserveUsage: true });
+        await SubscriptionService.setSubscription('free', {
+          isActive: true,
+          preserveUsage: true,
+        });
       } catch (fallbackError) {
         console.error('Failed to set fallback subscription:', fallbackError);
       }
@@ -109,9 +118,8 @@ export default function RootLayout() {
   };
 
   useEffect(() => {
-    if (showCustomSplash) return;
     handleInitializeIAP();
-  }, [showCustomSplash]);
+  }, []);
 
   if (!fontsLoaded && !fontError) {
     return null;
