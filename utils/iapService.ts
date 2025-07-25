@@ -166,7 +166,10 @@ export class IAPService {
       );
 
       if (credentialState === appleAuth.State.AUTHORIZED) {
-        return await this.handleSuccessfulAppleAuth(authResponse.user);
+        return await this.handleSuccessfulAppleAuth(
+          authResponse.user,
+          authResponse.email
+        );
       } else {
         console.log(
           'Apple ID authentication failed - credential state:',
@@ -207,13 +210,18 @@ export class IAPService {
   }
 
   private static async handleSuccessfulAppleAuth(
-    appleUserID: string
+    appleUserID: string,
+    appleUserEmail: string | null
   ): Promise<string> {
-    console.log('Apple ID authentication successful:', appleUserID);
+    console.log(
+      'Apple ID authentication successful:',
+      appleUserID,
+      appleUserEmail
+    );
     this.setAppleAuthState(true, appleUserID);
 
     await Promise.all([
-      UserService.authenticateWithAppleID(appleUserID),
+      UserService.authenticateWithAppleID(appleUserID, appleUserEmail ?? ''),
       UserService.saveAppleUserID(appleUserID),
     ]);
 

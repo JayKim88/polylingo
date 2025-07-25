@@ -17,6 +17,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
 export interface DatabaseUser {
   id: string;
   apple_id: string;
+  email?: string;
   created_at: string;
   updated_at: string;
 }

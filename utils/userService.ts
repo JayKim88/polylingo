@@ -12,6 +12,7 @@ const APPLE_USER_KEY = 'apple_user_id';
 export interface CachedUserData {
   userId: string;
   appleId: string;
+  email?: string;
   lastSync: number;
 }
 
@@ -40,7 +41,8 @@ export class UserService {
 
   // Apple ID로 사용자 인증 및 동기화
   static async authenticateWithAppleID(
-    appleId: string
+    appleId: string,
+    email?: string
   ): Promise<CachedUserData | null> {
     try {
       // Supabase를 사용할 수 없는 경우 로컬 캐시만 사용
@@ -49,6 +51,7 @@ export class UserService {
         const localUser: CachedUserData = {
           userId: `local_${appleId}`,
           appleId,
+          email,
           lastSync: Date.now(),
         };
         this.currentUser = localUser;
@@ -67,9 +70,14 @@ export class UserService {
 
       if (fetchError && fetchError.code === 'PGRST116') {
         // 사용자가 존재하지 않음 - 새 사용자 생성
+        const userData: { apple_id: string; email?: string } = { apple_id: appleId };
+        if (email) {
+          userData.email = email;
+        }
+        
         const { data: newUser, error: createError } = await supabase!
           .from('users')
-          .insert([{ apple_id: appleId }])
+          .insert([userData])
           .select()
           .single();
 
@@ -85,12 +93,26 @@ export class UserService {
       } else {
         user = existingUser;
         console.log('Existing user found:', user.id);
+        
+        // 기존 사용자의 이메일이 없고 새로 제공된 이메일이 있으면 업데이트
+        if (!user.email && email) {
+          const { error: updateError } = await supabase!
+            .from('users')
+            .update({ email })
+            .eq('id', user.id);
+            
+          if (!updateError) {
+            user.email = email;
+            console.log('User email updated:', email);
+          }
+        }
       }
 
       // 사용자 정보 캐시
       const cachedUser: CachedUserData = {
         userId: user.id,
         appleId: user.apple_id,
+        email: user.email,
         lastSync: Date.now(),
       };
 
