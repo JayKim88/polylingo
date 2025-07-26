@@ -125,31 +125,34 @@ export default function SubscriptionModal({
       return;
     }
 
-    const isLoggedIn = IAPService.getAppleIDLoginState();
+    const isLoggedIn = await SubscriptionService.isAppleIDLoggedIn();
 
     try {
-      if (!isLoggedIn) {
-        Alert.alert(
-          t('subscription.loginRequired'),
-          t('subscription.appleIDRequiredMessage'),
-          [
-            { text: t('alert.cancel'), style: 'cancel' },
-            {
-              text: t('subscription.loginAndTryAgain'),
-              onPress: async () => {
-                try {
-                  await IAPService.authenticateWithAppleID();
-                  setTimeout(() => handlePurchase(productId, planId), 100);
-                } catch (error) {
-                  console.error('Apple ID login failed:', error);
-                }
-              },
-            },
-          ]
-        );
-        setPurchaseLoading(null);
-        return;
-      }
+      /**
+       * @todo temporary comment out for test flight!
+       */
+      // if (!isLoggedIn) {
+      //   Alert.alert(
+      //     t('subscription.loginRequired'),
+      //     t('subscription.appleIDRequiredMessage'),
+      //     [
+      //       { text: t('alert.cancel'), style: 'cancel' },
+      //       {
+      //         text: t('subscription.loginAndTryAgain'),
+      //         onPress: async () => {
+      //           try {
+      //             await IAPService.authenticateWithAppleID();
+      //             setTimeout(() => handlePurchase(productId, planId), 100);
+      //           } catch (error) {
+      //             console.error('Apple ID login failed:', error);
+      //           }
+      //         },
+      //       },
+      //     ]
+      //   );
+      //   setPurchaseLoading(null);
+      //   return;
+      // }
 
       const currentSub = await SubscriptionService.getCurrentSubscription();
 

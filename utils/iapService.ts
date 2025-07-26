@@ -89,35 +89,6 @@ export class IAPService {
     }
   }
 
-  private static async retryInitialization(
-    originalError?: string
-  ): Promise<boolean> {
-    if (originalError === ERROR_CODES.IAP_NOT_AVAILABLE) {
-      console.log('Subscription features will be disabled');
-      return false;
-    }
-
-    try {
-      console.log('Retrying IAP initialization...');
-      await this.delay(CONSTANTS.RETRY_DELAY);
-      await initConnection();
-      this.isInitialized = true;
-      this.isAvailable = true;
-      this.setupPurchaseListeners();
-      console.log('IAP service initialized successfully on retry');
-      return true;
-    } catch (retryError) {
-      console.error('IAP initialization retry failed:', retryError);
-      const errorMessage = this.getErrorMessage(retryError);
-      if (errorMessage === ERROR_CODES.IAP_NOT_AVAILABLE) {
-        console.log(
-          'IAP not available - subscription features will be disabled'
-        );
-      }
-      return false;
-    }
-  }
-
   private static getErrorMessage(error: unknown): string {
     return typeof error === 'object' && error !== null && 'message' in error
       ? (error as any).message
@@ -258,24 +229,91 @@ export class IAPService {
 
   private static async restoreAppleUserSession(): Promise<void> {
     try {
-      const storedAppleUserID = await UserService.restoreAppleUserID();
-      if (!storedAppleUserID) {
-        return;
+      let appleUserID = await UserService.restoreAppleUserID();
+
+      if (!appleUserID) {
+        appleUserID = await this.restoreUserViaTransaction();
       }
 
-      console.log('Restored Apple User ID:', storedAppleUserID);
-
-      const isValid = await this.checkExistingAppleCredentials(
-        storedAppleUserID
-      );
-      if (isValid) {
-        await UserService.authenticateWithAppleID(storedAppleUserID);
-        console.log('Apple user session restored successfully');
-      } else {
-        console.log('Stored Apple credentials are no longer valid');
+      if (appleUserID) {
+        await this.authenticateAppleUser(appleUserID);
       }
     } catch (error) {
       console.error('Failed to restore Apple user session:', error);
+      const appleUserID = await this.restoreUserViaTransaction();
+      if (appleUserID) {
+        await this.authenticateAppleUser(appleUserID);
+      }
+    }
+  }
+
+  private static async restoreUserViaTransaction(): Promise<string | null> {
+    const success = await this.attemptTransactionBasedRestore();
+    if (!success) return null;
+
+    const currentUser = await UserService.getCurrentUser();
+    return currentUser?.appleId || null;
+  }
+
+  private static async authenticateAppleUser(
+    appleUserID: string
+  ): Promise<void> {
+    const isValid = await this.checkExistingAppleCredentials(appleUserID);
+    if (isValid) {
+      await UserService.authenticateWithAppleID(appleUserID);
+      console.log('Apple user session restored successfully');
+    } else {
+      console.log('Apple credentials are no longer valid');
+    }
+  }
+
+  private static async attemptTransactionBasedRestore(): Promise<boolean> {
+    try {
+      if (!this.isAvailable) {
+        console.log('IAP not available - skipping transaction-based restore');
+        return false;
+      }
+
+      const restored = await getAvailablePurchases({
+        onlyIncludeActiveItems: false, // 모든 구매 내역 조회
+      });
+
+      if (restored.length === 0) {
+        console.log('No purchase history found');
+        return false;
+      }
+
+      const latestPurchase = restored.sort(
+        (a: Purchase, b: Purchase) =>
+          (b.transactionDate || 0) - (a.transactionDate || 0)
+      )[0];
+
+      const originalTransactionId =
+        latestPurchase.originalTransactionIdentifierIOS;
+
+      if (!originalTransactionId) {
+        console.log('No original transaction ID found in latest purchase');
+        return false;
+      }
+
+      const restoredUser = await UserService.restoreUserByTransactionId(
+        originalTransactionId
+      );
+
+      if (restoredUser) {
+        console.log(
+          'User successfully restored via transaction ID:',
+          restoredUser.userId
+        );
+        this.setAppleAuthState(true, restoredUser.appleId);
+        return true;
+      } else {
+        console.log('Failed to restore user via transaction ID');
+        return false;
+      }
+    } catch (error) {
+      console.error('Transaction-based restore failed:', error);
+      return false;
     }
   }
 

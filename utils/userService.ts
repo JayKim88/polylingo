@@ -45,6 +45,80 @@ export class UserService {
     }
   }
 
+  // Original Transaction ID로 사용자 복원 (직접 Supabase 사용)
+  static async restoreUserByTransactionId(
+    originalTransactionId: string
+  ): Promise<CachedUserData | null> {
+    try {
+      if (!originalTransactionId) {
+        console.error('Original transaction ID is required');
+        return null;
+      }
+
+      if (!isSupabaseAvailable()) {
+        console.error('Supabase not available for user restoration');
+        return null;
+      }
+
+      // original_transaction_identifier_ios로 구독 찾기
+      const { data: subscription, error: subscriptionError } = await supabase!
+        .from('user_subscriptions')
+        .select('user_id')
+        .eq('original_transaction_identifier_ios', originalTransactionId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (subscriptionError && subscriptionError.code !== 'PGRST116') {
+        console.error('Subscription query error:', subscriptionError);
+        return null;
+      }
+
+      if (!subscription) {
+        console.log(
+          'No subscription found for transaction:',
+          originalTransactionId
+        );
+        return null;
+      }
+
+      // 해당 user_id로 사용자 정보 조회
+      const { data: user, error: userError } = await supabase!
+        .from('users')
+        .select('id, apple_id, email')
+        .eq('id', subscription.user_id)
+        .single();
+
+      if (userError) {
+        console.error('User query error:', userError);
+        return null;
+      }
+
+      if (!user) {
+        console.log('User not found for user_id:', subscription.user_id);
+        return null;
+      }
+
+      // 복원된 사용자 정보를 캐시
+      const cachedUser: CachedUserData = {
+        userId: user.id,
+        appleId: user.apple_id,
+        email: user.email,
+        lastSync: Date.now(),
+      };
+
+      this.currentUser = cachedUser;
+      await this.saveCachedUser(cachedUser);
+      await this.saveAppleUserID(user.apple_id);
+
+      console.log('User restored successfully:', user.id);
+      return cachedUser;
+    } catch (error) {
+      console.error('Transaction-based user restoration failed:', error);
+      return null;
+    }
+  }
+
   // Apple ID로 사용자 인증 및 동기화
   static async authenticateWithAppleID(
     appleId: string,
@@ -297,87 +371,44 @@ export class UserService {
     usageCount: number,
     originalTransactionIdentifierIOS?: string
   ): Promise<boolean> {
-    const user = await this.getCurrentUser();
+    let user = await this.getCurrentUser();
 
-    const noIdentifier = !user && !originalTransactionIdentifierIOS;
+    if (!user && originalTransactionIdentifierIOS) {
+      user = await this.restoreUserByTransactionId(
+        originalTransactionIdentifierIOS
+      );
 
-    if (noIdentifier || !isSupabaseAvailable()) {
+      if (!user) {
+        console.log('Failed to restore user by transaction ID');
+        return false;
+      }
+    }
+
+    // user가 여전히 없으면 실패
+    if (!user || !isSupabaseAvailable()) {
+      console.error('No user available for daily usage sync');
       return false;
     }
 
     try {
       const now = new Date().toISOString();
 
-      let error;
-
-      if (user) {
-        const result = await supabase!.from('daily_usage').upsert(
-          [
-            {
-              user_id: user.userId,
-              date,
-              usage_count: usageCount,
-              original_transaction_identifier_ios:
-                originalTransactionIdentifierIOS,
-              updated_at: now,
-            },
-          ],
+      const result = await supabase!.from('daily_usage').upsert(
+        [
           {
-            onConflict: 'user_id,date',
-          }
-        );
-        error = result.error;
-      } else if (originalTransactionIdentifierIOS) {
-        const { data: existingRecord, error: fetchError } = await supabase!
-          .from('daily_usage')
-          .select('*')
-          .eq(
-            'original_transaction_identifier_ios',
-            originalTransactionIdentifierIOS
-          )
-          .eq('date', date)
-          .single();
-
-        if (fetchError && fetchError.code !== 'PGRST116') {
-          console.error(
-            'Error fetching existing record by original_transaction_identifier_ios:',
-            fetchError
-          );
-          error = fetchError;
-        } else if (existingRecord) {
-          // 기존 레코드가 있으면 업데이트
-          const result = await supabase!
-            .from('daily_usage')
-            .update({
-              usage_count: usageCount,
-              updated_at: now,
-            })
-            .eq(
-              'original_transaction_identifier_ios',
-              originalTransactionIdentifierIOS
-            )
-            .eq('date', date);
-          error = result.error;
-          console.log(
-            '✅ Updated existing record by original_transaction_identifier_ios'
-          );
-        } else {
-          const result = await supabase!.from('daily_usage').upsert([
-            {
-              user_id: null,
-              date,
-              usage_count: usageCount,
-              original_transaction_identifier_ios:
-                originalTransactionIdentifierIOS,
-              updated_at: now,
-            },
-          ]);
-          error = result.error;
+            user_id: user.userId,
+            date,
+            usage_count: usageCount,
+            updated_at: now,
+          },
+        ],
+        {
+          onConflict: 'user_id,date',
         }
-      }
+      );
 
-      if (error) {
-        console.error('Failed to sync daily usage:', error);
+      if (result.error) {
+        console.error('Failed to sync daily usage:', result.error);
         return false;
       }
 
@@ -394,11 +425,22 @@ export class UserService {
     date: string,
     originalTransactionIdentifierIOS?: string
   ): Promise<number> {
-    const user = await this.getCurrentUser();
+    let user = await this.getCurrentUser();
 
-    const noIdentifier = !user && !originalTransactionIdentifierIOS;
+    if (!user && originalTransactionIdentifierIOS) {
+      console.log('No user found for daily usage fetch, attempting restore...');
+      user = await this.restoreUserByTransactionId(
+        originalTransactionIdentifierIOS
+      );
 
-    if (noIdentifier || !isSupabaseAvailable()) {
+      if (!user) {
+        console.log('Failed to restore user for daily usage fetch');
+        return 0;
+      }
+    }
+
+    // user가 여전히 없으면 0 반환
+    if (!user || !isSupabaseAvailable()) {
       return 0;
     }
 
@@ -406,12 +448,7 @@ export class UserService {
       const { data, error } = await supabase!
         .from('daily_usage')
         .select('usage_count')
-        .eq(
-          user ? 'user_id' : 'original_transaction_identifier_ios',
-          user
-            ? (user as CachedUserData).userId
-            : originalTransactionIdentifierIOS
-        )
+        .eq('user_id', user.userId)
         .eq('date', date)
         .single();
 

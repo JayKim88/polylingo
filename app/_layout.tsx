@@ -43,13 +43,9 @@ export default function RootLayout() {
 
   const handleAppStateChange = async (nextAppState: AppStateStatus) => {
     if (nextAppState === 'active') {
-      const subscription = await SubscriptionService.getCurrentSubscription();
-
-      console.log('@@@subscription@@@@', subscription);
       try {
         if (IAPService.isIAPAvailable()) {
           await IAPService.checkSubscriptionStatusAndUpdate();
-          await refreshSubscription();
         }
       } catch (error) {
         console.error(
@@ -106,7 +102,6 @@ export default function RootLayout() {
       console.log('IAP service initialized successfully');
 
       await IAPService.checkSubscriptionStatusAndUpdate();
-      await refreshSubscription();
     } catch (error) {
       console.error('Failed to initialize IAP service:', error);
       // Ensure we have a fallback subscription

@@ -45,7 +45,7 @@ export class SubscriptionService {
     }
   }
 
-  private static async isAppleIDLoggedIn(): Promise<boolean> {
+  public static async isAppleIDLoggedIn(): Promise<boolean> {
     if (__DEV__) return true;
 
     try {
