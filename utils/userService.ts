@@ -6,6 +6,12 @@ import {
   DatabaseSubscription,
 } from './supabase';
 
+// Utility function to get consistent date format (YYYY-MM-DD)
+export const getTodayDateString = (): string => {
+  const today = new Date();
+  return today.toISOString().split('T')[0]; // YYYY-MM-DD format
+};
+
 const USER_CACHE_KEY = 'cached_user_data';
 const APPLE_USER_KEY = 'apple_user_id';
 
@@ -70,11 +76,13 @@ export class UserService {
 
       if (fetchError && fetchError.code === 'PGRST116') {
         // 사용자가 존재하지 않음 - 새 사용자 생성
-        const userData: { apple_id: string; email?: string } = { apple_id: appleId };
+        const userData: { apple_id: string; email?: string } = {
+          apple_id: appleId,
+        };
         if (email) {
           userData.email = email;
         }
-        
+
         const { data: newUser, error: createError } = await supabase!
           .from('users')
           .insert([userData])
@@ -93,14 +101,14 @@ export class UserService {
       } else {
         user = existingUser;
         console.log('Existing user found:', user.id);
-        
+
         // 기존 사용자의 이메일이 없고 새로 제공된 이메일이 있으면 업데이트
         if (!user.email && email) {
           const { error: updateError } = await supabase!
             .from('users')
             .update({ email })
             .eq('id', user.id);
-            
+
           if (!updateError) {
             user.email = email;
             console.log('User email updated:', email);
@@ -161,7 +169,8 @@ export class UserService {
   // 사용자 구독 정보 동기화
   static async syncSubscription(
     planId: string,
-    isActive: boolean
+    isActive: boolean,
+    originalTransactionIdentifierIOS?: string
   ): Promise<boolean> {
     const user = await this.getCurrentUser();
 
@@ -177,6 +186,20 @@ export class UserService {
         currentSubscription &&
         currentSubscription.plan_id === planId &&
         currentSubscription.is_active === isActive;
+
+      const isTransactionIdEmpty =
+        !currentSubscription?.original_transaction_identifier_ios;
+
+      if (isTransactionIdEmpty) {
+        await supabase!
+          .from('user_subscriptions')
+          .update({
+            original_transaction_identifier_ios:
+              originalTransactionIdentifierIOS,
+          })
+          .eq('user_id', user.userId)
+          .eq('is_active', true);
+      }
 
       // 구독 변경 없음
       if (isIdenticalSubscription) return true;
@@ -211,6 +234,7 @@ export class UserService {
           user_id: user.userId,
           plan_id: planId,
           is_active: isActive,
+          original_transaction_identifier_ios: originalTransactionIdentifierIOS,
           start_date: now,
           end_date: endDate,
         },
@@ -230,9 +254,14 @@ export class UserService {
   }
 
   // 서버에서 최신 구독 정보 가져오기
-  static async getLatestSubscriptionFromServer(): Promise<DatabaseSubscription | null> {
+  static async getLatestSubscriptionFromServer(
+    transactionId?: string
+  ): Promise<DatabaseSubscription | null> {
     const user = await this.getCurrentUser();
-    if (!user || !isSupabaseAvailable()) {
+
+    const noIdentifier = !user && !transactionId;
+
+    if (noIdentifier || !isSupabaseAvailable()) {
       return null;
     }
 
@@ -240,7 +269,10 @@ export class UserService {
       const { data, error } = await supabase!
         .from('user_subscriptions')
         .select('*')
-        .eq('user_id', user.userId)
+        .eq(
+          user ? 'user_id' : 'original_transaction_identifier_ios',
+          user ? (user as CachedUserData).userId : transactionId
+        )
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -262,30 +294,87 @@ export class UserService {
 
   static async syncDailyUsage(
     date: string,
-    usageCount: number
+    usageCount: number,
+    originalTransactionIdentifierIOS?: string
   ): Promise<boolean> {
     const user = await this.getCurrentUser();
-    if (!user || !isSupabaseAvailable()) {
+
+    const noIdentifier = !user && !originalTransactionIdentifierIOS;
+
+    if (noIdentifier || !isSupabaseAvailable()) {
       return false;
     }
 
     try {
       const now = new Date().toISOString();
 
-      // UPSERT 방식으로 일일 사용량 업데이트
-      const { error } = await supabase!.from('daily_usage').upsert(
-        [
+      let error;
+
+      if (user) {
+        const result = await supabase!.from('daily_usage').upsert(
+          [
+            {
+              user_id: user.userId,
+              date,
+              usage_count: usageCount,
+              original_transaction_identifier_ios:
+                originalTransactionIdentifierIOS,
+              updated_at: now,
+            },
+          ],
           {
-            user_id: user.userId,
-            date,
-            usage_count: usageCount,
-            updated_at: now,
-          },
-        ],
-        {
-          onConflict: 'user_id,date',
+            onConflict: 'user_id,date',
+          }
+        );
+        error = result.error;
+      } else if (originalTransactionIdentifierIOS) {
+        const { data: existingRecord, error: fetchError } = await supabase!
+          .from('daily_usage')
+          .select('*')
+          .eq(
+            'original_transaction_identifier_ios',
+            originalTransactionIdentifierIOS
+          )
+          .eq('date', date)
+          .single();
+
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          console.error(
+            'Error fetching existing record by original_transaction_identifier_ios:',
+            fetchError
+          );
+          error = fetchError;
+        } else if (existingRecord) {
+          // 기존 레코드가 있으면 업데이트
+          const result = await supabase!
+            .from('daily_usage')
+            .update({
+              usage_count: usageCount,
+              updated_at: now,
+            })
+            .eq(
+              'original_transaction_identifier_ios',
+              originalTransactionIdentifierIOS
+            )
+            .eq('date', date);
+          error = result.error;
+          console.log(
+            '✅ Updated existing record by original_transaction_identifier_ios'
+          );
+        } else {
+          const result = await supabase!.from('daily_usage').upsert([
+            {
+              user_id: null,
+              date,
+              usage_count: usageCount,
+              original_transaction_identifier_ios:
+                originalTransactionIdentifierIOS,
+              updated_at: now,
+            },
+          ]);
+          error = result.error;
         }
-      );
+      }
 
       if (error) {
         console.error('Failed to sync daily usage:', error);
@@ -301,9 +390,15 @@ export class UserService {
   }
 
   // 서버에서 일일 사용량 가져오기
-  static async getDailyUsage(date: string): Promise<number> {
+  static async getDailyUsage(
+    date: string,
+    originalTransactionIdentifierIOS?: string
+  ): Promise<number> {
     const user = await this.getCurrentUser();
-    if (!user || !isSupabaseAvailable()) {
+
+    const noIdentifier = !user && !originalTransactionIdentifierIOS;
+
+    if (noIdentifier || !isSupabaseAvailable()) {
       return 0;
     }
 
@@ -311,7 +406,12 @@ export class UserService {
       const { data, error } = await supabase!
         .from('daily_usage')
         .select('usage_count')
-        .eq('user_id', user.userId)
+        .eq(
+          user ? 'user_id' : 'original_transaction_identifier_ios',
+          user
+            ? (user as CachedUserData).userId
+            : originalTransactionIdentifierIOS
+        )
         .eq('date', date)
         .single();
 

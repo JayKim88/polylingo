@@ -21,6 +21,7 @@ export interface UserSubscription {
     count: number;
   };
   isTrialUsed: boolean;
+  originalTransactionIdentifierIOS?: string;
 }
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [

@@ -11,6 +11,7 @@ import {
   getAvailablePurchases,
   acknowledgePurchaseAndroid,
   Subscription,
+  ProductPurchase,
 } from 'react-native-iap';
 import { Platform, Alert } from 'react-native';
 import appleAuth from '@invertase/react-native-apple-authentication';
@@ -282,7 +283,6 @@ export class IAPService {
   private static determineTestEnvironment(): boolean {
     // 1. 개발 모드는 무조건 Sandbox
     if (__DEV__) {
-      console.log('Development mode detected - using Sandbox');
       return true;
     }
 
@@ -310,11 +310,12 @@ export class IAPService {
     }
     this.purchaseUpdateSubscription = purchaseUpdatedListener(
       async (purchase: Purchase) => {
-        // 개발 모드에서는 productId만 사용 (transactionId가 매번 달라질 수 있음)
+        // 개발 모드에서는 productId만 사용 (originalTransactionIdentifierIOS가 매번 달라질 수 있음)
         const purchaseId = __DEV__
           ? purchase.productId
           : `${purchase.productId}_${
-              purchase.transactionId || purchase.purchaseToken
+              purchase.originalTransactionIdentifierIOS ||
+              purchase.purchaseToken
             }`;
 
         // 이미 처리된 구매인지 확인 (중복 처리 방지)
@@ -455,9 +456,11 @@ export class IAPService {
   }
 
   // 구독 구매 실행
-  static async purchaseSubscription(productId: string): Promise<boolean> {
+  static async purchaseSubscription(
+    productId: string
+  ): Promise<ProductPurchase | null> {
     if (!this.ensureIAPAvailability()) {
-      return false;
+      return null;
     }
 
     if (!this.isInitialized) {
@@ -466,7 +469,7 @@ export class IAPService {
 
     try {
       const result = await requestPurchase({ sku: productId });
-      return !!result;
+      return result ? (result as ProductPurchase) : null;
     } catch (error: any) {
       console.error('Purchase failed:', error);
 
@@ -480,7 +483,7 @@ export class IAPService {
         throw error; // 취소 에러를 상위로 전달
       }
 
-      return false;
+      return null;
     }
   }
 
@@ -596,7 +599,8 @@ export class IAPService {
         const purchaseId = __DEV__
           ? purchase.productId
           : `${purchase.productId}_${
-              purchase.transactionId || purchase.purchaseToken
+              purchase.originalTransactionIdentifierIOS ||
+              purchase.purchaseToken
             }`;
         this.processedPurchases.add(purchaseId);
         console.log(`Marked as processed: ${purchaseId} (DEV: ${__DEV__})`);
@@ -742,10 +746,14 @@ export class IAPService {
 
       // 새 구매 시 사용량 초기화하여 구독 상태 업데이트
       console.log('🔄 Resetting daily usage for new purchase...');
-      await SubscriptionService.setSubscription(planId, {
-        isActive: true,
-        preserveUsage: false,
-      });
+      await SubscriptionService.setSubscription(
+        planId,
+        {
+          isActive: true,
+          preserveUsage: false,
+        },
+        purchase.originalTransactionIdentifierIOS
+      );
 
       // Android에서 구매 승인
       if (Platform.OS === 'android' && purchase.purchaseToken) {
@@ -784,9 +792,16 @@ export class IAPService {
       }
 
       // 구독 상태 업데이트 (조용히)
-      await SubscriptionService.setSubscription(planId, { isActive: true });
+      await SubscriptionService.setSubscription(
+        planId,
+        {
+          isActive: true,
+          preserveUsage: true,
+        },
+        purchase.originalTransactionIdentifierIOS
+      );
 
-      console.log(`Subscription restored quietly: ${planId}`);
+      // console.log(`Subscription restored quietly: ${planId}`);
     } catch (error) {
       console.error('Failed to handle successful purchase quietly:', error);
       throw error;
@@ -797,9 +812,7 @@ export class IAPService {
    * @description 현재 구독 상태 확인 (구독 모달에서만 호출) 후,
    * 구독 상태 업데이트 (Supabase 동기화 포함)
    */
-  static async checkSubscriptionStatusAndUpdate(
-    retryCount: number = 0
-  ): Promise<void> {
+  static async checkSubscriptionStatusAndUpdate(): Promise<void> {
     try {
       // If IAP is not available, set to free plan
       if (!this.isAvailable) {
@@ -830,12 +843,14 @@ export class IAPService {
 
       let restored: Purchase[] = [];
       let detectedSubscriptionPlan = 'free';
+      let originalTransactionId: string | undefined;
 
       try {
         // Apple ID 인증 후 구매 복원
         restored = await getAvailablePurchases({
           onlyIncludeActiveItems: true,
         });
+
         console.log(`Found ${restored.length} total purchases from Apple`);
       } catch (purchaseError) {
         console.warn('Failed to get available purchases:', purchaseError);
@@ -862,22 +877,19 @@ export class IAPService {
         });
 
         const latestPurchase = sortedPurchases[0];
-        console.log(
-          `📱 Selected latest purchase: ${
-            latestPurchase.productId
-          } at ${new Date(latestPurchase.transactionDate || 0).toISOString()}`
-        );
+
+        originalTransactionId = latestPurchase.originalTransactionIdentifierIOS;
 
         // 서버를 통해 실제 구독 상태 검증 (만료/취소 여부 확인)
         try {
-          console.log(
-            `🔍 Server validation for ${latestPurchase.productId}...`
-          );
           const isValid = await this.validatePurchase(latestPurchase);
 
           if (isValid) {
             await this.handleSuccessfulPurchaseQuietly(latestPurchase);
 
+            /**
+             * @description cannot return free
+             */
             switch (latestPurchase.productId) {
               case IAP_PRODUCT_IDS.PRO_MONTHLY:
                 detectedSubscriptionPlan = 'pro_monthly';
@@ -910,27 +922,37 @@ export class IAPService {
         }
       }
 
-      // 현재 구독 상태와 감지된 상태 비교
-      const currentSub = await SubscriptionService.getCurrentSubscription();
-      const isNewSubscription = currentSub?.planId !== detectedSubscriptionPlan;
+      // 서버의 기존 구독과 감지된 상태 비교 (앱 재설치 시 로컬 데이터가 없을 수 있음)
+      const serverSub = await UserService.getLatestSubscriptionFromServer(
+        originalTransactionId
+      );
+      const isNewSubscription = serverSub?.plan_id !== detectedSubscriptionPlan;
 
-      if (isNewSubscription) {
+      if (detectedSubscriptionPlan !== 'free' && isNewSubscription) {
         console.log(
-          `📈 Subscription change detected: ${currentSub?.planId} → ${detectedSubscriptionPlan}`
+          `📈 Subscription change detected: ${serverSub?.plan_id} → ${detectedSubscriptionPlan}`
         );
 
         // 새로운 구독이나 플랜 변경 시 사용량 초기화
-        await SubscriptionService.setSubscription(detectedSubscriptionPlan, {
-          isActive: true,
-          preserveUsage: false, // 사용량 초기화
-        });
+        await SubscriptionService.setSubscription(
+          detectedSubscriptionPlan,
+          {
+            isActive: true,
+            preserveUsage: false, // 사용량 초기화
+          },
+          originalTransactionId
+        );
       } else {
         console.log(`✅ Same subscription plan: ${detectedSubscriptionPlan}`);
         // 동일한 플랜이면 사용량 보존
-        await SubscriptionService.setSubscription(detectedSubscriptionPlan, {
-          isActive: true,
-          preserveUsage: true,
-        });
+        await SubscriptionService.setSubscription(
+          detectedSubscriptionPlan,
+          {
+            isActive: true,
+            preserveUsage: true,
+          },
+          originalTransactionId
+        );
       }
     } catch (error) {
       console.error('Failed to check subscription status:', error);

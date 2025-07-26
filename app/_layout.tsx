@@ -40,8 +40,12 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+
   const handleAppStateChange = async (nextAppState: AppStateStatus) => {
     if (nextAppState === 'active') {
+      const subscription = await SubscriptionService.getCurrentSubscription();
+
+      console.log('@@@subscription@@@@', subscription);
       try {
         if (IAPService.isIAPAvailable()) {
           await IAPService.checkSubscriptionStatusAndUpdate();

@@ -16,6 +16,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { IAPService } from '../utils/iapService';
 import { SubscriptionService } from '../utils/subscriptionService';
 import { SUBSCRIPTION_PLANS, UserSubscription } from '../types/subscription';
+import { UserService, getTodayDateString } from '@/utils/userService';
 
 type ExtendedSubscription = Subscription & {
   localizedPrice?: string;
@@ -64,8 +65,12 @@ export default function SubscriptionModal({
   };
 
   useEffect(() => {
-    if (!visible) return;
-    loadSubscriptionData();
+    if (visible) {
+      loadSubscriptionData();
+    } else {
+      setLoading(false);
+      setPurchaseLoading(null);
+    }
   }, [visible]);
 
   const loadSubscriptionData = async () => {
@@ -176,11 +181,26 @@ export default function SubscriptionModal({
       const success = await IAPService.purchaseSubscription(productId);
       if (!success) throw new Error('Purchase failed');
 
-      await SubscriptionService.setSubscriptionWithLanguageReset(planId, true);
+      const originalTransactionIdentifierIOS =
+        success.originalTransactionIdentifierIOS;
 
+      await SubscriptionService.setSubscriptionWithLanguageReset(
+        planId,
+        true,
+        originalTransactionIdentifierIOS
+      );
+
+      const today = getTodayDateString();
+
+      await UserService.syncDailyUsage(
+        today,
+        0,
+        originalTransactionIdentifierIOS
+      );
       await updateSubscriptionStatus();
 
       const planName = getPlanDisplayName(planId);
+
       Alert.alert(
         t('subscription.subscriptionSuccess'),
         t('subscription.subscriptionSuccessMessage', { planName }),

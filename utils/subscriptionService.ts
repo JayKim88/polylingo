@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserSubscription, SUBSCRIPTION_PLANS } from '../types/subscription';
 import { SUPPORTED_LANGUAGES } from '../types/dictionary';
-import { UserService } from './userService';
+import { UserService, getTodayDateString } from './userService';
 import { DeviceUsageService } from './deviceUsageService';
 
 const STORAGE_KEYS = {
@@ -71,8 +71,10 @@ export class SubscriptionService {
       endDate: serverSubscription.end_date
         ? new Date(serverSubscription.end_date).getTime()
         : 0,
-      dailyUsage: { date: new Date().toDateString(), count: 0 },
+      dailyUsage: { date: getTodayDateString(), count: 0 },
       isTrialUsed: false,
+      originalTransactionIdentifierIOS:
+        serverSubscription.original_transaction_identifier_ios,
     };
 
     if (this.isSubscriptionExpired(subscription)) {
@@ -96,7 +98,7 @@ export class SubscriptionService {
   private static async updateDailyUsage(
     subscription: UserSubscription
   ): Promise<void> {
-    const today = new Date().toDateString();
+    const today = getTodayDateString();
     const dailyUsageCount = await UserService.getDailyUsage(today);
     subscription.dailyUsage = { date: today, count: dailyUsageCount };
   }
@@ -148,7 +150,8 @@ export class SubscriptionService {
 
   static async setSubscription(
     planId: string,
-    options: SubscriptionUpdateOptions = {}
+    options: SubscriptionUpdateOptions = {},
+    originalTransactionIdentifierIOS?: string
   ): Promise<void> {
     if (this.isUpdating) {
       return;
@@ -162,13 +165,12 @@ export class SubscriptionService {
       const subscription = await this.buildSubscription(
         finalPlanId,
         plan,
-        options
+        options,
+        originalTransactionIdentifierIOS
       );
 
       await this.saveSubscription(subscription);
-      await this.syncToServer(subscription);
-
-      console.log('Subscription set:', finalPlanId, options.isActive ?? true);
+      await this.syncToServer(subscription, originalTransactionIdentifierIOS);
     } catch (error) {
       console.error('Error setting subscription:', error);
       throw error;
@@ -197,24 +199,51 @@ export class SubscriptionService {
   private static async buildSubscription(
     planId: string,
     plan: any,
-    options: SubscriptionUpdateOptions
+    options: SubscriptionUpdateOptions,
+    originalTransactionIdentifierIOS?: string
   ): Promise<UserSubscription> {
     const existingSubscription = await this.getExistingSubscriptionInLocal();
     const now = Date.now();
     const endDate = this.calculateEndDate(plan, now);
-    const preservedUsage = this.calculatePreservedUsage(
-      existingSubscription,
-      planId,
-      options.preserveUsage
+    const today = getTodayDateString();
+    const todayUsageFromServer = await UserService.getDailyUsage(
+      today,
+      originalTransactionIdentifierIOS
     );
+    const serverSubscription =
+      await UserService.getLatestSubscriptionFromServer(
+        originalTransactionIdentifierIOS
+      );
+
+    const currentPlan = serverSubscription
+      ? serverSubscription.plan_id
+      : existingSubscription
+      ? existingSubscription.planId
+      : null;
+
+    const isNewPlan = currentPlan !== planId;
+
+    const currentUsage =
+      todayUsageFromServer ||
+      (existingSubscription?.dailyUsage.date === today
+        ? existingSubscription.dailyUsage.count
+        : 0);
+
+    const finalUsage = isNewPlan || !options.preserveUsage ? 0 : currentUsage;
 
     return {
       planId,
       isActive: options.isActive ?? true,
       startDate: now,
       endDate: planId === 'free' ? 0 : endDate,
-      dailyUsage: preservedUsage,
+      dailyUsage: {
+        date: today,
+        count: finalUsage,
+      },
       isTrialUsed: existingSubscription?.isTrialUsed || false,
+      originalTransactionIdentifierIOS:
+        originalTransactionIdentifierIOS ||
+        existingSubscription?.originalTransactionIdentifierIOS,
     };
   }
 
@@ -222,26 +251,6 @@ export class SubscriptionService {
     const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
     const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
     return plan.period === 'yearly' ? now + YEAR_MS : now + MONTH_MS;
-  }
-
-  private static calculatePreservedUsage(
-    existingSubscription: UserSubscription | null,
-    newPlanId: string,
-    preserveUsage?: boolean
-  ) {
-    const today = new Date().toDateString();
-    const defaultUsage = { date: today, count: 0 };
-
-    if (!existingSubscription?.dailyUsage) {
-      return defaultUsage;
-    }
-
-    const existingDailyUsage = existingSubscription.dailyUsage;
-    const isChangePlan = existingSubscription.planId !== newPlanId;
-    const shouldPreserve =
-      (!isChangePlan || preserveUsage) && existingDailyUsage.date === today;
-
-    return shouldPreserve ? existingDailyUsage : defaultUsage;
   }
 
   private static async saveSubscription(
@@ -254,17 +263,20 @@ export class SubscriptionService {
   }
 
   private static async syncToServer(
-    subscription: UserSubscription
+    subscription: UserSubscription,
+    originalTransactionIdentifierIOS?: string
   ): Promise<void> {
     try {
       await Promise.all([
         UserService.syncSubscription(
           subscription.planId,
-          subscription.isActive
+          subscription.isActive,
+          originalTransactionIdentifierIOS
         ),
         UserService.syncDailyUsage(
           subscription.dailyUsage.date,
-          subscription.dailyUsage.count
+          subscription.dailyUsage.count,
+          originalTransactionIdentifierIOS
         ),
       ]);
     } catch (error) {
@@ -291,7 +303,7 @@ export class SubscriptionService {
       startDate: Date.now(),
       endDate: 0,
       dailyUsage: {
-        date: new Date().toDateString(),
+        date: getTodayDateString(),
         count: 0,
       },
       isTrialUsed: false,
@@ -322,7 +334,7 @@ export class SubscriptionService {
         }
       }
 
-      const today = new Date().toDateString();
+      const today = getTodayDateString();
       const resetRequired = subscription.dailyUsage.date !== today;
 
       // 날짜가 바뀌면 카운트 리셋
@@ -385,7 +397,7 @@ export class SubscriptionService {
         }
       }
 
-      const today = new Date().toDateString();
+      const today = getTodayDateString();
       const resetRequired = subscription.dailyUsage.date !== today;
 
       if (resetRequired) {
@@ -420,11 +432,13 @@ export class SubscriptionService {
         JSON.stringify(subscription)
       );
 
-      UserService.syncDailyUsage(today, subscription.dailyUsage.count).catch(
-        (error) => {
-          console.warn('Failed to sync daily usage to server:', error);
-        }
-      );
+      UserService.syncDailyUsage(
+        today,
+        subscription.dailyUsage.count,
+        subscription.originalTransactionIdentifierIOS
+      ).catch((error) => {
+        console.warn('Failed to sync daily usage to server:', error);
+      });
 
       return true;
     } catch (error) {
@@ -462,7 +476,7 @@ export class SubscriptionService {
         return freeUsage;
       }
 
-      const today = new Date().toDateString();
+      const today = getTodayDateString();
       let used = 0;
 
       if (subscription.dailyUsage.date === today) {
@@ -542,10 +556,15 @@ export class SubscriptionService {
   // 구독 설정과 함께 언어 설정 초기화
   static async setSubscriptionWithLanguageReset(
     planId: string,
-    isActive: boolean = true
+    isActive: boolean = true,
+    originalTransactionIdentifierIOS?: string
   ): Promise<void> {
     try {
-      await this.setSubscription(planId, { isActive });
+      await this.setSubscription(
+        planId,
+        { isActive },
+        originalTransactionIdentifierIOS
+      );
       const defaultLanguages = await this.getDefaultLanguageSelection(planId);
 
       const { StorageService } = await import('./storage');
