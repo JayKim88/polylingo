@@ -20,6 +20,7 @@ import i18n from '../i18n';
 import { SubscriptionService } from './subscriptionService';
 import { UserService } from './userService';
 import { IAP_PRODUCT_IDS } from '../types/subscription';
+import { useSubscriptionStore } from '../stores/subscriptionStore';
 
 type AppleAuthState = {
   isLoggedIn: boolean;
@@ -54,6 +55,9 @@ export class IAPService {
     isLoggedIn: false,
     currentUser: null,
   };
+  private static lastSubscriptionCheck = 0; // 마지막 구독 체크 시간
+  // private static SUBSCRIPTION_CHECK_INTERVAL = 2 * 60 * 1000; // 2분
+  private static SUBSCRIPTION_CHECK_INTERVAL = 0; // 2분
 
   static async initialize(): Promise<boolean> {
     if (this.isInitialized) {
@@ -355,7 +359,6 @@ export class IAPService {
 
         // 이미 처리된 구매인지 확인 (중복 처리 방지)
         if (this.processedPurchases.has(purchaseId)) {
-          console.log(`✅ Purchase already processed: ${purchaseId}`);
           return;
         }
 
@@ -892,7 +895,27 @@ export class IAPService {
    * @description 현재 구독 상태 확인 (구독 모달에서만 호출) 후,
    * 구독 상태 업데이트 (Supabase 동기화 포함)
    */
-  static async checkSubscriptionStatusAndUpdate(): Promise<void> {
+  static async checkSubscriptionStatusAndUpdate(
+    checkFromActive?: boolean
+  ): Promise<void> {
+    if (checkFromActive) {
+      const now = Date.now();
+      const isRecentlyChecked =
+        now - this.lastSubscriptionCheck < this.SUBSCRIPTION_CHECK_INTERVAL;
+
+      if (isRecentlyChecked) return;
+
+      this.lastSubscriptionCheck = now;
+    }
+
+    // 이미 체크 중이면 중복 실행 방지
+    const store = useSubscriptionStore.getState();
+    if (store.isCheckingSubscription) {
+      console.log('Subscription check already in progress - skipping');
+      return;
+    }
+    store.setIsCheckingSubscription(true);
+
     try {
       // If IAP is not available, set to free plan
       if (!this.isAvailable) {
@@ -1000,7 +1023,10 @@ export class IAPService {
       );
       const isNewSubscription = serverSub?.plan_id !== detectedSubscriptionPlan;
 
-      if (detectedSubscriptionPlan !== 'free' && isNewSubscription) {
+      const isPaidNewPlan =
+        detectedSubscriptionPlan !== 'free' && isNewSubscription;
+
+      if (isPaidNewPlan) {
         console.log(
           `📈 Subscription change detected: ${serverSub?.plan_id} → ${detectedSubscriptionPlan}`
         );
@@ -1046,6 +1072,8 @@ export class IAPService {
     } catch (error) {
       console.error('Failed to check subscription status:', error);
       await this.setSubscriptionFreeWithPreserve();
+    } finally {
+      useSubscriptionStore.getState().setIsCheckingSubscription(false);
     }
   }
 

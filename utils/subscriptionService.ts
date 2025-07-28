@@ -171,12 +171,7 @@ export class SubscriptionService {
       await this.syncToServer(subscription, originalTransactionIdentifierIOS);
     } catch (error) {
       console.error('Error setting subscription:', error);
-      
-      // 서버 동기화 실패 시 사용자에게 알림
-      if (error && typeof error === 'object' && 'code' in error && error.code === '23503') {
-        console.log('Server sync failed - user will be notified and subscription reset to free');
-        // 이미 syncToServer에서 free로 롤백되었으므로 에러만 던짐
-      }
+      // 이미 syncToServer에서 free로 롤백되었으므로 에러만 던짐
       throw error;
     } finally {
       this.isUpdating = false;
@@ -285,14 +280,9 @@ export class SubscriptionService {
       ]);
     } catch (error) {
       console.warn('Failed to sync subscription/usage to server:', error);
-      
-      // 서버 동기화 실패 시 (외래 키 제약 조건 위반 등) 구독을 free로 롤백
-      if (error && typeof error === 'object' && 'code' in error && error.code === '23503') {
-        console.log('Foreign key constraint violation - rolling back to free subscription');
-        const freeSubscription = this.getDefaultSubscription();
-        await this.saveSubscription(freeSubscription);
-        throw error; // 에러를 다시 throw하여 상위에서 처리할 수 있도록 함
-      }
+      const freeSubscription = this.getDefaultSubscription();
+      await this.saveSubscription(freeSubscription);
+      throw error; // 에러를 다시 throw하여 상위에서 처리할 수 있도록 함
     }
   }
 

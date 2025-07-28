@@ -45,7 +45,7 @@ export default function RootLayout() {
     if (nextAppState === 'active') {
       try {
         if (IAPService.isIAPAvailable()) {
-          await IAPService.checkSubscriptionStatusAndUpdate();
+          await IAPService.checkSubscriptionStatusAndUpdate(true);
         }
       } catch (error) {
         console.error(

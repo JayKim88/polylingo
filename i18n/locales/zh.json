@@ -233,7 +233,8 @@
   "loading": {
     "searching": "搜索中...",
     "loadingHistory": "加载历史中...",
-    "loadingFavorites": "加载收藏中..."
+    "loadingFavorites": "加载收藏中...",
+    "loadingUpdateSubscription": "与服务器同步中..."
   },
   "calendar": {
     "weekDays": ["日", "一", "二", "三", "四", "五", "六"],

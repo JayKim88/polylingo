@@ -14,8 +14,10 @@ import { X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../contexts/ThemeContext';
-import { SubscriptionService } from '../utils/subscriptionService';
 import { SUBSCRIPTION_PLANS } from '../types/subscription';
+import { useSubscriptionStore } from '../stores/subscriptionStore';
+import { SubscriptionService } from '@/utils/subscriptionService';
+import Loading from './Loading';
 
 const { height } = Dimensions.get('window');
 
@@ -33,6 +35,8 @@ export default function UsageDetailModal({
   const [usage, setUsage] = useState({ used: 0, limit: 100, remaining: 100 });
   const [planId, setPlanId] = useState('free');
   const [currentPlan, setCurrentPlan] = useState<any>(null);
+  const { isCheckingSubscription } = useSubscriptionStore();
+
   const okButtonScale = useRef(new Animated.Value(1)).current;
 
   const loadUsageData = async () => {
@@ -58,7 +62,7 @@ export default function UsageDetailModal({
     if (visible) {
       loadUsageData();
     }
-  }, [visible]);
+  }, [visible, isCheckingSubscription]);
 
   // Calculate usage percentage
   const usagePercentage = (usage.used / usage.limit) * 100;
@@ -127,7 +131,6 @@ export default function UsageDetailModal({
               style={{ backgroundColor: colors.surface }}
               behavior={RNPlatform.OS === 'ios' ? 'padding' : 'height'}
             >
-              {/* Header */}
               <View
                 className="flex-row justify-between items-center px-5 pt-5 pb-4 border-b"
                 style={{ borderBottomColor: colors.border }}
@@ -146,158 +149,157 @@ export default function UsageDetailModal({
                 </TouchableOpacity>
               </View>
 
-              {/* Content */}
               <View className="px-5 py-6">
-                {/* Current Plan */}
-                <View className="mb-6">
-                  <Text
-                    className="text-sm font-medium mb-2"
-                    style={{ color: colors.textSecondary }}
-                  >
-                    {t('subscription.currentPlan')}
-                  </Text>
-                  <View
-                    className="p-3 rounded-2xl"
-                    style={{ backgroundColor: colors.background }}
-                  >
-                    <Text
-                      className="text-lg font-bold"
-                      style={{ color: colors.text }}
-                    >
-                      {getPlanDisplayName()}
-                    </Text>
-                    {currentPlan && (
-                      <Text
-                        className="text-sm mt-1"
-                        style={{ color: colors.textSecondary }}
-                      >
-                        {currentPlan.price} •{' '}
-                        {currentPlan.period === 'yearly'
-                          ? t('subscription.yearly')
-                          : t('subscription.monthly')}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-
-                {/* Usage Statistics */}
-                <View className="mb-6">
-                  <View className="flex-row items-center justify-between mb-4">
-                    <Text
-                      className="text-lg font-semibold"
-                      style={{ color: colors.text }}
-                    >
-                      {usage.used.toFixed(1)} / {usage.limit}
-                    </Text>
-                    <Text
-                      className="text-sm font-bold"
-                      style={{ color: getStatusColor() }}
-                    >
-                      {usage.remaining.toFixed(1)} {t('subscription.remaining')}
-                    </Text>
-                  </View>
-
-                  {/* Progress Bar */}
-                  <View
-                    className="h-3 rounded-full mb-4"
-                    style={{ backgroundColor: colors.background }}
-                  >
-                    <View
-                      className="h-full rounded-full"
-                      style={{
-                        backgroundColor: getStatusColor(),
-                        width: `${Math.min(usagePercentage, 100)}%`,
-                      }}
-                    />
-                  </View>
-
-                  {/* Usage Description */}
-                  <Text
-                    className="text-sm text-center"
-                    style={{ color: colors.textSecondary }}
-                  >
-                    {getUsageDescription()}
-                  </Text>
-                </View>
-
-                {/* Plan Features */}
-                {currentPlan && (
+                {isCheckingSubscription && (
+                  <Loading
+                    isHeaderVisible={false}
+                    message={t('loading.loadingUpdateSubscription')}
+                  />
+                )}
+                <>
                   <View className="mb-6">
                     <Text
-                      className="text-sm font-medium mb-3"
+                      className="text-sm font-medium mb-2"
                       style={{ color: colors.textSecondary }}
                     >
-                      {t('subscription.features.basicTranslation')}
+                      {t('subscription.currentPlan')}
                     </Text>
-                    <View className="space-y-2">
-                      <View className="flex-row items-center">
-                        <View
-                          className="w-2 h-2 rounded-full mr-3"
-                          style={{ backgroundColor: colors.text }}
-                        />
+                    <View
+                      className="p-3 rounded-2xl"
+                      style={{ backgroundColor: colors.background }}
+                    >
+                      <Text
+                        className="text-lg font-bold"
+                        style={{ color: colors.text }}
+                      >
+                        {getPlanDisplayName()}
+                      </Text>
+                      {currentPlan && (
                         <Text
-                          className="text-sm flex-1"
-                          style={{ color: colors.text }}
+                          className="text-sm mt-1"
+                          style={{ color: colors.textSecondary }}
                         >
-                          {planId === 'free'
-                            ? t('subscription.features.twoLanguages')
-                            : t('subscription.features.fiveLanguages')}
+                          {currentPlan.price} •{' '}
+                          {currentPlan.period === 'yearly'
+                            ? t('subscription.yearly')
+                            : t('subscription.monthly')}
                         </Text>
-                      </View>
-                      <View className="flex-row items-center">
-                        <View
-                          className="w-2 h-2 rounded-full mr-3"
-                          style={{ backgroundColor: colors.text }}
-                        />
-                        <Text
-                          className="text-sm flex-1"
-                          style={{ color: colors.text }}
-                        >
-                          {planId === 'free'
-                            ? t('subscription.features.dailyLimit100')
-                            : planId === 'pro_max_monthly'
-                            ? t('subscription.features.dailyLimit500')
-                            : t('subscription.features.dailyLimit200')}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center">
-                        <View
-                          className="w-2 h-2 rounded-full mr-3"
-                          style={{ backgroundColor: colors.text }}
-                        />
-                        <Text
-                          className="text-sm flex-1"
-                          style={{ color: colors.text }}
-                        >
-                          {currentPlan.hasAds
-                            ? t('subscription.features.adSupported')
-                            : t('subscription.features.noAds')}
-                        </Text>
-                      </View>
+                      )}
                     </View>
                   </View>
-                )}
+                  <View className="mb-6">
+                    <View className="flex-row items-center justify-between mb-4">
+                      <Text
+                        className="text-lg font-semibold"
+                        style={{ color: colors.text }}
+                      >
+                        {usage.used.toFixed(1)} / {usage.limit}
+                      </Text>
+                      <Text
+                        className="text-sm font-bold"
+                        style={{ color: getStatusColor() }}
+                      >
+                        {usage.remaining.toFixed(1)}{' '}
+                        {t('subscription.remaining')}
+                      </Text>
+                    </View>
 
-                {/* Close Button */}
-                <Animated.View
-                  style={{ transform: [{ scale: okButtonScale }] }}
-                >
-                  <TouchableOpacity
-                    onPress={onClose}
-                    className="w-full h-12 rounded-2xl items-center justify-center"
-                    style={{ backgroundColor: colors.text }}
-                    onPressIn={() => animateButton(0.95)}
-                    onPressOut={() => animateButton(1)}
-                    activeOpacity={1}
-                  >
-                    <Text
-                      className="font-semibold"
-                      style={{ color: colors.background }}
+                    <View
+                      className="h-3 rounded-full mb-4"
+                      style={{ backgroundColor: colors.background }}
                     >
-                      {t('alert.confirm')}
+                      <View
+                        className="h-full rounded-full"
+                        style={{
+                          backgroundColor: getStatusColor(),
+                          width: `${Math.min(usagePercentage, 100)}%`,
+                        }}
+                      />
+                    </View>
+
+                    <Text
+                      className="text-sm text-center"
+                      style={{ color: colors.textSecondary }}
+                    >
+                      {getUsageDescription()}
                     </Text>
-                  </TouchableOpacity>
-                </Animated.View>
+                  </View>
+                  {currentPlan && (
+                    <View className="mb-6">
+                      <Text
+                        className="text-sm font-medium mb-3"
+                        style={{ color: colors.textSecondary }}
+                      >
+                        {t('subscription.features.basicTranslation')}
+                      </Text>
+                      <View className="space-y-2">
+                        <View className="flex-row items-center">
+                          <View
+                            className="w-2 h-2 rounded-full mr-3"
+                            style={{ backgroundColor: colors.text }}
+                          />
+                          <Text
+                            className="text-sm flex-1"
+                            style={{ color: colors.text }}
+                          >
+                            {planId === 'free'
+                              ? t('subscription.features.twoLanguages')
+                              : t('subscription.features.fiveLanguages')}
+                          </Text>
+                        </View>
+                        <View className="flex-row items-center">
+                          <View
+                            className="w-2 h-2 rounded-full mr-3"
+                            style={{ backgroundColor: colors.text }}
+                          />
+                          <Text
+                            className="text-sm flex-1"
+                            style={{ color: colors.text }}
+                          >
+                            {planId === 'free'
+                              ? t('subscription.features.dailyLimit100')
+                              : planId === 'pro_max_monthly'
+                              ? t('subscription.features.dailyLimit500')
+                              : t('subscription.features.dailyLimit200')}
+                          </Text>
+                        </View>
+                        <View className="flex-row items-center">
+                          <View
+                            className="w-2 h-2 rounded-full mr-3"
+                            style={{ backgroundColor: colors.text }}
+                          />
+                          <Text
+                            className="text-sm flex-1"
+                            style={{ color: colors.text }}
+                          >
+                            {currentPlan.hasAds
+                              ? t('subscription.features.adSupported')
+                              : t('subscription.features.noAds')}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  )}
+                  <Animated.View
+                    style={{ transform: [{ scale: okButtonScale }] }}
+                  >
+                    <TouchableOpacity
+                      onPress={onClose}
+                      className="w-full h-12 rounded-2xl items-center justify-center"
+                      style={{ backgroundColor: colors.text }}
+                      onPressIn={() => animateButton(0.95)}
+                      onPressOut={() => animateButton(1)}
+                      activeOpacity={1}
+                    >
+                      <Text
+                        className="font-semibold"
+                        style={{ color: colors.background }}
+                      >
+                        {t('alert.confirm')}
+                      </Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </>
               </View>
             </KeyboardAvoidingView>
           </SafeAreaView>

@@ -233,7 +233,8 @@
   "loading": {
     "searching": "Searching...",
     "loadingHistory": "Loading history...",
-    "loadingFavorites": "Loading favorites..."
+    "loadingFavorites": "Loading favorites...",
+    "loadingUpdateSubscription": "Synchronizing with server..."
   },
   "calendar": {
     "weekDays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],

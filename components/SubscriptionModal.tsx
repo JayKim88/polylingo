@@ -17,6 +17,7 @@ import { IAPService } from '../utils/iapService';
 import { SubscriptionService } from '../utils/subscriptionService';
 import { SUBSCRIPTION_PLANS, UserSubscription } from '../types/subscription';
 import { UserService, getTodayDateString } from '@/utils/userService';
+import { useSubscriptionStore } from '@/stores/subscriptionStore';
 
 type ExtendedSubscription = Subscription & {
   localizedPrice?: string;
@@ -42,6 +43,7 @@ export default function SubscriptionModal({
   const [loading, setLoading] = useState(false);
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null);
   const [iapAvailable, setIapAvailable] = useState(false);
+  const { isCheckingSubscription } = useSubscriptionStore();
 
   const getFormattedEndDate = () => {
     const endDate = currentSubscription?.endDate;
@@ -71,7 +73,7 @@ export default function SubscriptionModal({
       setLoading(false);
       setPurchaseLoading(null);
     }
-  }, [visible]);
+  }, [visible, isCheckingSubscription]);
 
   const loadSubscriptionData = async () => {
     setLoading(true);
@@ -298,12 +300,6 @@ export default function SubscriptionModal({
     }
   };
 
-  const getProductPrice = (productId: string): string => {
-    const product = products.find((p) => p.productId === productId);
-
-    return (product as any)?.priceString || (product as any)?.price || '$0.00';
-  };
-
   const getPlanDisplayName = (planId: string): string => {
     switch (planId) {
       case 'free':
@@ -484,8 +480,7 @@ export default function SubscriptionModal({
             <X size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
-
-        {loading ? (
+        {loading || isCheckingSubscription ? (
           <View className="flex-1 justify-center items-center">
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
