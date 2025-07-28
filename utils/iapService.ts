@@ -15,6 +15,7 @@ import {
 } from 'react-native-iap';
 import { Platform, Alert } from 'react-native';
 import appleAuth from '@invertase/react-native-apple-authentication';
+import i18n from '../i18n';
 
 import { SubscriptionService } from './subscriptionService';
 import { UserService } from './userService';
@@ -301,10 +302,6 @@ export class IAPService {
       );
 
       if (restoredUser) {
-        console.log(
-          'User successfully restored via transaction ID:',
-          restoredUser.userId
-        );
         this.setAppleAuthState(true, restoredUser.appleId);
         return true;
       } else {
@@ -578,19 +575,21 @@ export class IAPService {
       const restored = await Promise.race([restorePromise, timeoutPromise]);
 
       if (restored.length === 0) {
-        Alert.alert('복원 완료', '복원할 구매 항목이 없습니다.');
+        Alert.alert(
+          i18n.t('subscription.restoreComplete'),
+          i18n.t('subscription.noItemsToRestore')
+        );
         return false;
       }
 
-      await this.processRestoredPurchases(restored);
-      return true;
+      return this.processRestoredPurchases(restored);
     } catch (error) {
       console.error('Restore failed:', error);
 
       if (error instanceof Error && error.message?.includes('timeout')) {
         Alert.alert(
-          '복원 시간 초과',
-          'Apple 서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요.'
+          i18n.t('subscription.restoreTimeout'),
+          i18n.t('subscription.restoreTimeoutMessage')
         );
       } else {
         this.handleRestoreError();
@@ -611,7 +610,7 @@ export class IAPService {
 
   private static async processRestoredPurchases(
     restored: Purchase[]
-  ): Promise<void> {
+  ): Promise<boolean> {
     this.isProcessingRestore = true;
 
     try {
@@ -626,9 +625,15 @@ export class IAPService {
 
         if (isValid) {
           await this.handleSuccessfulPurchaseQuietly(latestPurchase);
-          console.log(`Latest purchase restored: ${latestPurchase.productId}`);
+          return true;
         } else {
+          Alert.alert(
+            i18n.t('subscription.subscriptionStatus'),
+            i18n.t('subscription.noActiveSubscription'),
+            [{ text: i18n.t('alert.confirm') }]
+          );
           console.log('Latest purchase validation failed');
+          return false;
         }
       }
 
@@ -643,6 +648,13 @@ export class IAPService {
         this.processedPurchases.add(purchaseId);
         console.log(`Marked as processed: ${purchaseId} (DEV: ${__DEV__})`);
       }
+      return false;
+    } catch {
+      Alert.alert(
+        i18n.t('subscription.restoreError'),
+        i18n.t('subscription.restoreErrorMessage')
+      );
+      return false;
     } finally {
       this.isProcessingRestore = false;
     }
@@ -784,14 +796,28 @@ export class IAPService {
 
       // 새 구매 시 사용량 초기화하여 구독 상태 업데이트
       console.log('🔄 Resetting daily usage for new purchase...');
-      await SubscriptionService.setSubscription(
-        planId,
-        {
-          isActive: true,
-          preserveUsage: false,
-        },
-        purchase.originalTransactionIdentifierIOS
-      );
+      try {
+        await SubscriptionService.setSubscription(
+          planId,
+          {
+            isActive: true,
+            preserveUsage: false,
+          },
+          purchase.originalTransactionIdentifierIOS
+        );
+      } catch (syncError) {
+        console.error(
+          'Failed to sync subscription to server - setting to free:',
+          syncError
+        );
+        // 서버 동기화 실패 시 free로 설정 (이미 syncToServer에서 처리됨)
+        Alert.alert(
+          i18n.t('alert.error'),
+          'Server synchronization failed. Your subscription has been reset to free plan.',
+          [{ text: i18n.t('alert.confirm') }]
+        );
+        return; // 에러 시 더 이상 진행하지 않음
+      }
 
       // Android에서 구매 승인
       if (Platform.OS === 'android' && purchase.purchaseToken) {
@@ -830,20 +856,36 @@ export class IAPService {
       }
 
       // 구독 상태 업데이트 (조용히)
-      await SubscriptionService.setSubscription(
-        planId,
-        {
-          isActive: true,
-          preserveUsage: true,
-        },
-        purchase.originalTransactionIdentifierIOS
-      );
+      try {
+        await SubscriptionService.setSubscription(
+          planId,
+          {
+            isActive: true,
+            preserveUsage: true,
+          },
+          purchase.originalTransactionIdentifierIOS
+        );
+      } catch (syncError) {
+        console.error(
+          'Failed to sync subscription to server during restore - setting to free:',
+          syncError
+        );
+        // 서버 동기화 실패 시 에러를 throw하여 상위에서 처리
+        throw syncError;
+      }
 
       // console.log(`Subscription restored quietly: ${planId}`);
     } catch (error) {
       console.error('Failed to handle successful purchase quietly:', error);
       throw error;
     }
+  }
+
+  static async setSubscriptionFreeWithPreserve() {
+    await SubscriptionService.setSubscription('free', {
+      isActive: true,
+      preserveUsage: true,
+    });
   }
 
   /**
@@ -856,10 +898,8 @@ export class IAPService {
       if (!this.isAvailable) {
         console.log('IAP not available - setting to free plan');
         this.setAppleAuthState(false);
-        await SubscriptionService.setSubscription('free', {
-          isActive: true,
-          preserveUsage: true,
-        });
+        await this.setSubscriptionFreeWithPreserve();
+
         return;
       }
 
@@ -869,10 +909,7 @@ export class IAPService {
         const initialized = await this.initialize();
         if (!initialized) {
           this.setAppleAuthState(false);
-          await SubscriptionService.setSubscription('free', {
-            isActive: true,
-            preserveUsage: true,
-          });
+          await this.setSubscriptionFreeWithPreserve();
           return;
         }
       }
@@ -894,10 +931,7 @@ export class IAPService {
         console.warn('Failed to get available purchases:', purchaseError);
         // Failed to access purchases likely means not logged in to Apple ID
         this.setAppleAuthState(false);
-        await SubscriptionService.setSubscription('free', {
-          isActive: true,
-          preserveUsage: true,
-        });
+        await this.setSubscriptionFreeWithPreserve();
         return;
       }
 
@@ -972,32 +1006,46 @@ export class IAPService {
         );
 
         // 새로운 구독이나 플랜 변경 시 사용량 초기화
-        await SubscriptionService.setSubscription(
-          detectedSubscriptionPlan,
-          {
-            isActive: true,
-            preserveUsage: false, // 사용량 초기화
-          },
-          originalTransactionId
-        );
+        try {
+          await SubscriptionService.setSubscription(
+            detectedSubscriptionPlan,
+            {
+              isActive: true,
+              preserveUsage: false, // 사용량 초기화
+            },
+            originalTransactionId
+          );
+        } catch (syncError) {
+          console.error(
+            'Failed to sync new subscription to server - setting to free:',
+            syncError
+          );
+          detectedSubscriptionPlan = 'free';
+          await this.setSubscriptionFreeWithPreserve();
+        }
       } else {
         console.log(`✅ Same subscription plan: ${detectedSubscriptionPlan}`);
         // 동일한 플랜이면 사용량 보존
-        await SubscriptionService.setSubscription(
-          detectedSubscriptionPlan,
-          {
-            isActive: true,
-            preserveUsage: true,
-          },
-          originalTransactionId
-        );
+        try {
+          await SubscriptionService.setSubscription(
+            detectedSubscriptionPlan,
+            {
+              isActive: true,
+              preserveUsage: true,
+            },
+            originalTransactionId
+          );
+        } catch (syncError) {
+          console.error(
+            'Failed to sync existing subscription to server - setting to free:',
+            syncError
+          );
+          await this.setSubscriptionFreeWithPreserve();
+        }
       }
     } catch (error) {
       console.error('Failed to check subscription status:', error);
-      await SubscriptionService.setSubscription('free', {
-        isActive: true,
-        preserveUsage: true,
-      });
+      await this.setSubscriptionFreeWithPreserve();
     }
   }
 

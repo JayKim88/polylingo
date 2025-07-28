@@ -105,54 +105,30 @@ export default function SubscriptionModal({
   const handlePurchase = async (productId: string, planId: string) => {
     setPurchaseLoading(planId);
 
-    if (__DEV__) {
-      // Development mode - direct subscription setting
-      await SubscriptionService.setSubscriptionWithLanguageReset(planId, true);
-      await updateSubscriptionStatus();
-
-      // Show success message
-      const planName = getPlanDisplayName(planId);
-      Alert.alert(
-        t('subscription.subscriptionSuccess'),
-        t('subscription.subscriptionSuccessMessage', { planName }),
-        [
-          {
-            text: t('alert.confirm'),
-            onPress: () => onClose(),
-          },
-        ]
-      );
-      return;
-    }
-
-    const isLoggedIn = await SubscriptionService.isAppleIDLoggedIn();
-
     try {
-      /**
-       * @todo temporary comment out for test flight!
-       */
-      // if (!isLoggedIn) {
-      //   Alert.alert(
-      //     t('subscription.loginRequired'),
-      //     t('subscription.appleIDRequiredMessage'),
-      //     [
-      //       { text: t('alert.cancel'), style: 'cancel' },
-      //       {
-      //         text: t('subscription.loginAndTryAgain'),
-      //         onPress: async () => {
-      //           try {
-      //             await IAPService.authenticateWithAppleID();
-      //             setTimeout(() => handlePurchase(productId, planId), 100);
-      //           } catch (error) {
-      //             console.error('Apple ID login failed:', error);
-      //           }
-      //         },
-      //       },
-      //     ]
-      //   );
-      //   setPurchaseLoading(null);
-      //   return;
-      // }
+      const isLoggedIn = await SubscriptionService.isAppleIDLoggedIn();
+      if (!isLoggedIn) {
+        Alert.alert(
+          t('subscription.loginRequired'),
+          t('subscription.appleIDRequiredMessage'),
+          [
+            { text: t('alert.cancel'), style: 'cancel' },
+            {
+              text: t('subscription.loginAndTryAgain'),
+              onPress: async () => {
+                try {
+                  await IAPService.authenticateWithAppleID();
+                  setTimeout(() => handlePurchase(productId, planId), 100);
+                } catch (error) {
+                  console.error('Apple ID login failed:', error);
+                }
+              },
+            },
+          ]
+        );
+        setPurchaseLoading(null);
+        return;
+      }
 
       const currentSub = await SubscriptionService.getCurrentSubscription();
 
@@ -252,6 +228,30 @@ export default function SubscriptionModal({
   const handleRestore = async () => {
     setLoading(true);
     try {
+      const isLoggedIn = await SubscriptionService.isAppleIDLoggedIn();
+      if (!isLoggedIn) {
+        Alert.alert(
+          t('subscription.loginRequired'),
+          t('subscription.appleIDRequiredMessage'),
+          [
+            { text: t('alert.cancel'), style: 'cancel' },
+            {
+              text: t('subscription.loginAndTryAgain'),
+              onPress: async () => {
+                try {
+                  await IAPService.authenticateWithAppleID();
+                  setTimeout(() => handleRestore());
+                } catch (error) {
+                  console.error('Apple ID login failed:', error);
+                }
+              },
+            },
+          ]
+        );
+        setLoading(false);
+        return;
+      }
+
       const success = await IAPService.restorePurchases();
       if (success) {
         await updateSubscriptionStatus();
@@ -266,11 +266,6 @@ export default function SubscriptionModal({
               onPress: () => onClose(),
             },
           ]
-        );
-      } else {
-        Alert.alert(
-          t('subscription.restoreError'),
-          t('subscription.restoreErrorMessage')
         );
       }
     } catch (error: any) {
