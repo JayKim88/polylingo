@@ -49,6 +49,7 @@ import {
 import { StorageService } from '../../utils/storage';
 import { TranslationAPI } from '../../utils/translationAPI';
 import { UserService } from '../../utils/userService';
+import { unitIds } from '@/constants/bannerAds';
 
 type SettingItemProps = {
   icon: React.ReactNode;
@@ -560,7 +561,7 @@ export default function SettingsTab() {
         >
           <BannerAd
             key={adKey}
-            unitId={TestIds.BANNER}
+            unitId={unitIds.settings}
             size={BannerAdSize.BANNER}
             requestOptions={{
               requestNonPersonalizedAdsOnly: false,
@@ -648,12 +649,19 @@ export default function SettingsTab() {
             />
             {/* {__DEV__ && (
               <SettingItem
-                icon={<Settings size={20} color="#F59E0B" />}
-                title="Supabase 테스트 (개발 모드)"
-                subtitle="Supabase 연결 및 동기화 테스트"
-                onPress={handleSupabaseTest}
-                iconColor="#F59E0B"
-                backgroundColor="#FEF3C7"
+                icon={<Settings size={20} color="#EF4444" />}
+                title="Sentry 테스트 (개발 모드)"
+                subtitle="에러 모니터링 테스트 메시지 전송"
+                onPress={() => {
+                  testSentryIntegration();
+                  Alert.alert(
+                    'Sentry 테스트',
+                    'Sentry 대시보드에서 테스트 에러를 확인해보세요.',
+                    [{ text: '확인' }]
+                  );
+                }}
+                iconColor="#EF4444"
+                backgroundColor="#FEE2E2"
               />
             )} */}
             <SettingItem

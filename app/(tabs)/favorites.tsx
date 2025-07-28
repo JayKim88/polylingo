@@ -18,6 +18,7 @@ import { FavoriteItem } from '../../types/dictionary';
 import { useTheme } from '../../contexts/ThemeContext';
 import { ANIMATION_DURATION, hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '@/utils/subscriptionService';
+import { unitIds } from '@/constants/bannerAds';
 
 /**
  * 3s
@@ -212,7 +213,7 @@ export default function FavoritesTab() {
         >
           <BannerAd
             key={adKey}
-            unitId={TestIds.BANNER}
+            unitId={unitIds.favorites}
             size={BannerAdSize.BANNER}
             requestOptions={{
               requestNonPersonalizedAdsOnly: false,

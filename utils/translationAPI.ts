@@ -5,6 +5,7 @@ import {
 } from '../types/dictionary';
 import { PronunciationService } from './pronunciationService';
 import NetInfo from '@react-native-community/netinfo';
+import { captureNetworkError } from './sentryUtils';
 
 const MYMEMORY_BASE_URL = 'https://mymemory.translated.net/api/get';
 const LIBRETRANSLATE_BASE_URL =
@@ -308,6 +309,19 @@ export class TranslationAPI {
       };
     } catch (error) {
       console.log('💥 Claude API error:', error);
+
+      // Sentry에 Claude API 에러 전송 (가장 중요한 API)
+      captureNetworkError(error as Error, {
+        url: `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/translate`,
+        method: 'POST',
+        requestBody: {
+          text: text.substring(0, 100), // 처음 100자만 로깅
+          sourceLanguage,
+          targetLanguage,
+          provider: 'claude',
+        },
+        api_provider: 'Claude',
+      });
 
       return { translation: '' };
     }

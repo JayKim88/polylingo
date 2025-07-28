@@ -21,6 +21,7 @@ import { SubscriptionService } from './subscriptionService';
 import { UserService } from './userService';
 import { IAP_PRODUCT_IDS } from '../types/subscription';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
+import { captureIAPError, addBreadcrumb, trackUserAction } from './sentryUtils';
 
 type AppleAuthState = {
   isLoggedIn: boolean;
@@ -375,6 +376,13 @@ export class IAPService {
           purchaseId
         );
 
+        // Sentry에 구매 시작 추적
+        trackUserAction('purchase_detected', {
+          product_id: purchase.productId,
+          purchase_id: purchaseId,
+          platform: Platform.OS,
+        });
+
         try {
           this.processedPurchases.add(purchaseId);
 
@@ -393,6 +401,16 @@ export class IAPService {
           }
         } catch (error) {
           console.error('Purchase validation error:', error);
+
+          // Sentry에 IAP 에러 전송
+          captureIAPError(error as Error, {
+            productId: purchase.productId,
+            transactionId:
+              purchase.originalTransactionIdentifierIOS ||
+              purchase.purchaseToken,
+            step: 'purchase_validation',
+          });
+
           Alert.alert('구매 오류', '구매 처리 중 오류가 발생했습니다.');
           // 에러 발생 시 처리됨 표시 제거 (재시도 가능하게)
           this.processedPurchases.delete(purchaseId);
@@ -505,11 +523,19 @@ export class IAPService {
       await this.ensureInitialized();
     }
 
+    addBreadcrumb(`Starting purchase for ${productId}`, 'iap');
+
     try {
       const result = await requestPurchase({ sku: productId });
       return result ? (result as ProductPurchase) : null;
     } catch (error: any) {
       console.error('Purchase failed:', error);
+
+      // Sentry에 구매 실패 에러 전송
+      captureIAPError(error, {
+        productId,
+        step: 'purchase_request',
+      });
 
       // 사용자가 취소한 경우 에러를 다시 throw하여 상위에서 처리할 수 있도록 함
       if (

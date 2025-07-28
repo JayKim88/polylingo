@@ -169,6 +169,14 @@ export class SubscriptionService {
 
       await this.saveSubscription(subscription);
       await this.syncToServer(subscription, originalTransactionIdentifierIOS);
+      
+      // Sentry 구독 컨텍스트 업데이트
+      try {
+        const { updateSubscriptionContext } = await import('./sentryUtils');
+        await updateSubscriptionContext(subscription);
+      } catch (sentryError) {
+        console.warn('Failed to update Sentry subscription context:', sentryError);
+      }
     } catch (error) {
       console.error('Error setting subscription:', error);
       // 이미 syncToServer에서 free로 롤백되었으므로 에러만 던짐
@@ -441,6 +449,14 @@ export class SubscriptionService {
       ).catch((error) => {
         console.warn('Failed to sync daily usage to server:', error);
       });
+
+      // Sentry 구독 컨텍스트 업데이트 (사용량 변경)
+      try {
+        const { updateSubscriptionContext } = await import('./sentryUtils');
+        await updateSubscriptionContext(subscription);
+      } catch (sentryError) {
+        console.warn('Failed to update Sentry context after usage increment:', sentryError);
+      }
 
       return true;
     } catch (error) {

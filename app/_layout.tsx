@@ -1,6 +1,7 @@
 import { Stack, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+import * as Sentry from '@sentry/react-native';
 import {
   useFonts,
   Inter_400Regular,
@@ -19,10 +20,21 @@ import { IAPService } from '@/utils/iapService';
 import { SubscriptionService } from '@/utils/subscriptionService';
 import { AppState, AppStateStatus } from 'react-native';
 import { useSubscription } from '@/hooks/useSubscription';
+import {
+  initializeUserContext,
+  updateAppStateContext,
+} from '@/utils/sentryUtils';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+// Sentry 초기화
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || '', // 환경변수에서 DSN 가져오기
+  environment: __DEV__ ? 'development' : 'production',
+  tracesSampleRate: 1.0, // 개발 단계에서는 100% 샘플링
+});
+
+export default Sentry.wrap(function RootLayout() {
   useFrameworkReady();
 
   const [showCustomSplash, setShowCustomSplash] = useState(true);
@@ -42,11 +54,17 @@ export default function RootLayout() {
   }, [fontsLoaded, fontError]);
 
   const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+    // Sentry에 앱 상태 변경 추적
+    updateAppStateContext(nextAppState);
+
     if (nextAppState === 'active') {
       try {
         if (IAPService.isIAPAvailable()) {
           await IAPService.checkSubscriptionStatusAndUpdate(true);
         }
+
+        // 사용자 컨텍스트 업데이트
+        await initializeUserContext();
       } catch (error) {
         console.error(
           'Error checking subscription on app state change:',
@@ -102,6 +120,9 @@ export default function RootLayout() {
       console.log('IAP service initialized successfully');
 
       await IAPService.checkSubscriptionStatusAndUpdate();
+
+      // 사용자 컨텍스트 초기화
+      await initializeUserContext();
     } catch (error) {
       console.error('Failed to initialize IAP service:', error);
       // Ensure we have a fallback subscription
@@ -141,4 +162,4 @@ export default function RootLayout() {
       </GestureHandlerRootView>
     </ThemeProvider>
   );
-}
+});

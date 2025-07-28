@@ -18,6 +18,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { ANIMATION_DURATION, hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '@/utils/subscriptionService';
 import { NEW_AD_TERM } from './favorites';
+import { unitIds } from '@/constants/bannerAds';
 
 export default function HistoryTab() {
   const { t } = useTranslation();
@@ -208,7 +209,7 @@ export default function HistoryTab() {
         >
           <BannerAd
             key={adKey}
-            unitId={TestIds.BANNER}
+            unitId={unitIds.history}
             size={BannerAdSize.BANNER}
             requestOptions={{
               requestNonPersonalizedAdsOnly: false,

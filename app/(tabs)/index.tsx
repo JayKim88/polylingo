@@ -40,6 +40,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '../../utils/subscriptionService';
 import { IAPService } from '../../utils/iapService';
+import { unitIds } from '@/constants/bannerAds';
 
 const TRANSLATION_PROVIDER = 'claude';
 const MAX_LENGTH = 50;
@@ -936,7 +937,7 @@ export default function SearchTab() {
         >
           <BannerAd
             key={adKey} // 매 검색마다 새로운 광고 컴포넌트 생성
-            unitId={TestIds.BANNER}
+            unitId={unitIds.search}
             size={BannerAdSize.BANNER}
             requestOptions={{
               requestNonPersonalizedAdsOnly: false,
