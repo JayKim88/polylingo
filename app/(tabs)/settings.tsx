@@ -30,11 +30,7 @@ import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
-import {
-  BannerAd,
-  BannerAdSize,
-  TestIds,
-} from 'react-native-google-mobile-ads';
+import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 
 import AppLanguageModal from '../../components/AppLanguageModal';
 import SubscriptionModal from '../../components/SubscriptionModal';

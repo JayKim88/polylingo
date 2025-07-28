@@ -3,11 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import {
-  BannerAd,
-  BannerAdSize,
-  TestIds,
-} from 'react-native-google-mobile-ads';
+import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import NetInfo from '@react-native-community/netinfo';
 
 import { useTabSlideAnimation } from '../../hooks/useTabSlideAnimation';

@@ -16,11 +16,7 @@ import {
 import { Languages, Volume2, Mic, Search, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import NetInfo from '@react-native-community/netinfo';
-import {
-  BannerAd,
-  BannerAdSize,
-  TestIds,
-} from 'react-native-google-mobile-ads';
+import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 
 import LanguageSelector from '../../components/LanguageSelector';
 import SearchInput from '../../components/SearchInput';
