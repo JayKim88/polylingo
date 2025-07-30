@@ -17,9 +17,16 @@ PolyLingo ("we," "our," or "us") is committed to protecting your privacy. This P
 - Usage Data: How you interact with the app, frequency of use, and feature usage
 - Device Information: Device type, operating system version, and app version
 - Error Logs: Crash reports and error information to improve app stability
+- Email Address:  
+  When you purchase a subscription plan and log in, we collect your email address if available. This is used for:
+  - Managing your subscription
+  - Providing customer support
+  - Restoring purchases
+
+  Your email is stored securely and never shared with third parties.
 
 ### Information We Don't Collect
-- Personal Identity: We do not collect your name, email, phone number, or other personal identifiers
+- Other Personal Identifiers: We do not collect your name, phone number, or other personal identifiers unless explicitly provided by you.
 - Location Data: We do not track your location
 - Contact Information: We do not access your contacts or other personal data
 
@@ -29,7 +36,6 @@ PolyLingo ("we," "our," or "us") is committed to protecting your privacy. This P
 - Translation Services: Process your text through secure translation APIs
 - App Improvement: Analyze usage patterns to enhance features and performance
 - Error Resolution: Use crash reports to fix bugs and improve stability
-- Personalization: Save your preferences and settings for a better user experience
 
 ### Data Processing
 - Local Storage: Your favorites, history, and preferences are stored locally on your device
@@ -101,7 +107,6 @@ This Privacy Policy is designed to comply with:
 - General Data Protection Regulation (GDPR)
 - California Consumer Privacy Act (CCPA)
 - Apple App Store Privacy Requirements
-- Google Play Privacy Requirements
 
 ---
 
