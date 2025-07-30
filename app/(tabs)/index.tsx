@@ -849,6 +849,28 @@ export default function SearchTab() {
     }
   }, [results.length, isHeaderVisible, headerAnimValue, searchAnimValue]);
 
+  // 컴포넌트 언마운트 시 메모리 정리
+  useEffect(() => {
+    return () => {
+      translationStates.forEach((state) => {
+        if (state.abortController) {
+          state.abortController.abort();
+        }
+        if (state.timeoutId) {
+          clearTimeout(state.timeoutId);
+        }
+      });
+
+      if (searchAbortController) {
+        searchAbortController.abort();
+      }
+
+      if (speechRecognition) {
+        speechRecognition.stop();
+      }
+    };
+  }, []);
+
   return (
     <Animated.View
       onStartShouldSetResponder={() => {

@@ -11,7 +11,7 @@ import {
 } from '@expo-google-fonts/inter';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect, useState } from 'react';
-import mobileAds from 'react-native-google-mobile-ads';
+import mobileAds, { MaxAdContentRating } from 'react-native-google-mobile-ads';
 
 import '../i18n';
 import { ThemeProvider } from '../contexts/ThemeContext';
@@ -19,7 +19,7 @@ import CustomSplashScreen from '../components/SplashScreen';
 import { IAPService } from '@/utils/iapService';
 import { SubscriptionService } from '@/utils/subscriptionService';
 import { AppState, AppStateStatus } from 'react-native';
-import { useSubscription } from '@/hooks/useSubscription';
+import { TranslationAPI } from '@/utils/translationAPI';
 import {
   initializeUserContext,
   updateAppStateContext,
@@ -38,7 +38,6 @@ export default Sentry.wrap(function RootLayout() {
   useFrameworkReady();
 
   const [showCustomSplash, setShowCustomSplash] = useState(true);
-  const { refreshSubscription } = useSubscription();
 
   const [fontsLoaded, fontError] = useFonts({
     'Inter-Regular': Inter_400Regular,
@@ -80,6 +79,9 @@ export default Sentry.wrap(function RootLayout() {
           console.error('Failed to set fallback subscription:', fallbackError);
         }
       }
+    } else if (nextAppState === 'background') {
+      TranslationAPI.clearCache();
+      await IAPService.cleanup();
     }
   };
 
@@ -89,24 +91,46 @@ export default Sentry.wrap(function RootLayout() {
       handleAppStateChange
     );
 
+    // 메모리 경고 핸들러 추가
+    const handleMemoryWarning = () => {
+      console.warn('Memory warning received - cleaning up');
+      TranslationAPI.clearCache();
+      IAPService.cleanup().catch(console.error);
+    };
+
+    const memorySubscription = AppState.addEventListener(
+      'memoryWarning',
+      handleMemoryWarning
+    );
+
     return () => {
       subscription.remove();
+      memorySubscription?.remove();
     };
   }, []);
 
   const handleSplashComplete = () => setShowCustomSplash(false);
 
   useEffect(() => {
-    // Initialize Google Mobile Ads
-    mobileAds()
-      .initialize()
-      .then((adapterStatuses) => {
-        console.log('Google Mobile Ads initialized');
-        console.log('Adapter statuses:', adapterStatuses);
-      })
-      .catch((error) => {
+    // Initialize Google Mobile Ads with optimization
+    const initializeAds = async () => {
+      try {
+        await mobileAds().initialize();
+
+        // 불필요한 어댑터 비활성화 및 설정 최적화
+        await mobileAds().setRequestConfiguration({
+          maxAdContentRating: MaxAdContentRating.T,
+          tagForChildDirectedTreatment: false,
+          tagForUnderAgeOfConsent: false,
+        });
+
+        console.log('Google Mobile Ads initialized with optimized settings');
+      } catch (error) {
         console.error('Failed to initialize Google Mobile Ads:', error);
-      });
+      }
+    };
+
+    initializeAds();
   }, []);
 
   const handleInitializeIAP = async () => {

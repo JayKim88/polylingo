@@ -17,8 +17,14 @@ type SubscriptionUpdateOptions = {
 
 export class SubscriptionService {
   private static isUpdating = false;
+  private static subscriptionPromise: Promise<UserSubscription | null> | null = null;
 
   static async getCurrentSubscription(): Promise<UserSubscription | null> {
+    // 이미 요청이 진행 중이면 같은 Promise 반환
+    if (this.subscriptionPromise) {
+      return await this.subscriptionPromise;
+    }
+    
     if (this.isUpdating) {
       console.log(
         'Subscription update in progress. Returning local data to avoid race condition.'
@@ -26,6 +32,17 @@ export class SubscriptionService {
       return await this.getLocalSubscriptionOrDefault();
     }
 
+    this.subscriptionPromise = this.fetchSubscription();
+    
+    try {
+      const result = await this.subscriptionPromise;
+      return result;
+    } finally {
+      this.subscriptionPromise = null; // 완료 후 초기화
+    }
+  }
+  
+  private static async fetchSubscription(): Promise<UserSubscription | null> {
     const isLoggedIn = await this.isAppleIDLoggedIn();
 
     try {

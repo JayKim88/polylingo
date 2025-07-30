@@ -52,6 +52,7 @@ export class IAPService {
   private static isAvailable = false;
   private static processedPurchases = new Set<string>(); // 처리된 구매 추적
   private static isProcessingRestore = false; // 복원 처리 중 플래그
+  private static initializationPromise: Promise<boolean> | null = null; // 초기화 중복 방지
   private static appleAuthState: AppleAuthState = {
     isLoggedIn: false,
     currentUser: null,
@@ -61,19 +62,40 @@ export class IAPService {
   private static SUBSCRIPTION_CHECK_INTERVAL = 0; // 2분
 
   static async initialize(): Promise<boolean> {
+    if (this.initializationPromise) {
+      return await this.initializationPromise;
+    }
+
     if (this.isInitialized) {
       return true;
     }
 
-    await this.performInitialization();
-    await this.restoreAppleUserSession();
+    this.initializationPromise = this.performInitializationSequence();
+    return await this.initializationPromise;
+  }
 
-    return true;
+  private static async performInitializationSequence(): Promise<boolean> {
+    try {
+      await this.performInitialization();
+      await this.restoreAppleUserSession();
+      return true;
+    } catch (error) {
+      this.initializationPromise = null;
+      throw error;
+    } finally {
+      this.initializationPromise = null;
+    }
   }
 
   private static async performInitialization(): Promise<InitializationResult> {
     try {
       console.log('Initializing IAP service...');
+
+      // 기존 연결이 있으면 먼저 정리
+      if (this.isInitialized) {
+        await this.cleanup();
+      }
+
       await initConnection();
       this.isInitialized = true;
       this.isAvailable = true;
@@ -82,6 +104,7 @@ export class IAPService {
     } catch (error) {
       console.error('IAP initialization failed:', error);
       this.isInitialized = false;
+      this.isAvailable = false;
 
       const errorMessage = this.getErrorMessage(error);
       if (errorMessage === ERROR_CODES.IAP_NOT_AVAILABLE) {
