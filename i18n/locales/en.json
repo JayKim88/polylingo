@@ -206,6 +206,12 @@
     "title": "Supported Languages",
     "message": "Currently supported languages:\n\n🇺🇸 English (English)\n🇨🇳 Chinese Traditional (中文(繁體))\n🇪🇸 Spanish (Español)\n🇮🇳 Hindi (हिन्दी)\n🇸🇦 Arabic (العربية)\n🇫🇷 French (Français)\n🇵🇹 Portuguese (Português)\n🇷🇺 Russian (Русский)\n🇯🇵 Japanese (日本語)\n🇰🇷 Korean (한국어)\n🇮🇩 Indonesian (Bahasa Indonesia)\n🇩🇪 German (Deutsch)\n🇮🇹 Italian (Italiano)\n🇹🇭 Thai (ไทย)\n\nEnjoy seamless translation across all these languages!"
   },
+  "errorBoundary": {
+    "title": "An error occurred",
+    "message": "This is a temporary error. Restarting the app will allow you to use it normally.",
+    "retry": "Retry",
+    "devMode": "Dev mode:"
+  },
   "search": {
     "translateFrom": "Translate from",
     "listening": "Listening...",

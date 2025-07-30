@@ -206,6 +206,12 @@
     "title": "지원 언어",
     "message": "현재 지원되는 언어:\n\n🇺🇸 영어 (English)\n🇨🇳 중국어 번체 (中文(繁體))\n🇪🇸 스페인어 (Español)\n🇮🇳 힌디어 (हिन्दी)\n🇸🇦 아랍어 (العربية)\n🇫🇷 프랑스어 (Français)\n🇵🇹 포르투갈어 (Português)\n🇷🇺 러시아어 (Русский)\n🇯🇵 일본어 (日本語)\n🇰🇷 한국어 (한국어)\n🇮🇩 인도네시아어 (Bahasa Indonesia)\n🇩🇪 독일어 (Deutsch)\n🇮🇹 이탈리아어 (Italiano)\n🇹🇭 태국어 (ไทย)\n\n모든 언어에서 원활한 번역을 즐기세요!"
   },
+  "errorBoundary": {
+    "title": "앱에 문제가 발생했습니다",
+    "message": "일시적인 오류입니다. 앱을 다시 시작하면 정상적으로 사용할 수 있습니다.",
+    "retry": "다시 시도",
+    "devMode": "개발 모드:"
+  },
   "search": {
     "translateFrom": "번역 대상",
     "listening": "듣는 중...",

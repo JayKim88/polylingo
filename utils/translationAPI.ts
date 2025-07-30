@@ -310,12 +310,12 @@ export class TranslationAPI {
     } catch (error) {
       console.log('💥 Claude API error:', error);
 
-      // Sentry에 Claude API 에러 전송 (가장 중요한 API)
+      // Sentry에 Claude API 에러 전송 (개인정보 보호를 위해 텍스트 제외)
       captureNetworkError(error as Error, {
         url: `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/translate`,
         method: 'POST',
         requestBody: {
-          text: text.substring(0, 100), // 처음 100자만 로깅
+          textLength: text.length, // 길이만 로깅 (개인정보 보호)
           sourceLanguage,
           targetLanguage,
           provider: 'claude',

@@ -206,6 +206,12 @@
     "title": "支持的语言",
     "message": "目前支持的语言：\n\n🇺🇸 英语 (English)\n🇨🇳 中文繁体 (中文(繁體))\n🇪🇸 西班牙语 (Español)\n🇮🇳 印地语 (हिन्दी)\n🇸🇦 阿拉伯语 (العربية)\n🇫🇷 法语 (Français)\n🇵🇹 葡萄牙语 (Português)\n🇷🇺 俄语 (Русский)\n🇯🇵 日语 (日本語)\n🇰🇷 韩语 (한국어)\n🇮🇩 印度尼西亚语 (Bahasa Indonesia)\n🇩🇪 德语 (Deutsch)\n🇮🇹 意大利语 (Italiano)\n🇹🇭 泰语 (ไทย)\n\n享受所有语言的无缝翻译体验！"
   },
+  "errorBoundary": {
+    "title": "应用出现错误",
+    "message": "这是临时错误。重新启动应用后可以正常使用。",
+    "retry": "重试",
+    "devMode": "开发模式："
+  },
   "search": {
     "translateFrom": "翻译自",
     "listening": "正在聆听...",

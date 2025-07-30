@@ -16,6 +16,7 @@ import mobileAds, { MaxAdContentRating } from 'react-native-google-mobile-ads';
 import '../i18n';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import CustomSplashScreen from '../components/SplashScreen';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { IAPService } from '@/utils/iapService';
 import { SubscriptionService } from '@/utils/subscriptionService';
 import { AppState, AppStateStatus } from 'react-native';
@@ -170,20 +171,22 @@ export default Sentry.wrap(function RootLayout() {
   }
 
   return (
-    <ThemeProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        {showCustomSplash ? (
-          <CustomSplashScreen onAnimationComplete={handleSplashComplete} />
-        ) : (
-          <>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-            <StatusBar style="auto" />
-          </>
-        )}
-      </GestureHandlerRootView>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          {showCustomSplash ? (
+            <CustomSplashScreen onAnimationComplete={handleSplashComplete} />
+          ) : (
+            <>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <StatusBar style="auto" />
+            </>
+          )}
+        </GestureHandlerRootView>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 });
