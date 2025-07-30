@@ -77,7 +77,7 @@ PolyLingo ("we," "our," or "us") is committed to protecting your privacy. This P
 
 ## Children's Privacy
 
-PolyLingo is not intended for children under 13. We do not knowingly collect personal information from children under 13. If you believe we have collected such information, please contact us immediately.
+PolyLingo is designed for users aged 4 and older. We do not knowingly collect personal information from children under 13. If you believe we have collected such information, please contact us immediately.
 
 ## International Data Transfers
 
@@ -160,9 +160,12 @@ PolyLingo is a mobile application that provides:
 ## Subscription Services
 
 ### Premium Features
-- Pro Plan: Enhanced translation capabilities, more languages
-- Premium Plan: Maximum language support, no advertisements
-- Free Plan: Basic translation with advertisements and usage limits
+- Free Plan: Basic translations with up to 3 languages, 100 daily translations, with ads
+- Pro Monthly ($2.99): Up to 6 languages, 200 daily translations, ad-free experience
+- Pro Max Monthly ($4.99): Up to 6 languages, 500 daily translations, ad-free with priority
+  support
+- Premium Yearly ($29.99): Up to 6 languages, 200 daily translations, ad-free with yearly
+  savings
 
 ### Billing and Payments
 - Payment: All payments are processed through Apple App Store or Google Play Store
@@ -171,10 +174,10 @@ PolyLingo is a mobile application that provides:
 - Taxes: Users are responsible for applicable taxes
 
 ### Cancellation and Refunds
-- Cancellation: Cancel anytime through App Store or Google Play Store settings
-- Refunds: Refund requests are handled by Apple or Google according to their policies
+- Cancellation: Cancel anytime through App Store settings
+- Refunds: Refund requests are handled by Apple according to their policies
 - No Partial Refunds: No refunds for partial subscription periods
-- Immediate Termination: Premium features end when subscription is cancelled
+- Immediate Termination: Premium features end when subscription is expired
 
 ## Intellectual Property
 
