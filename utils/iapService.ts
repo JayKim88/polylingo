@@ -58,8 +58,7 @@ export class IAPService {
     currentUser: null,
   };
   private static lastSubscriptionCheck = 0; // 마지막 구독 체크 시간
-  // private static SUBSCRIPTION_CHECK_INTERVAL = 2 * 60 * 1000; // 2분
-  private static SUBSCRIPTION_CHECK_INTERVAL = 0; // 2분
+  private static SUBSCRIPTION_CHECK_INTERVAL = 2 * 60 * 1000; // 2분
 
   static async initialize(): Promise<boolean> {
     if (this.initializationPromise) {
