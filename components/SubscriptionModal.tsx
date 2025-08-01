@@ -578,10 +578,8 @@ export default function SubscriptionModal({
                 className="text-xs mt-3 text-center"
                 style={{ color: colors.textSecondary }}
               >
-                By subscribing, you agree to our Terms of Use and acknowledge
-                our Privacy Policy.
-                {'\n'}Subscriptions auto-renew and can be cancelled anytime in
-                App Store settings.
+                Subscriptions will be charged to your payment method through your App Store account. Your subscription will automatically renew unless canceled at least 24 hours before the end of the current period. Manage your subscription in App Store Settings after purchase.
+                {'\n\n'}By subscribing, you agree to our Terms of Use and acknowledge our Privacy Policy.
               </Text>
             </View>
           </ScrollView>
