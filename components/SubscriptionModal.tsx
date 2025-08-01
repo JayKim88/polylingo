@@ -366,9 +366,9 @@ export default function SubscriptionModal({
             <Text className="text-xl font-bold" style={{ color: colors.text }}>
               {isFreePlan
                 ? `${
-                    (products[1] as ExtendedSubscription).localizedPrice?.[0]
+                    (products[1] as ExtendedSubscription)?.localizedPrice?.[0] ?? '$'
                   }0`
-                : typedProduct?.localizedPrice ?? ''}
+                : typedProduct?.localizedPrice ?? plan.price}
             </Text>
             {!isFreePlan && (
               <Text
