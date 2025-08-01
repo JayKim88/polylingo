@@ -33,15 +33,13 @@ import { hideTabBar, showTabBar } from './_layout';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 
 import AppLanguageModal from '../../components/AppLanguageModal';
-import SubscriptionModal from '../../components/SubscriptionModal';
-import LegalDocumentModal from '../../components/LegalDocumentModal';
+import SubscriptionModal, {
+  APPLE_EULA_LINK,
+  PRIVACY_POLICY_LINK,
+} from '../../components/SubscriptionModal';
 import { SubscriptionService } from '../../utils/subscriptionService';
 import { VersionService } from '../../utils/version';
 import { NEW_AD_TERM } from './favorites';
-import {
-  PRIVACY_POLICY_CONTENT,
-  TERMS_OF_SERVICE_CONTENT,
-} from '../../constants/legalDocuments';
 import { StorageService } from '../../utils/storage';
 import { TranslationAPI } from '../../utils/translationAPI';
 import { UserService } from '../../utils/userService';
@@ -65,8 +63,6 @@ export default function SettingsTab() {
 
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
   const [showAd, setShowAd] = useState(false);
@@ -121,11 +117,11 @@ export default function SettingsTab() {
   };
 
   const handlePrivacy = () => {
-    setShowPrivacyModal(true);
+    Linking.openURL(PRIVACY_POLICY_LINK);
   };
 
   const handleTermsOfService = () => {
-    setShowTermsModal(true);
+    Linking.openURL(APPLE_EULA_LINK);
   };
 
   // 실제 Apple ID로 Supabase 테스트
@@ -772,7 +768,10 @@ export default function SettingsTab() {
             >
               Made with ❤️ for multilingual learners
             </Text>
-            <Text className="text-sm mb-2" style={{ color: colors.textTertiary }}>
+            <Text
+              className="text-sm mb-2"
+              style={{ color: colors.textTertiary }}
+            >
               {VersionService.getFormattedVersion()}
             </Text>
             <Text className="text-xs" style={{ color: colors.textTertiary }}>
@@ -794,18 +793,6 @@ export default function SettingsTab() {
           const newSub = await SubscriptionService.getCurrentSubscription();
           setShowAd(newSub?.planId === 'free');
         }}
-      />
-      <LegalDocumentModal
-        visible={showPrivacyModal}
-        onClose={() => setShowPrivacyModal(false)}
-        title={t('settings.privacyPolicy')}
-        content={PRIVACY_POLICY_CONTENT}
-      />
-      <LegalDocumentModal
-        visible={showTermsModal}
-        onClose={() => setShowTermsModal(false)}
-        title={t('settings.termsOfService')}
-        content={TERMS_OF_SERVICE_CONTENT}
       />
     </Animated.View>
   );

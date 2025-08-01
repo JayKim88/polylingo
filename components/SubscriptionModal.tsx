@@ -30,9 +30,9 @@ interface SubscriptionModalProps {
   onSubscriptionChange?: () => void;
 }
 
-const PRIVACY_POLICY_LINK =
+export const PRIVACY_POLICY_LINK =
   'https://jay-global.notion.site/PolyLingo-Privacy-Policy-234e5ccd65b18054b73dcfb9fe6982a0';
-const EULA_LINK =
+export const APPLE_EULA_LINK =
   'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
 export default function SubscriptionModal({
@@ -542,10 +542,10 @@ export default function SubscriptionModal({
               style={{ backgroundColor: colors.secondaryContainer }}
             >
               <Text
-                className="text-sm font-semibold mb-3 text-center"
+                className="text-base font-semibold mb-3 text-center"
                 style={{ color: colors.text }}
               >
-                Legal Information
+                {t('subscription.legalInformation')}
               </Text>
 
               <View className="flex-row justify-center space-x-6">
@@ -557,29 +557,30 @@ export default function SubscriptionModal({
                     className="text-sm underline text-center"
                     style={{ color: colors.primary }}
                   >
-                    Privacy Policy
+                    {t('subscription.privacyPolicy')}
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() => Linking.openURL(EULA_LINK)}
+                  onPress={() => Linking.openURL(APPLE_EULA_LINK)}
                   className="py-2 px-4"
                 >
                   <Text
                     className="text-sm underline text-center"
                     style={{ color: colors.primary }}
                   >
-                    Terms of Use (EULA)
+                    {t('subscription.eula')}
                   </Text>
                 </TouchableOpacity>
               </View>
 
               <Text
-                className="text-xs mt-3 text-center"
+                className="text-sm mt-3 text-center"
                 style={{ color: colors.textSecondary }}
               >
-                Subscriptions will be charged to your payment method through your App Store account. Your subscription will automatically renew unless canceled at least 24 hours before the end of the current period. Manage your subscription in App Store Settings after purchase.
-                {'\n\n'}By subscribing, you agree to our Terms of Use and acknowledge our Privacy Policy.
+                {t('subscription.subscriptionTerms')}
+                {'\n\n'}
+                {t('subscription.legalAgreement')}
               </Text>
             </View>
           </ScrollView>

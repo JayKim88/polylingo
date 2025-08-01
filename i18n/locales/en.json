@@ -74,8 +74,8 @@
     "rateSubtitle": "Rate us on the App Store",
     "privacyPolicy": "Privacy Policy",
     "privacyPolicySubtitle": "Data handling and security policy",
-    "termsOfService": "Terms of Service",
-    "termsOfServiceSubtitle": "App usage terms and conditions",
+    "termsOfService": "Terms of Use (EULA)",
+    "termsOfServiceSubtitle": "Apple's End User License Agreement",
     "dataManagement": "Data Management",
     "exportData": "Export Data",
     "exportDataSubtitle": "Export your favorites and history",
@@ -348,7 +348,12 @@
     "changeSubscription": "Change Subscription",
     "changeSubscriptionMessage": "Would you like to change from {{currentPlan}} to {{newPlan}}?",
     "change": "Change",
-    "expiryDate": "Expires at"
+    "expiryDate": "Expires at",
+    "legalInformation": "Legal Information",
+    "privacyPolicy": "Privacy Policy",
+    "eula": "Terms of Use (EULA)",
+    "subscriptionTerms": "Subscriptions will be charged to your payment method through your App Store account. Your subscription will automatically renew unless canceled at least 24 hours before the end of the current period. Manage your subscription in App Store Settings after purchase.",
+    "legalAgreement": "By subscribing, you agree to Apple's Terms of Use (EULA) and acknowledge our Privacy Policy."
   },
   "consent": {
     "title": "Welcome to PolyLingo",

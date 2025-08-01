@@ -74,8 +74,8 @@
     "rateSubtitle": "在App Store中给我们评分",
     "privacyPolicy": "隐私政策",
     "privacyPolicySubtitle": "数据处理和安全政策",
-    "termsOfService": "服务条款",
-    "termsOfServiceSubtitle": "应用使用条款和条件",
+    "termsOfService": "使用条款 (EULA)",
+    "termsOfServiceSubtitle": "Apple的最终用户许可协议",
     "dataManagement": "数据管理",
     "exportData": "导出数据",
     "exportDataSubtitle": "导出您的收藏和历史记录",
@@ -349,7 +349,12 @@
     "changeSubscription": "更改订阅",
     "changeSubscriptionMessage": "是否要从{{currentPlan}}更改为{{newPlan}}？",
     "change": "更改",
-    "expiryDate": "有效期限至"
+    "expiryDate": "有效期限至",
+    "legalInformation": "法律信息",
+    "privacyPolicy": "隐私政策",
+    "eula": "使用条款 (EULA)",
+    "subscriptionTerms": "订阅将通过您的App Store账户向您的付款方式收费。除非在当前期间结束前至少24小时取消，否则您的订阅将自动续费。购买后可在App Store设置中管理您的订阅。",
+    "legalAgreement": "订阅即表示您同意Apple的使用条款(EULA)并确认我们的隐私政策。"
   },
   "consent": {
     "title": "欢迎使用PolyLingo",

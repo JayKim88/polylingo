@@ -81,8 +81,8 @@
     "rateSubtitle": "앱스토어에서 평가해주세요",
     "privacyPolicy": "개인정보 보호정책",
     "privacyPolicySubtitle": "데이터 처리 및 보안 정책",
-    "termsOfService": "서비스 약관",
-    "termsOfServiceSubtitle": "앱 사용 약관 및 조건",
+    "termsOfService": "이용약관 (EULA)",
+    "termsOfServiceSubtitle": "Apple의 최종 사용자 사용권 계약",
     "dataManagement": "데이터 관리",
     "exportData": "데이터 내보내기",
     "exportDataSubtitle": "즐겨찾기와 히스토리 내보내기",
@@ -349,7 +349,12 @@
     "changeSubscription": "구독 변경",
     "changeSubscriptionMessage": "현재 {{currentPlan}}에서 {{newPlan}}으로 변경하시겠습니까?",
     "change": "변경",
-    "expiryDate": "만료일"
+    "expiryDate": "만료일",
+    "legalInformation": "법적 정보",
+    "privacyPolicy": "개인정보 처리방침",
+    "eula": "이용약관 (EULA)",
+    "subscriptionTerms": "구독료는 App Store 계정을 통해 결제됩니다. 현재 구독 기간이 끝나기 최소 24시간 전에 취소하지 않으면 자동으로 갱신됩니다. 구매 후 App Store 설정에서 구독을 관리할 수 있습니다.",
+    "legalAgreement": "구독하시면 Apple의 이용약관(EULA)에 동의하고 개인정보 처리방침을 확인하셨음을 인정하는 것입니다."
   },
   "consent": {
     "title": "PolyLingo에 오신 것을 환영합니다",
