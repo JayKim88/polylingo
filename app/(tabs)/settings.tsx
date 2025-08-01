@@ -772,8 +772,11 @@ export default function SettingsTab() {
             >
               Made with ❤️ for multilingual learners
             </Text>
-            <Text className="text-sm" style={{ color: colors.textTertiary }}>
+            <Text className="text-sm mb-2" style={{ color: colors.textTertiary }}>
               {VersionService.getFormattedVersion()}
+            </Text>
+            <Text className="text-xs" style={{ color: colors.textTertiary }}>
+              © 2025 PolyLingo. All rights reserved.
             </Text>
           </View>
         </ScrollView>

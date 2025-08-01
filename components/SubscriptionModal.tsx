@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import { X, Crown, Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +29,11 @@ interface SubscriptionModalProps {
   onClose: () => void;
   onSubscriptionChange?: () => void;
 }
+
+const PRIVACY_POLICY_LINK =
+  'https://jay-global.notion.site/PolyLingo-Privacy-Policy-234e5ccd65b18054b73dcfb9fe6982a0';
+const EULA_LINK =
+  'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
 export default function SubscriptionModal({
   visible,
@@ -516,8 +522,7 @@ export default function SubscriptionModal({
               {SUBSCRIPTION_PLANS.map(renderPlanCard)}
             </View>
 
-            {/* Restore Button */}
-            <View className="mb-10">
+            <View className="mb-6">
               <TouchableOpacity
                 className="py-4 px-6 rounded-xl border"
                 style={{ borderColor: colors.border }}
@@ -530,6 +535,54 @@ export default function SubscriptionModal({
                   {t('subscription.restore')}
                 </Text>
               </TouchableOpacity>
+            </View>
+
+            <View
+              className="mb-10 p-4 rounded-lg"
+              style={{ backgroundColor: colors.secondaryContainer }}
+            >
+              <Text
+                className="text-sm font-semibold mb-3 text-center"
+                style={{ color: colors.text }}
+              >
+                Legal Information
+              </Text>
+
+              <View className="flex-row justify-center space-x-6">
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(PRIVACY_POLICY_LINK)}
+                  className="py-2 px-4"
+                >
+                  <Text
+                    className="text-sm underline text-center"
+                    style={{ color: colors.primary }}
+                  >
+                    Privacy Policy
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(EULA_LINK)}
+                  className="py-2 px-4"
+                >
+                  <Text
+                    className="text-sm underline text-center"
+                    style={{ color: colors.primary }}
+                  >
+                    Terms of Use (EULA)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text
+                className="text-xs mt-3 text-center"
+                style={{ color: colors.textSecondary }}
+              >
+                By subscribing, you agree to our Terms of Use and acknowledge
+                our Privacy Policy.
+                {'\n'}Subscriptions auto-renew and can be cancelled anytime in
+                App Store settings.
+              </Text>
             </View>
           </ScrollView>
         )}
