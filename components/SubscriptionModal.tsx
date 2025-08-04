@@ -114,30 +114,6 @@ export default function SubscriptionModal({
     setPurchaseLoading(planId);
 
     try {
-      const isLoggedIn = await SubscriptionService.isAppleIDLoggedIn();
-      if (!isLoggedIn) {
-        Alert.alert(
-          t('subscription.loginRequired'),
-          t('subscription.appleIDRequiredMessage'),
-          [
-            { text: t('alert.cancel'), style: 'cancel' },
-            {
-              text: t('subscription.loginAndTryAgain'),
-              onPress: async () => {
-                try {
-                  await IAPService.authenticateWithAppleID();
-                  setTimeout(() => handlePurchase(productId, planId), 100);
-                } catch (error) {
-                  console.error('Apple ID login failed:', error);
-                }
-              },
-            },
-          ]
-        );
-        setPurchaseLoading(null);
-        return;
-      }
-
       const currentSub = await SubscriptionService.getCurrentSubscription();
 
       if (currentSub && currentSub?.isActive) {
@@ -236,30 +212,6 @@ export default function SubscriptionModal({
   const handleRestore = async () => {
     setLoading(true);
     try {
-      const isLoggedIn = await SubscriptionService.isAppleIDLoggedIn();
-      if (!isLoggedIn) {
-        Alert.alert(
-          t('subscription.loginRequired'),
-          t('subscription.appleIDRequiredMessage'),
-          [
-            { text: t('alert.cancel'), style: 'cancel' },
-            {
-              text: t('subscription.loginAndTryAgain'),
-              onPress: async () => {
-                try {
-                  await IAPService.authenticateWithAppleID();
-                  setTimeout(() => handleRestore());
-                } catch (error) {
-                  console.error('Apple ID login failed:', error);
-                }
-              },
-            },
-          ]
-        );
-        setLoading(false);
-        return;
-      }
-
       const success = await IAPService.restorePurchases();
       if (success) {
         await updateSubscriptionStatus();
@@ -366,7 +318,8 @@ export default function SubscriptionModal({
             <Text className="text-xl font-bold" style={{ color: colors.text }}>
               {isFreePlan
                 ? `${
-                    (products[1] as ExtendedSubscription)?.localizedPrice?.[0] ?? '$'
+                    (products[1] as ExtendedSubscription)
+                      ?.localizedPrice?.[0] ?? '$'
                   }0`
                 : typedProduct?.localizedPrice ?? plan.price}
             </Text>

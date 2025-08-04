@@ -17,14 +17,15 @@ type SubscriptionUpdateOptions = {
 
 export class SubscriptionService {
   private static isUpdating = false;
-  private static subscriptionPromise: Promise<UserSubscription | null> | null = null;
+  private static subscriptionPromise: Promise<UserSubscription | null> | null =
+    null;
 
   static async getCurrentSubscription(): Promise<UserSubscription | null> {
     // 이미 요청이 진행 중이면 같은 Promise 반환
     if (this.subscriptionPromise) {
       return await this.subscriptionPromise;
     }
-    
+
     if (this.isUpdating) {
       console.log(
         'Subscription update in progress. Returning local data to avoid race condition.'
@@ -33,7 +34,7 @@ export class SubscriptionService {
     }
 
     this.subscriptionPromise = this.fetchSubscription();
-    
+
     try {
       const result = await this.subscriptionPromise;
       return result;
@@ -41,17 +42,12 @@ export class SubscriptionService {
       this.subscriptionPromise = null; // 완료 후 초기화
     }
   }
-  
+
   private static async fetchSubscription(): Promise<UserSubscription | null> {
-    const isLoggedIn = await this.isAppleIDLoggedIn();
-
     try {
-      if (!isLoggedIn) {
-        return this.getDefaultSubscription();
-      }
-
+      // Try to get subscription by transaction ID first (if available from purchases)
       const serverSubscription =
-        await UserService.getLatestSubscriptionFromServer();
+        await this.getServerSubscriptionByTransaction();
       if (serverSubscription) {
         return await this.processServerSubscription(serverSubscription);
       }
@@ -62,19 +58,27 @@ export class SubscriptionService {
     }
   }
 
-  public static async isAppleIDLoggedIn(): Promise<boolean> {
+  private static async getServerSubscriptionByTransaction(): Promise<
+    any | null
+  > {
     try {
-      const { IAPService } = await import('./iapService');
-      const isLoggedIn = IAPService.getAppleIDLoginState();
-      if (!isLoggedIn) {
-        return false;
+      // Try to get stored transaction ID first
+      const transactionId = await UserService.getCurrentTransactionId();
+      if (transactionId) {
+        const serverSubscription =
+          await UserService.getLatestSubscriptionFromServer(transactionId);
+        return serverSubscription;
       }
-      return true;
+
+      // If no stored transaction ID, user hasn't made any purchases yet
+      return null;
     } catch (error) {
-      console.error('Error checking Apple ID login state:', error);
-      return false;
+      console.warn('Failed to get subscription by transaction:', error);
+      return null;
     }
   }
+
+  // Apple ID login check removed - using transaction-based identification
 
   private static async processServerSubscription(
     serverSubscription: any
@@ -174,11 +178,10 @@ export class SubscriptionService {
 
     this.isUpdating = true;
     try {
-      const finalPlanId = await this.validateAndAdjustPlanId(planId);
-      const plan = this.validatePlan(finalPlanId);
+      const plan = this.validatePlan(planId);
 
       const subscription = await this.buildSubscription(
-        finalPlanId,
+        planId,
         plan,
         options,
         originalTransactionIdentifierIOS
@@ -186,13 +189,16 @@ export class SubscriptionService {
 
       await this.saveSubscription(subscription);
       await this.syncToServer(subscription, originalTransactionIdentifierIOS);
-      
+
       // Sentry 구독 컨텍스트 업데이트
       try {
         const { updateSubscriptionContext } = await import('./sentryUtils');
         await updateSubscriptionContext(subscription);
       } catch (sentryError) {
-        console.warn('Failed to update Sentry subscription context:', sentryError);
+        console.warn(
+          'Failed to update Sentry subscription context:',
+          sentryError
+        );
       }
     } catch (error) {
       console.error('Error setting subscription:', error);
@@ -206,10 +212,8 @@ export class SubscriptionService {
   private static async validateAndAdjustPlanId(
     planId: string
   ): Promise<string> {
-    if (__DEV__) return planId;
-
-    const isLoggedIn = await this.isAppleIDLoggedIn();
-    return isLoggedIn ? planId : 'free';
+    // Allow any plan ID - validation will happen during purchase
+    return planId;
   }
 
   private static validatePlan(planId: string) {
@@ -230,14 +234,16 @@ export class SubscriptionService {
     const now = Date.now();
     const endDate = this.calculateEndDate(plan, now);
     const today = getTodayDateString();
+    const finalTransactionId =
+      originalTransactionIdentifierIOS ||
+      (await UserService.getCurrentTransactionId());
+
     const todayUsageFromServer = await UserService.getDailyUsage(
       today,
-      originalTransactionIdentifierIOS
+      finalTransactionId
     );
     const serverSubscription =
-      await UserService.getLatestSubscriptionFromServer(
-        originalTransactionIdentifierIOS
-      );
+      await UserService.getLatestSubscriptionFromServer(finalTransactionId);
 
     const currentPlan = serverSubscription
       ? serverSubscription.plan_id
@@ -266,7 +272,7 @@ export class SubscriptionService {
       },
       isTrialUsed: existingSubscription?.isTrialUsed || false,
       originalTransactionIdentifierIOS:
-        originalTransactionIdentifierIOS ||
+        finalTransactionId ||
         existingSubscription?.originalTransactionIdentifierIOS,
     };
   }
@@ -290,17 +296,27 @@ export class SubscriptionService {
     subscription: UserSubscription,
     originalTransactionIdentifierIOS?: string
   ): Promise<void> {
+    const finalTransactionId =
+      originalTransactionIdentifierIOS ||
+      subscription.originalTransactionIdentifierIOS ||
+      (await UserService.getCurrentTransactionId());
+
+    if (!finalTransactionId) {
+      console.warn('No transaction ID available for server sync');
+      return;
+    }
+
     try {
       await Promise.all([
         UserService.syncSubscription(
           subscription.planId,
           subscription.isActive,
-          originalTransactionIdentifierIOS
+          finalTransactionId
         ),
         UserService.syncDailyUsage(
           subscription.dailyUsage.date,
           subscription.dailyUsage.count,
-          originalTransactionIdentifierIOS
+          finalTransactionId
         ),
       ]);
     } catch (error) {
@@ -343,22 +359,20 @@ export class SubscriptionService {
       const subscription = await this.getCurrentSubscription();
       if (!subscription) return false;
 
-      // Apple ID 없는 무료 사용자의 경우 디바이스 기반 제한 적용
-      if (subscription.planId === 'free') {
-        const { IAPService } = await import('./iapService');
-        const isLoggedIn = IAPService.getAppleIDLoginState();
+      // For free users without purchases, use device-based usage tracking
+      if (
+        subscription.planId === 'free' &&
+        !subscription.originalTransactionIdentifierIOS
+      ) {
+        // Device-based usage check (doesn't actually increment)
+        const plan = SUBSCRIPTION_PLANS.find((p) => p.id === 'free');
+        if (!plan) return false;
 
-        if (!isLoggedIn) {
-          // 디바이스 기반 사용량 검사 (실제 증가는 하지 않음)
-          const plan = SUBSCRIPTION_PLANS.find((p) => p.id === 'free');
-          if (!plan) return false;
+        const maxLanguages = plan.maxLanguages;
+        const usageIncrement = languageCount / maxLanguages;
 
-          const maxLanguages = plan.maxLanguages;
-          const usageIncrement = languageCount / maxLanguages;
-
-          const deviceStats = await DeviceUsageService.getCurrentUsageStats();
-          return deviceStats.daily.remaining >= usageIncrement;
-        }
+        const deviceStats = await DeviceUsageService.getCurrentUsageStats();
+        return deviceStats.daily.remaining >= usageIncrement;
       }
 
       const today = getTodayDateString();
@@ -400,28 +414,26 @@ export class SubscriptionService {
       const subscription = await this.getCurrentSubscription();
       if (!subscription) return false;
 
-      // Apple ID 없는 최초 무료 사용자의 경우 디바이스 기반 사용량 관리
-      if (subscription.planId === 'free') {
-        const { IAPService } = await import('./iapService');
-        const isLoggedIn = IAPService.getAppleIDLoginState();
+      // For free users without purchases, use device-based usage management
+      if (
+        subscription.planId === 'free' &&
+        !subscription.originalTransactionIdentifierIOS
+      ) {
+        const plan = SUBSCRIPTION_PLANS.find((p) => p.id === 'free');
+        if (!plan) return false;
 
-        if (!isLoggedIn) {
-          const plan = SUBSCRIPTION_PLANS.find((p) => p.id === 'free');
-          if (!plan) return false;
+        const maxLanguages = plan.maxLanguages;
+        const usageIncrement = languageCount / maxLanguages;
 
-          const maxLanguages = plan.maxLanguages;
-          const usageIncrement = languageCount / maxLanguages;
+        const result = await DeviceUsageService.incrementUsageWithLimits(
+          usageIncrement
+        );
 
-          const result = await DeviceUsageService.incrementUsageWithLimits(
-            usageIncrement
-          );
-
-          if (!result.allowed) {
-            return false;
-          }
-
-          return true;
+        if (!result.allowed) {
+          return false;
         }
+
+        return true;
       }
 
       const today = getTodayDateString();
@@ -472,7 +484,10 @@ export class SubscriptionService {
         const { updateSubscriptionContext } = await import('./sentryUtils');
         await updateSubscriptionContext(subscription);
       } catch (sentryError) {
-        console.warn('Failed to update Sentry context after usage increment:', sentryError);
+        console.warn(
+          'Failed to update Sentry context after usage increment:',
+          sentryError
+        );
       }
 
       return true;
@@ -494,15 +509,13 @@ export class SubscriptionService {
 
       if (!subscription) return freeUsage;
 
-      // Apple ID 없는 최초의 무료 사용자의 경우 디바이스 기반 사용량 반환
-      if (subscription.planId === 'free') {
-        const { IAPService } = await import('./iapService');
-        const isLoggedIn = IAPService.getAppleIDLoginState();
-
-        if (!isLoggedIn) {
-          const deviceStats = await DeviceUsageService.getCurrentUsageStats();
-          return deviceStats.daily;
-        }
+      // For free users without purchases, return device-based usage
+      if (
+        subscription.planId === 'free' &&
+        !subscription.originalTransactionIdentifierIOS
+      ) {
+        const deviceStats = await DeviceUsageService.getCurrentUsageStats();
+        return deviceStats.daily;
       }
 
       const plan = SUBSCRIPTION_PLANS.find((p) => p.id === subscription.planId);

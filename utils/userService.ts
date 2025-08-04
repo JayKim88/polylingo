@@ -14,6 +14,7 @@ export const getTodayDateString = (): string => {
 
 const USER_CACHE_KEY = 'cached_user_data';
 const APPLE_USER_KEY = 'apple_user_id';
+const TRANSACTION_ID_KEY = 'original_transaction_identifier_ios';
 
 export interface CachedUserData {
   userId: string;
@@ -24,8 +25,44 @@ export interface CachedUserData {
 
 export class UserService {
   private static currentUser: CachedUserData | null = null;
+  private static currentTransactionId: string | null = null;
 
-  // 저장된 Apple User ID 복원
+  // Transaction ID 관리 메소드들
+  static async saveTransactionId(transactionId: string): Promise<void> {
+    try {
+      await AsyncStorage.setItem(TRANSACTION_ID_KEY, transactionId);
+      this.currentTransactionId = transactionId;
+      console.log('Transaction ID saved:', transactionId);
+    } catch (error) {
+      console.error('Failed to save transaction ID:', error);
+    }
+  }
+
+  static async getCurrentTransactionId(): Promise<string | null> {
+    if (this.currentTransactionId) {
+      return this.currentTransactionId;
+    }
+
+    try {
+      const stored = await AsyncStorage.getItem(TRANSACTION_ID_KEY);
+      this.currentTransactionId = stored;
+      return stored;
+    } catch (error) {
+      console.error('Failed to get transaction ID:', error);
+      return null;
+    }
+  }
+
+  static async clearTransactionId(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(TRANSACTION_ID_KEY);
+      this.currentTransactionId = null;
+    } catch (error) {
+      console.error('Failed to clear transaction ID:', error);
+    }
+  }
+
+  // 저장된 Apple User ID 복원 (향후 호환성용)
   static async restoreAppleUserID(): Promise<string | null> {
     try {
       const storedAppleUserID = await AsyncStorage.getItem(APPLE_USER_KEY);
@@ -36,7 +73,7 @@ export class UserService {
     }
   }
 
-  // Apple User ID 저장
+  // Apple User ID 저장 (향후 호환성용)
   static async saveAppleUserID(appleUserID: string): Promise<void> {
     try {
       await AsyncStorage.setItem(APPLE_USER_KEY, appleUserID);
@@ -45,7 +82,7 @@ export class UserService {
     }
   }
 
-  // Original Transaction ID로 사용자 복원 (직접 Supabase 사용)
+  // Transaction ID 복원 (단순히 로컬에 저장)
   static async restoreUserByTransactionId(
     originalTransactionId: string
   ): Promise<CachedUserData | null> {
@@ -55,66 +92,16 @@ export class UserService {
         return null;
       }
 
-      if (!isSupabaseAvailable()) {
-        console.error('Supabase not available for user restoration');
-        return null;
-      }
-
-      // original_transaction_identifier_ios로 구독 찾기
-      const { data: subscription, error: subscriptionError } = await supabase!
-        .from('user_subscriptions')
-        .select('user_id')
-        .eq('original_transaction_identifier_ios', originalTransactionId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (subscriptionError && subscriptionError.code !== 'PGRST116') {
-        console.error('Subscription query error:', subscriptionError);
-        return null;
-      }
-
-      if (!subscription) {
-        console.log(
-          'No subscription found for transaction:',
-          originalTransactionId
-        );
-        return null;
-      }
-
-      // 해당 user_id로 사용자 정보 조회
-      const { data: user, error: userError } = await supabase!
-        .from('users')
-        .select('id, apple_id, email')
-        .eq('id', subscription.user_id)
-        .single();
-
-      if (userError) {
-        console.error('User query error:', userError);
-        return null;
-      }
-
-      if (!user) {
-        console.log('User not found for user_id:', subscription.user_id);
-        return null;
-      }
-
-      // 복원된 사용자 정보를 캐시
-      const cachedUser: CachedUserData = {
-        userId: user.id,
-        appleId: user.apple_id,
-        email: user.email,
-        lastSync: Date.now(),
-      };
-
-      this.currentUser = cachedUser;
-      await this.saveCachedUser(cachedUser);
-      await this.saveAppleUserID(user.apple_id);
-
-      console.log('User restored successfully:', user.id);
-      return cachedUser;
+      // Transaction ID를 로컬에 저장
+      await this.saveTransactionId(originalTransactionId);
+      
+      console.log('Transaction ID restored successfully:', originalTransactionId);
+      
+      // 더 이상 user 객체가 필요없으므로 null 반환
+      // 실제 데이터는 transaction ID로 관리됨
+      return null;
     } catch (error) {
-      console.error('Transaction-based user restoration failed:', error);
+      console.error('Transaction-based restoration failed:', error);
       return null;
     }
   }
@@ -240,40 +227,30 @@ export class UserService {
     }
   }
 
-  // 사용자 구독 정보 동기화
+  // 구독 정보 동기화 (Transaction ID 기반)
   static async syncSubscription(
     planId: string,
     isActive: boolean,
     originalTransactionIdentifierIOS?: string
   ): Promise<boolean> {
-    const user = await this.getCurrentUser();
-
-    if (!user || !isSupabaseAvailable()) {
+    if (!originalTransactionIdentifierIOS || !isSupabaseAvailable()) {
+      console.log('No transaction ID or Supabase unavailable');
       return false;
     }
 
+    // Transaction ID 저장
+    await this.saveTransactionId(originalTransactionIdentifierIOS);
+
     try {
-      // 현재 활성 구독 확인
-      const currentSubscription = await this.getLatestSubscriptionFromServer();
+      // 현재 활성 구독 확인 (Transaction ID로)
+      const currentSubscription = await this.getLatestSubscriptionFromServer(
+        originalTransactionIdentifierIOS
+      );
 
       const isIdenticalSubscription =
         currentSubscription &&
         currentSubscription.plan_id === planId &&
         currentSubscription.is_active === isActive;
-
-      const isTransactionIdEmpty =
-        !currentSubscription?.original_transaction_identifier_ios;
-
-      if (isTransactionIdEmpty) {
-        await supabase!
-          .from('user_subscriptions')
-          .update({
-            original_transaction_identifier_ios:
-              originalTransactionIdentifierIOS,
-          })
-          .eq('user_id', user.userId)
-          .eq('is_active', true);
-      }
 
       // 구독 변경 없음
       if (isIdenticalSubscription) return true;
@@ -286,26 +263,19 @@ export class UserService {
           ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
           : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-      /**
-       * @description 기존 구독 비활성화 → 새 구독 추가 패턴의 이유
-       * 데이터베이스 설계 관점
-       * 1. 구독 이력 보존
-       * 2. 구독 변경 추적
-       * 비즈니스 요구사항
-       * 1. 결제 및 환불 관리
-       * 2. 사용자 행동 분석
-       */
-      // 기존 활성 구독 비활성화
+      // 기존 활성 구독 비활성화 (Transaction ID로)
       await supabase!
         .from('user_subscriptions')
         .update({ is_active: false, updated_at: now })
-        .eq('user_id', user.userId)
+        .eq(
+          'original_transaction_identifier_ios',
+          originalTransactionIdentifierIOS
+        )
         .eq('is_active', true);
 
-      // 새 구독 추가
+      // 새 구독 추가 (user_id 없이)
       const { error } = await supabase!.from('user_subscriptions').insert([
         {
-          user_id: user.userId,
           plan_id: planId,
           is_active: isActive,
           original_transaction_identifier_ios: originalTransactionIdentifierIOS,
@@ -327,15 +297,15 @@ export class UserService {
     }
   }
 
-  // 서버에서 최신 구독 정보 가져오기
+  // 서버에서 최신 구독 정보 가져오기 (Transaction ID 기반)
   static async getLatestSubscriptionFromServer(
-    transactionId?: string
+    transactionId?: string | null
   ): Promise<DatabaseSubscription | null> {
-    const user = await this.getCurrentUser();
+    // Transaction ID가 없으면 저장된 것을 가져오기 시도
+    const finalTransactionId =
+      transactionId || (await this.getCurrentTransactionId());
 
-    const noIdentifier = !user && !transactionId;
-
-    if (noIdentifier || !isSupabaseAvailable()) {
+    if (!finalTransactionId || !isSupabaseAvailable()) {
       return null;
     }
 
@@ -343,10 +313,7 @@ export class UserService {
       const { data, error } = await supabase!
         .from('user_subscriptions')
         .select('*')
-        .eq(
-          user ? 'user_id' : 'original_transaction_identifier_ios',
-          user ? (user as CachedUserData).userId : transactionId
-        )
+        .eq('original_transaction_identifier_ios', finalTransactionId)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -371,23 +338,18 @@ export class UserService {
     usageCount: number,
     originalTransactionIdentifierIOS?: string
   ): Promise<boolean> {
-    let user = await this.getCurrentUser();
+    const finalTransactionId =
+      originalTransactionIdentifierIOS ||
+      (await this.getCurrentTransactionId());
 
-    if (!user && originalTransactionIdentifierIOS) {
-      user = await this.restoreUserByTransactionId(
-        originalTransactionIdentifierIOS
-      );
-
-      if (!user) {
-        console.log('Failed to restore user by transaction ID');
-        return false;
-      }
+    if (!finalTransactionId || !isSupabaseAvailable()) {
+      console.log('No transaction ID available for daily usage sync');
+      return false;
     }
 
-    // user가 여전히 없으면 실패
-    if (!user || !isSupabaseAvailable()) {
-      console.error('No user available for daily usage sync');
-      return false;
+    // Transaction ID 저장
+    if (originalTransactionIdentifierIOS) {
+      await this.saveTransactionId(originalTransactionIdentifierIOS);
     }
 
     try {
@@ -396,14 +358,14 @@ export class UserService {
       const result = await supabase!.from('daily_usage').upsert(
         [
           {
-            user_id: user.userId,
+            original_transaction_identifier_ios: finalTransactionId,
             date,
             usage_count: usageCount,
             updated_at: now,
           },
         ],
         {
-          onConflict: 'user_id,date',
+          onConflict: 'original_transaction_identifier_ios,date',
         }
       );
 
@@ -420,27 +382,16 @@ export class UserService {
     }
   }
 
-  // 서버에서 일일 사용량 가져오기
+  // 서버에서 일일 사용량 가져오기 (Transaction ID 기반)
   static async getDailyUsage(
     date: string,
-    originalTransactionIdentifierIOS?: string
+    originalTransactionIdentifierIOS?: string | null
   ): Promise<number> {
-    let user = await this.getCurrentUser();
+    const finalTransactionId =
+      originalTransactionIdentifierIOS ||
+      (await this.getCurrentTransactionId());
 
-    if (!user && originalTransactionIdentifierIOS) {
-      console.log('No user found for daily usage fetch, attempting restore...');
-      user = await this.restoreUserByTransactionId(
-        originalTransactionIdentifierIOS
-      );
-
-      if (!user) {
-        console.log('Failed to restore user for daily usage fetch');
-        return 0;
-      }
-    }
-
-    // user가 여전히 없으면 0 반환
-    if (!user || !isSupabaseAvailable()) {
+    if (!finalTransactionId || !isSupabaseAvailable()) {
       return 0;
     }
 
@@ -448,7 +399,7 @@ export class UserService {
       const { data, error } = await supabase!
         .from('daily_usage')
         .select('usage_count')
-        .eq('user_id', user.userId)
+        .eq('original_transaction_identifier_ios', finalTransactionId)
         .eq('date', date)
         .single();
 
@@ -468,8 +419,10 @@ export class UserService {
   static async logout(): Promise<void> {
     try {
       this.currentUser = null;
+      this.currentTransactionId = null;
       await AsyncStorage.removeItem(USER_CACHE_KEY);
       await AsyncStorage.removeItem(APPLE_USER_KEY);
+      await AsyncStorage.removeItem(TRANSACTION_ID_KEY);
       console.log('User logged out and cache cleared');
     } catch (error) {
       console.error('Logout error:', error);

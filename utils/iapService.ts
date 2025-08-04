@@ -14,7 +14,6 @@ import {
   ProductPurchase,
 } from 'react-native-iap';
 import { Platform, Alert } from 'react-native';
-import appleAuth from '@invertase/react-native-apple-authentication';
 import i18n from '../i18n';
 
 import { SubscriptionService } from './subscriptionService';
@@ -22,11 +21,6 @@ import { UserService } from './userService';
 import { IAP_PRODUCT_IDS } from '../types/subscription';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
 import { captureIAPError, addBreadcrumb, trackUserAction } from './sentryUtils';
-
-type AppleAuthState = {
-  isLoggedIn: boolean;
-  currentUser: string | null;
-};
 
 type InitializationResult = {
   success: boolean;
@@ -53,10 +47,7 @@ export class IAPService {
   private static processedPurchases = new Set<string>(); // 처리된 구매 추적
   private static isProcessingRestore = false; // 복원 처리 중 플래그
   private static initializationPromise: Promise<boolean> | null = null; // 초기화 중복 방지
-  private static appleAuthState: AppleAuthState = {
-    isLoggedIn: false,
-    currentUser: null,
-  };
+  // Apple auth state removed - using transaction-based identification
   private static lastSubscriptionCheck = 0; // 마지막 구독 체크 시간
   private static SUBSCRIPTION_CHECK_INTERVAL = 2 * 60 * 1000; // 2분
 
@@ -76,7 +67,7 @@ export class IAPService {
   private static async performInitializationSequence(): Promise<boolean> {
     try {
       await this.performInitialization();
-      await this.restoreAppleUserSession();
+      // Skip Apple authentication - use transaction-based identification instead
       return true;
     } catch (error) {
       this.initializationPromise = null;
@@ -123,223 +114,14 @@ export class IAPService {
       : 'Unknown error';
   }
 
-  private static delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 
   static isIAPAvailable(): boolean {
     return this.isAvailable;
   }
 
-  static getAppleIDLoginState(): boolean {
-    return this.appleAuthState.isLoggedIn;
-  }
+  // Apple authentication methods removed - using transaction-based identification
 
-  static getCurrentAppleUser(): string | null {
-    return this.appleAuthState.currentUser;
-  }
-
-  private static setAppleAuthState(
-    isLoggedIn: boolean,
-    currentUser?: string
-  ): void {
-    this.appleAuthState = {
-      isLoggedIn,
-      currentUser: isLoggedIn
-        ? currentUser || this.appleAuthState.currentUser
-        : null,
-    };
-  }
-
-  /**
-   * @description 로그인 및 권한 체크 후 유저정보를 서버와 로컬 캐시에 저장함.
-   */
-  static async authenticateWithAppleID(): Promise<string | null> {
-    if (!this.isAppleAuthSupported()) {
-      return null;
-    }
-
-    try {
-      const authResponse = await this.performAppleAuthentication();
-      const credentialState = await appleAuth.getCredentialStateForUser(
-        authResponse.user
-      );
-
-      if (credentialState === appleAuth.State.AUTHORIZED) {
-        return await this.handleSuccessfulAppleAuth(
-          authResponse.user,
-          authResponse.email
-        );
-      } else {
-        console.log(
-          'Apple ID authentication failed - credential state:',
-          credentialState
-        );
-        this.setAppleAuthState(false);
-        return null;
-      }
-    } catch (error) {
-      console.warn('Apple ID authentication error:', error);
-      this.setAppleAuthState(false);
-      return null;
-    }
-  }
-
-  private static isAppleAuthSupported(): boolean {
-    if (Platform.OS !== 'ios') {
-      console.log('Apple Authentication is only available on iOS');
-      return false;
-    }
-
-    if (!appleAuth.isSupported) {
-      console.log('Apple Authentication is not supported on this device');
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * @description login 요구 모달을 띄움.
-   */
-  private static async performAppleAuthentication() {
-    return await appleAuth.performRequest({
-      requestedOperation: appleAuth.Operation.LOGIN,
-      requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
-    });
-  }
-
-  private static async handleSuccessfulAppleAuth(
-    appleUserID: string,
-    appleUserEmail: string | null
-  ): Promise<string> {
-    console.log(
-      'Apple ID authentication successful:',
-      appleUserID,
-      appleUserEmail
-    );
-    this.setAppleAuthState(true, appleUserID);
-
-    await Promise.all([
-      UserService.authenticateWithAppleID(appleUserID, appleUserEmail ?? ''),
-      UserService.saveAppleUserID(appleUserID),
-    ]);
-
-    return appleUserID;
-  }
-
-  static async checkExistingAppleCredentials(
-    userId?: string
-  ): Promise<boolean> {
-    if (!this.isAppleAuthSupported()) {
-      return false;
-    }
-
-    try {
-      const currentUser = this.appleAuthState.currentUser ?? userId;
-      if (!currentUser) {
-        return false;
-      }
-
-      const credentialState = await appleAuth.getCredentialStateForUser(
-        currentUser
-      );
-      const isAuthorized = credentialState === appleAuth.State.AUTHORIZED;
-
-      this.setAppleAuthState(isAuthorized, currentUser);
-      return isAuthorized;
-    } catch (error) {
-      console.error('Error checking Apple credentials:', error);
-      this.setAppleAuthState(false);
-      return false;
-    }
-  }
-
-  private static async restoreAppleUserSession(): Promise<void> {
-    try {
-      let appleUserID = await UserService.restoreAppleUserID();
-
-      if (!appleUserID) {
-        appleUserID = await this.restoreUserViaTransaction();
-      }
-
-      if (appleUserID) {
-        await this.authenticateAppleUser(appleUserID);
-      }
-    } catch (error) {
-      console.error('Failed to restore Apple user session:', error);
-      const appleUserID = await this.restoreUserViaTransaction();
-      if (appleUserID) {
-        await this.authenticateAppleUser(appleUserID);
-      }
-    }
-  }
-
-  private static async restoreUserViaTransaction(): Promise<string | null> {
-    const success = await this.attemptTransactionBasedRestore();
-    if (!success) return null;
-
-    const currentUser = await UserService.getCurrentUser();
-    return currentUser?.appleId || null;
-  }
-
-  private static async authenticateAppleUser(
-    appleUserID: string
-  ): Promise<void> {
-    const isValid = await this.checkExistingAppleCredentials(appleUserID);
-    if (isValid) {
-      await UserService.authenticateWithAppleID(appleUserID);
-      console.log('Apple user session restored successfully');
-    } else {
-      console.log('Apple credentials are no longer valid');
-    }
-  }
-
-  private static async attemptTransactionBasedRestore(): Promise<boolean> {
-    try {
-      if (!this.isAvailable) {
-        console.log('IAP not available - skipping transaction-based restore');
-        return false;
-      }
-
-      const restored = await getAvailablePurchases({
-        onlyIncludeActiveItems: false, // 모든 구매 내역 조회
-      });
-
-      if (restored.length === 0) {
-        console.log('No purchase history found');
-        return false;
-      }
-
-      const latestPurchase = restored.sort(
-        (a: Purchase, b: Purchase) =>
-          (b.transactionDate || 0) - (a.transactionDate || 0)
-      )[0];
-
-      const originalTransactionId =
-        latestPurchase.originalTransactionIdentifierIOS;
-
-      if (!originalTransactionId) {
-        console.log('No original transaction ID found in latest purchase');
-        return false;
-      }
-
-      const restoredUser = await UserService.restoreUserByTransactionId(
-        originalTransactionId
-      );
-
-      if (restoredUser) {
-        this.setAppleAuthState(true, restoredUser.appleId);
-        return true;
-      } else {
-        console.log('Failed to restore user via transaction ID');
-        return false;
-      }
-    } catch (error) {
-      console.error('Transaction-based restore failed:', error);
-      return false;
-    }
-  }
+  // Apple authentication methods removed - using transaction-based identification only
 
   // TestFlight/Sandbox 환경 감지
   private static determineTestEnvironment(): boolean {
@@ -372,16 +154,13 @@ export class IAPService {
     }
     this.purchaseUpdateSubscription = purchaseUpdatedListener(
       async (purchase: Purchase) => {
-        // 개발 모드에서는 productId만 사용 (originalTransactionIdentifierIOS가 매번 달라질 수 있음)
-        const purchaseId = __DEV__
-          ? purchase.productId
-          : `${purchase.productId}_${
-              purchase.originalTransactionIdentifierIOS ||
-              purchase.purchaseToken
-            }`;
+        // Use transaction ID as primary identifier to prevent duplicate processing of same transaction
+        const transactionId = purchase.originalTransactionIdentifierIOS || purchase.purchaseToken;
+        const purchaseId = __DEV__ ? purchase.productId : (transactionId || purchase.productId);
 
         // 이미 처리된 구매인지 확인 (중복 처리 방지)
         if (this.processedPurchases.has(purchaseId)) {
+          console.log(`Purchase already processed: ${purchaseId}`);
           return;
         }
 
@@ -411,7 +190,19 @@ export class IAPService {
           const isValid = await this.validatePurchase(purchase);
 
           if (isValid) {
-            await this.handleSuccessfulPurchase(purchase);
+            // Check if this is a restored purchase (app restart) vs new purchase
+            const existingTransactionId = await UserService.getCurrentTransactionId();
+            const isRestoredPurchase = existingTransactionId === purchase.originalTransactionIdentifierIOS;
+            
+            if (isRestoredPurchase) {
+              // This is a restored purchase - preserve usage
+              console.log('🔄 Restored purchase detected, preserving usage');
+              await this.handleSuccessfulPurchaseQuietly(purchase);
+            } else {
+              // This is a new purchase - reset usage  
+              console.log('🎉 New purchase detected, resetting usage');
+              await this.handleSuccessfulPurchase(purchase);
+            }
 
             await finishTransaction({
               purchase,
@@ -824,10 +615,15 @@ export class IAPService {
     return false;
   }
 
-  // 성공적인 구매 처리
+  // 성공적인 구매 처리 - 트랜잭션 ID를 사용자 식별자로 사용
   private static async handleSuccessfulPurchase(purchase: Purchase) {
     try {
       const productId = purchase.productId;
+      const transactionId = purchase.originalTransactionIdentifierIOS;
+
+      if (!transactionId) {
+        throw new Error('Missing transaction identifier for purchase');
+      }
 
       // 구독 플랜 ID 매핑
       let planId: string;
@@ -845,8 +641,11 @@ export class IAPService {
           throw new Error(`Unknown product ID: ${productId}`);
       }
 
-      // 새 구매 시 사용량 초기화하여 구독 상태 업데이트
-      console.log('🔄 Resetting daily usage for new purchase...');
+      // Transaction ID 저장
+      await UserService.saveTransactionId(transactionId);
+
+      // 새 구매 시 사용량 초기화하여 구독 상태 업데이트 (트랜잭션 ID 기반)
+      console.log(`🔄 Activating subscription for transaction: ${transactionId}`);
       try {
         await SubscriptionService.setSubscription(
           planId,
@@ -854,7 +653,7 @@ export class IAPService {
             isActive: true,
             preserveUsage: false,
           },
-          purchase.originalTransactionIdentifierIOS
+          transactionId
         );
       } catch (syncError) {
         console.error(
@@ -878,17 +677,22 @@ export class IAPService {
         });
       }
 
-      console.log(`Subscription activated: ${planId}`);
+      console.log(`Subscription activated: ${planId} for transaction: ${transactionId}`);
     } catch (error) {
       console.error('Failed to handle successful purchase:', error);
       throw error;
     }
   }
 
-  // 복원 시 조용히 처리 (리스너 트리거 방지)
+  // 복원 시 조용히 처리 (리스너 트리거 방지) - 트랜잭션 ID를 사용자 식별자로 사용
   private static async handleSuccessfulPurchaseQuietly(purchase: Purchase) {
     try {
       const productId = purchase.productId;
+      const transactionId = purchase.originalTransactionIdentifierIOS;
+
+      if (!transactionId) {
+        throw new Error('Missing transaction identifier for restore');
+      }
 
       // 구독 플랜 ID 매핑
       let planId: string;
@@ -906,7 +710,10 @@ export class IAPService {
           throw new Error(`Unknown product ID: ${productId}`);
       }
 
-      // 구독 상태 업데이트 (조용히)
+      // Transaction ID 저장
+      await UserService.saveTransactionId(transactionId);
+
+      // 구독 상태 업데이트 (조용히) - 트랜잭션 ID 기반
       try {
         await SubscriptionService.setSubscription(
           planId,
@@ -914,7 +721,7 @@ export class IAPService {
             isActive: true,
             preserveUsage: true,
           },
-          purchase.originalTransactionIdentifierIOS
+          transactionId
         );
       } catch (syncError) {
         console.error(
@@ -925,7 +732,7 @@ export class IAPService {
         throw syncError;
       }
 
-      // console.log(`Subscription restored quietly: ${planId}`);
+      console.log(`Subscription restored quietly: ${planId} for transaction: ${transactionId}`);
     } catch (error) {
       console.error('Failed to handle successful purchase quietly:', error);
       throw error;
@@ -968,9 +775,7 @@ export class IAPService {
       // If IAP is not available, set to free plan
       if (!this.isAvailable) {
         console.log('IAP not available - setting to free plan');
-        this.setAppleAuthState(false);
         await this.setSubscriptionFreeWithPreserve();
-
         return;
       }
 
@@ -979,7 +784,6 @@ export class IAPService {
         console.log('IAP not initialized - initializing now...');
         const initialized = await this.initialize();
         if (!initialized) {
-          this.setAppleAuthState(false);
           await this.setSubscriptionFreeWithPreserve();
           return;
         }
@@ -992,7 +796,7 @@ export class IAPService {
       let originalTransactionId: string | undefined;
 
       try {
-        // Apple ID 인증 후 구매 복원
+        // 구매 복원 (Apple ID 인증 없이)
         restored = await getAvailablePurchases({
           onlyIncludeActiveItems: true,
         });
@@ -1000,8 +804,7 @@ export class IAPService {
         console.log(`Found ${restored.length} total purchases from Apple`);
       } catch (purchaseError) {
         console.warn('Failed to get available purchases:', purchaseError);
-        // Failed to access purchases likely means not logged in to Apple ID
-        this.setAppleAuthState(false);
+        // Failed to access purchases - set to free plan
         await this.setSubscriptionFreeWithPreserve();
         return;
       }

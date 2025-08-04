@@ -89,23 +89,20 @@ export const initializeUserContext = async () => {
     const { UserService } = await import('./userService');
     const { SubscriptionService } = await import('./subscriptionService');
 
-    const [user, subscription] = await Promise.all([
-      UserService.getCurrentUser(),
+    const [transactionId, subscription] = await Promise.all([
+      UserService.getCurrentTransactionId(),
       SubscriptionService.getCurrentSubscription(),
     ]);
 
-    if (user) {
+    if (transactionId) {
       setUserContext({
-        id: user.userId,
-        email: user.email || undefined,
+        id: transactionId,
       });
 
-      // 추가 컨텍스트 설정
+      // 추가 컨텍스트 설정 (Transaction ID 기반)
       Sentry.setContext('user_details', {
-        user_id: user.userId,
-        apple_id: user.appleId ? 'connected' : 'not_connected',
-        email: user.email || 'not_provided',
-        last_sync: new Date(user.lastSync).toISOString(),
+        transaction_id: transactionId,
+        identification_method: 'transaction_based',
       });
     }
 
