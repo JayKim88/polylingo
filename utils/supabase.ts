@@ -17,17 +17,9 @@ export const supabase =
     : null;
 
 // 데이터베이스 타입 정의
-export interface DatabaseUser {
-  id: string;
-  apple_id: string;
-  email?: string;
-  created_at: string;
-  updated_at: string;
-}
 
 export interface DatabaseSubscription {
   id: string;
-  user_id: string;
   plan_id: string;
   is_active: boolean;
   start_date: string;
@@ -39,7 +31,6 @@ export interface DatabaseSubscription {
 
 export interface DatabaseDailyUsage {
   id: string;
-  user_id: string | null;
   date: string;
   usage_count: number;
   original_transaction_identifier_ios?: string;

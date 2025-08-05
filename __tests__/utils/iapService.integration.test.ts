@@ -44,7 +44,6 @@ describe('IAPService Integration Tests', () => {
       mockSubscriptionService.setSubscription.mockResolvedValue(undefined);
       mockUserService.getLatestSubscriptionFromServer.mockResolvedValue({
         id: 'sub_123',
-        user_id: 'user_123',
         plan_id: 'free', // Different from detected - should trigger reset
         is_active: false,
         start_date: '2023-01-01',
@@ -91,7 +90,6 @@ describe('IAPService Integration Tests', () => {
       mockSubscriptionService.setSubscription.mockResolvedValue(undefined);
       mockUserService.getLatestSubscriptionFromServer.mockResolvedValue({
         id: 'sub_456',
-        user_id: 'user_123',
         plan_id: 'premium_yearly',
         is_active: true,
         start_date: '2023-01-01',
@@ -140,7 +138,6 @@ describe('IAPService Integration Tests', () => {
       mockSubscriptionService.setSubscription.mockResolvedValue(undefined);
       mockUserService.getLatestSubscriptionFromServer.mockResolvedValue({
         id: 'sub_invalid',
-        user_id: 'user_123',
         plan_id: 'free',
         is_active: false,
         start_date: '2023-01-01',
@@ -172,15 +169,11 @@ describe('IAPService Integration Tests', () => {
         new Error('Apple ID not logged in')
       );
       jest
-        .spyOn(IAPService as any, 'setAppleAuthState')
-        .mockImplementation(() => {});
-      jest
         .spyOn(IAPService as any, 'setSubscriptionFreeWithPreserve')
         .mockResolvedValue(undefined);
 
       await IAPService.checkSubscriptionStatusAndUpdate();
 
-      expect(IAPService['setAppleAuthState']).toHaveBeenCalledWith(false);
       expect(IAPService['setSubscriptionFreeWithPreserve']).toHaveBeenCalled();
     });
   });
@@ -283,7 +276,6 @@ function createMockPurchase(overrides: Partial<Purchase> = {}): Purchase {
 function createMockDatabaseSubscription(overrides: any = {}) {
   return {
     id: 'sub_test_123',
-    user_id: 'user_test_123',
     plan_id: 'free',
     is_active: false,
     start_date: '2023-01-01',

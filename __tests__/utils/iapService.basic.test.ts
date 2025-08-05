@@ -33,29 +33,6 @@ describe('IAPService - Real Method Tests', () => {
     });
   });
 
-  describe('Apple ID Authentication State', () => {
-    test('should return correct Apple ID login state', () => {
-      // Test actual method - initially false
-      expect(IAPService.getAppleIDLoginState()).toBe(false);
-      expect(IAPService.getCurrentAppleUser()).toBe(null);
-      
-      // Simulate logged in state
-      (IAPService as any).setAppleAuthState(true, 'test_user_123');
-      expect(IAPService.getAppleIDLoginState()).toBe(true);
-      expect(IAPService.getCurrentAppleUser()).toBe('test_user_123');
-    });
-
-    test('should handle Apple ID logout correctly', () => {
-      // Set logged in state
-      (IAPService as any).setAppleAuthState(true, 'test_user_123');
-      expect(IAPService.getAppleIDLoginState()).toBe(true);
-      
-      // Logout
-      (IAPService as any).setAppleAuthState(false);
-      expect(IAPService.getAppleIDLoginState()).toBe(false);
-      expect(IAPService.getCurrentAppleUser()).toBe(null);
-    });
-  });
 
   describe('Subscription Products', () => {
     test('should return simulation products when IAP not available', async () => {
@@ -113,27 +90,6 @@ describe('IAPService - Real Method Tests', () => {
     });
   });
 
-  describe('Apple ID Authentication Flow', () => {
-    test('should handle unsupported Apple Auth gracefully', async () => {
-      // Mock Apple Auth as unsupported
-      jest.spyOn(IAPService as any, 'isAppleAuthSupported').mockReturnValue(false);
-      
-      const result = await IAPService.authenticateWithAppleID();
-      
-      // Should return null when not supported
-      expect(result).toBe(null);
-    });
-
-    test('should handle Apple credential check', async () => {
-      const mockUserId = 'test_apple_user_123';
-      
-      // Test actual method (will be mocked by jest-setup.js)
-      const result = await IAPService.checkExistingAppleCredentials(mockUserId);
-      
-      // Should return boolean indicating credential state
-      expect(typeof result).toBe('boolean');
-    });
-  });
 
   describe('Subscription Status Management', () => {
     test('should handle subscription status check', async () => {
@@ -171,12 +127,8 @@ describe('IAPService - Real Method Tests', () => {
 /**
  * These tests are now testing REAL IAPService methods:
  * ✅ IAPService.isIAPAvailable()
- * ✅ IAPService.getAppleIDLoginState()
- * ✅ IAPService.getCurrentAppleUser()
  * ✅ IAPService.getSubscriptionProducts()
  * ✅ IAPService.initialize()
- * ✅ IAPService.authenticateWithAppleID()
- * ✅ IAPService.checkExistingAppleCredentials()
  * ✅ IAPService.checkSubscriptionStatusAndUpdate()
  * ✅ IAPService.restorePurchases()
  * ✅ IAPService.cleanup()

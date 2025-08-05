@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   supabase,
   isSupabaseAvailable,
-  DatabaseUser,
   DatabaseSubscription,
 } from './supabase';
 
@@ -12,19 +11,9 @@ export const getTodayDateString = (): string => {
   return today.toISOString().split('T')[0]; // YYYY-MM-DD format
 };
 
-const USER_CACHE_KEY = 'cached_user_data';
-const APPLE_USER_KEY = 'apple_user_id';
 const TRANSACTION_ID_KEY = 'original_transaction_identifier_ios';
 
-export interface CachedUserData {
-  userId: string;
-  appleId: string;
-  email?: string;
-  lastSync: number;
-}
-
 export class UserService {
-  private static currentUser: CachedUserData | null = null;
   private static currentTransactionId: string | null = null;
 
   // Transaction ID 관리 메소드들
@@ -62,168 +51,22 @@ export class UserService {
     }
   }
 
-  // 저장된 Apple User ID 복원 (향후 호환성용)
-  static async restoreAppleUserID(): Promise<string | null> {
-    try {
-      const storedAppleUserID = await AsyncStorage.getItem(APPLE_USER_KEY);
-      return storedAppleUserID;
-    } catch (error) {
-      console.error('Failed to restore Apple User ID:', error);
-      return null;
-    }
-  }
-
-  // Apple User ID 저장 (향후 호환성용)
-  static async saveAppleUserID(appleUserID: string): Promise<void> {
-    try {
-      await AsyncStorage.setItem(APPLE_USER_KEY, appleUserID);
-    } catch (error) {
-      console.error('Failed to save Apple User ID:', error);
-    }
-  }
-
   // Transaction ID 복원 (단순히 로컬에 저장)
   static async restoreUserByTransactionId(
     originalTransactionId: string
-  ): Promise<CachedUserData | null> {
+  ): Promise<boolean> {
     try {
       if (!originalTransactionId) {
         console.error('Original transaction ID is required');
-        return null;
+        return false;
       }
 
       // Transaction ID를 로컬에 저장
       await this.saveTransactionId(originalTransactionId);
-      
-      console.log('Transaction ID restored successfully:', originalTransactionId);
-      
-      // 더 이상 user 객체가 필요없으므로 null 반환
-      // 실제 데이터는 transaction ID로 관리됨
-      return null;
+      return true;
     } catch (error) {
       console.error('Transaction-based restoration failed:', error);
-      return null;
-    }
-  }
-
-  // Apple ID로 사용자 인증 및 동기화
-  static async authenticateWithAppleID(
-    appleId: string,
-    email?: string
-  ): Promise<CachedUserData | null> {
-    try {
-      // Supabase를 사용할 수 없는 경우 로컬 캐시만 사용
-      if (!isSupabaseAvailable()) {
-        console.log('Supabase not available - using local mode only');
-        const localUser: CachedUserData = {
-          userId: `local_${appleId}`,
-          appleId,
-          email,
-          lastSync: Date.now(),
-        };
-        this.currentUser = localUser;
-        await this.saveCachedUser(localUser);
-        return localUser;
-      }
-
-      // 기존 사용자 조회
-      const { data: existingUser, error: fetchError } = await supabase!
-        .from('users')
-        .select('*')
-        .eq('apple_id', appleId)
-        .single();
-
-      let user: DatabaseUser;
-
-      if (fetchError && fetchError.code === 'PGRST116') {
-        // 사용자가 존재하지 않음 - 새 사용자 생성
-        const userData: { apple_id: string; email?: string } = {
-          apple_id: appleId,
-        };
-        if (email) {
-          userData.email = email;
-        }
-
-        const { data: newUser, error: createError } = await supabase!
-          .from('users')
-          .insert([userData])
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Failed to create user:', createError);
-          return null;
-        }
-        user = newUser;
-        console.log('New user created:', user.id);
-      } else if (fetchError) {
-        console.error('Failed to fetch user:', fetchError);
-        return null;
-      } else {
-        user = existingUser;
-        console.log('Existing user found:', user.id);
-
-        // 기존 사용자의 이메일이 없고 새로 제공된 이메일이 있으면 업데이트
-        if (!user.email && email) {
-          const { error: updateError } = await supabase!
-            .from('users')
-            .update({ email })
-            .eq('id', user.id);
-
-          if (!updateError) {
-            user.email = email;
-            console.log('User email updated:', email);
-          }
-        }
-      }
-
-      // 사용자 정보 캐시
-      const cachedUser: CachedUserData = {
-        userId: user.id,
-        appleId: user.apple_id,
-        email: user.email,
-        lastSync: Date.now(),
-      };
-
-      this.currentUser = cachedUser;
-      await this.saveCachedUser(cachedUser);
-
-      // Apple User ID도 별도 저장
-      await this.saveAppleUserID(appleId);
-
-      return cachedUser;
-    } catch (error) {
-      console.error('Authentication failed:', error);
-      return null;
-    }
-  }
-
-  // 현재 사용자 정보 가져오기
-  static async getCurrentUser(): Promise<CachedUserData | null> {
-    if (this.currentUser) {
-      return this.currentUser;
-    }
-
-    // 캐시된 사용자 정보 로드
-    try {
-      const cached = await AsyncStorage.getItem(USER_CACHE_KEY);
-      if (cached) {
-        this.currentUser = JSON.parse(cached);
-        return this.currentUser;
-      }
-    } catch (error) {
-      console.error('Failed to load cached user:', error);
-    }
-
-    return null;
-  }
-
-  // 사용자 캐시 저장
-  private static async saveCachedUser(user: CachedUserData): Promise<void> {
-    try {
-      await AsyncStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
-    } catch (error) {
-      console.error('Failed to save cached user:', error);
+      return false;
     }
   }
 
@@ -273,7 +116,7 @@ export class UserService {
         )
         .eq('is_active', true);
 
-      // 새 구독 추가 (user_id 없이)
+      // 새 구독 추가
       const { error } = await supabase!.from('user_subscriptions').insert([
         {
           plan_id: planId,
@@ -412,20 +255,6 @@ export class UserService {
     } catch (error) {
       console.error('Get daily usage error:', error);
       return 0;
-    }
-  }
-
-  // 사용자 로그아웃 (캐시 클리어)
-  static async logout(): Promise<void> {
-    try {
-      this.currentUser = null;
-      this.currentTransactionId = null;
-      await AsyncStorage.removeItem(USER_CACHE_KEY);
-      await AsyncStorage.removeItem(APPLE_USER_KEY);
-      await AsyncStorage.removeItem(TRANSACTION_ID_KEY);
-      console.log('User logged out and cache cleared');
-    } catch (error) {
-      console.error('Logout error:', error);
     }
   }
 }

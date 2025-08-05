@@ -114,7 +114,6 @@ export class IAPService {
       : 'Unknown error';
   }
 
-
   static isIAPAvailable(): boolean {
     return this.isAvailable;
   }
@@ -155,8 +154,11 @@ export class IAPService {
     this.purchaseUpdateSubscription = purchaseUpdatedListener(
       async (purchase: Purchase) => {
         // Use transaction ID as primary identifier to prevent duplicate processing of same transaction
-        const transactionId = purchase.originalTransactionIdentifierIOS || purchase.purchaseToken;
-        const purchaseId = __DEV__ ? purchase.productId : (transactionId || purchase.productId);
+        const transactionId =
+          purchase.originalTransactionIdentifierIOS || purchase.purchaseToken;
+        const purchaseId = __DEV__
+          ? purchase.productId
+          : transactionId || purchase.productId;
 
         // 이미 처리된 구매인지 확인 (중복 처리 방지)
         if (this.processedPurchases.has(purchaseId)) {
@@ -191,15 +193,18 @@ export class IAPService {
 
           if (isValid) {
             // Check if this is a restored purchase (app restart) vs new purchase
-            const existingTransactionId = await UserService.getCurrentTransactionId();
-            const isRestoredPurchase = existingTransactionId === purchase.originalTransactionIdentifierIOS;
-            
+            const existingTransactionId =
+              await UserService.getCurrentTransactionId();
+            const isRestoredPurchase =
+              existingTransactionId ===
+              purchase.originalTransactionIdentifierIOS;
+
             if (isRestoredPurchase) {
               // This is a restored purchase - preserve usage
               console.log('🔄 Restored purchase detected, preserving usage');
               await this.handleSuccessfulPurchaseQuietly(purchase);
             } else {
-              // This is a new purchase - reset usage  
+              // This is a new purchase - reset usage
               console.log('🎉 New purchase detected, resetting usage');
               await this.handleSuccessfulPurchase(purchase);
             }
@@ -645,7 +650,9 @@ export class IAPService {
       await UserService.saveTransactionId(transactionId);
 
       // 새 구매 시 사용량 초기화하여 구독 상태 업데이트 (트랜잭션 ID 기반)
-      console.log(`🔄 Activating subscription for transaction: ${transactionId}`);
+      console.log(
+        `🔄 Activating subscription for transaction: ${transactionId}`
+      );
       try {
         await SubscriptionService.setSubscription(
           planId,
@@ -677,7 +684,9 @@ export class IAPService {
         });
       }
 
-      console.log(`Subscription activated: ${planId} for transaction: ${transactionId}`);
+      console.log(
+        `Subscription activated: ${planId} for transaction: ${transactionId}`
+      );
     } catch (error) {
       console.error('Failed to handle successful purchase:', error);
       throw error;
@@ -732,7 +741,9 @@ export class IAPService {
         throw syncError;
       }
 
-      console.log(`Subscription restored quietly: ${planId} for transaction: ${transactionId}`);
+      console.log(
+        `Subscription restored quietly: ${planId} for transaction: ${transactionId}`
+      );
     } catch (error) {
       console.error('Failed to handle successful purchase quietly:', error);
       throw error;
