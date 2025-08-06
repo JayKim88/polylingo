@@ -553,7 +553,7 @@ export class IAPService {
       const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
       const apiUrl = baseUrl ? `${baseUrl}/api/iap/verify` : '/api/iap/verify';
 
-      const isTestEnvironment = this.determineTestEnvironment();
+      // const isTestEnvironment = this.determineTestEnvironment();
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -563,7 +563,7 @@ export class IAPService {
         },
         body: JSON.stringify({
           receiptData: purchase.transactionReceipt,
-          isTest: isTestEnvironment,
+          isTest: false,
           platform: 'ios',
         }),
       });
