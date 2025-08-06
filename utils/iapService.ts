@@ -126,23 +126,18 @@ export class IAPService {
   private static determineTestEnvironment(): boolean {
     // 1. 개발 모드는 무조건 Sandbox
     if (__DEV__) {
+      console.log('✅ Using Sandbox: Development mode');
       return true;
     }
 
     // 2. 환경변수로 강제 설정 (TestFlight 배포용)
     if (process.env.EXPO_PUBLIC_IAP_USE_SANDBOX === 'true') {
-      console.log('Forced sandbox mode via environment variable');
+      console.log('✅ Using Sandbox: Environment variable forced');
       return true;
     }
 
-    // 3. Expo 환경 체크
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Non-production environment - using Sandbox');
-      return true;
-    }
-
-    // 4. 기본값: Production (App Store)
-    console.log('Production environment - using Production server');
+    // 3. 기본값: Production (App Store)
+    console.log('🏪 Using Production: App Store environment');
     return false;
   }
 
@@ -553,7 +548,7 @@ export class IAPService {
       const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
       const apiUrl = baseUrl ? `${baseUrl}/api/iap/verify` : '/api/iap/verify';
 
-      // const isTestEnvironment = this.determineTestEnvironment();
+      const isTestEnvironment = this.determineTestEnvironment();
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -563,7 +558,7 @@ export class IAPService {
         },
         body: JSON.stringify({
           receiptData: purchase.transactionReceipt,
-          isTest: false,
+          isTest: isTestEnvironment,
           platform: 'ios',
         }),
       });
