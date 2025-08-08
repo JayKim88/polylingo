@@ -144,8 +144,7 @@ describe('IAPService - Unit Tests', () => {
     test('should generate correct purchase ID in development mode', () => {
       const mockPurchase = {
         productId: 'com.test.product',
-        originalTransactionIdentifierIOS: 'tx_123',
-        purchaseToken: 'token_456'
+        originalTransactionIdentifierIOS: 'tx_123'
       };
 
       // Development mode uses only productId for easier testing
@@ -156,8 +155,7 @@ describe('IAPService - Unit Tests', () => {
     test('should generate unique purchase ID in production mode', () => {
       const mockPurchase = {
         productId: 'com.test.product',
-        originalTransactionIdentifierIOS: 'tx_123',
-        purchaseToken: 'token_456'
+        originalTransactionIdentifierIOS: 'tx_123'
       };
 
       // Production mode combines productId with transaction identifier
@@ -168,13 +166,16 @@ describe('IAPService - Unit Tests', () => {
     test('should handle missing transaction identifiers', () => {
       const mockPurchase = {
         productId: 'com.test.product',
-        originalTransactionIdentifierIOS: undefined,
-        purchaseToken: 'token_456'
+        originalTransactionIdentifierIOS: undefined
       };
 
-      // Should fallback to purchaseToken when iOS identifier missing
-      const fallbackId = `${mockPurchase.productId}_${mockPurchase.purchaseToken}`;
-      expect(fallbackId).toBe('com.test.product_token_456');
+      // iOS app should require originalTransactionIdentifierIOS
+      expect(mockPurchase.originalTransactionIdentifierIOS).toBeUndefined();
+      expect(() => {
+        if (!mockPurchase.originalTransactionIdentifierIOS) {
+          throw new Error('Missing transaction identifier for purchase');
+        }
+      }).toThrow('Missing transaction identifier for purchase');
     });
   });
 

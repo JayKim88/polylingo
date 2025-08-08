@@ -34,7 +34,6 @@ describe('IAPService Integration Tests', () => {
         productId: IAP_PRODUCT_IDS.PREMIUM_YEARLY,
         transactionDate: Date.now(),
         originalTransactionIdentifierIOS: 'tx_premium_123',
-        purchaseToken: 'token_123',
         transactionId: 'tx_123',
         transactionReceipt: 'receipt_data',
       } as Purchase;
@@ -184,7 +183,6 @@ describe('IAPService Integration Tests', () => {
         productId: IAP_PRODUCT_IDS.PRO_MONTHLY,
         transactionDate: Date.now(),
         originalTransactionIdentifierIOS: 'tx_new_purchase',
-        purchaseToken: 'token_new',
       } as Purchase;
 
       jest.spyOn(IAPService as any, 'validatePurchase').mockResolvedValue(true);
@@ -266,7 +264,6 @@ function createMockPurchase(overrides: Partial<Purchase> = {}): Purchase {
     productId: IAP_PRODUCT_IDS.PRO_MONTHLY,
     transactionDate: Date.now(),
     originalTransactionIdentifierIOS: 'tx_test_123',
-    purchaseToken: 'token_test_123',
     transactionId: 'tx_123',
     transactionReceipt: 'receipt_data',
     ...overrides

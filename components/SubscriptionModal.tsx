@@ -11,13 +11,16 @@ import {
 } from 'react-native';
 import { X, Crown, Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Subscription } from 'react-native-iap';
+import {
+  Subscription,
+  Purchase,
+  getAvailablePurchases,
+} from 'react-native-iap';
 
 import { useTheme } from '../contexts/ThemeContext';
 import { IAPService } from '../utils/iapService';
 import { SubscriptionService } from '../utils/subscriptionService';
 import { SUBSCRIPTION_PLANS, UserSubscription } from '../types/subscription';
-import { UserService, getTodayDateString } from '@/utils/userService';
 import { useSubscriptionStore } from '@/stores/subscriptionStore';
 
 type ExtendedSubscription = Subscription & {
@@ -114,52 +117,63 @@ export default function SubscriptionModal({
     setPurchaseLoading(planId);
 
     try {
-      const currentSub = await SubscriptionService.getCurrentSubscription();
+      let currentApplePlanId = 'free';
 
-      if (currentSub && currentSub?.isActive) {
-        const shouldProceed = await new Promise<boolean>((resolve) => {
-          Alert.alert(
-            t('subscription.changeSubscription'),
-            t('subscription.changeSubscriptionMessage', {
-              currentPlan: getPlanDisplayName(currentSub.planId),
-              newPlan: getPlanDisplayName(planId),
-            }),
-            [
-              {
-                text: t('alert.cancel'),
-                style: 'cancel',
-                onPress: () => resolve(false),
-              },
-              { text: t('subscription.change'), onPress: () => resolve(true) },
-            ]
-          );
+      try {
+        const activePurchases = await getAvailablePurchases({
+          onlyIncludeActiveItems: true,
         });
 
-        if (!shouldProceed) {
-          setPurchaseLoading(null);
-          return; // 사용자가 취소한 경우
+        if (activePurchases.length > 0) {
+          const latestPurchase = activePurchases.sort(
+            (a: Purchase, b: Purchase) =>
+              (b.transactionDate || 0) - (a.transactionDate || 0)
+          )[0];
+
+          const productToPlanMap: { [key: string]: string } = {
+            'com.polylingo.pro.monthly': 'pro_monthly',
+            'com.polylingo.promax.monthly': 'pro_max_monthly',
+            'com.polylingo.premium.yearly': 'premium_yearly',
+          };
+
+          currentApplePlanId =
+            productToPlanMap[latestPurchase.productId] || 'free';
         }
+      } catch (error) {
+        console.warn('Failed to check Apple subscription status:', error);
+        // Fallback to local subscription state
+        currentApplePlanId = currentSubscription?.planId || 'free';
+      }
+
+      // Check if this is a downgrade scenario
+      const currentTier = getPlanTier(currentApplePlanId);
+      const newTier = getPlanTier(planId);
+
+      if (currentTier > 0 && newTier < currentTier) {
+        // This is a downgrade - redirect to iOS Settings
+        Alert.alert(
+          t('subscription.manageSubscription'),
+          t('subscription.downgradeMessage', {
+            currentPlan: getPlanDisplayName(currentApplePlanId),
+            newPlan: getPlanDisplayName(planId),
+          }),
+          [
+            { text: t('alert.cancel'), style: 'cancel' },
+            {
+              text: t('subscription.openSettings'),
+              onPress: () =>
+                Linking.openURL(
+                  'App-prefs:APPLE_ID&path=SUBSCRIPTIONS_AND_BILLING'
+                ),
+            },
+          ]
+        );
+        return;
       }
 
       const success = await IAPService.purchaseSubscription(productId);
       if (!success) throw new Error('Purchase failed');
 
-      const originalTransactionIdentifierIOS =
-        success.originalTransactionIdentifierIOS;
-
-      await SubscriptionService.setSubscriptionWithLanguageReset(
-        planId,
-        true,
-        originalTransactionIdentifierIOS
-      );
-
-      const today = getTodayDateString();
-
-      await UserService.syncDailyUsage(
-        today,
-        0,
-        originalTransactionIdentifierIOS
-      );
       await updateSubscriptionStatus();
 
       const planName = getPlanDisplayName(planId);
@@ -270,6 +284,21 @@ export default function SubscriptionModal({
         return t('subscription.premium');
       default:
         return t('subscription.free');
+    }
+  };
+
+  const getPlanTier = (planId: string): number => {
+    switch (planId) {
+      case 'free':
+        return 0;
+      case 'pro_monthly':
+        return 1;
+      case 'pro_max_monthly':
+        return 2;
+      case 'premium_yearly':
+        return 3;
+      default:
+        return 0;
     }
   };
 

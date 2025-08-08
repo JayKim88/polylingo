@@ -1,15 +1,11 @@
 import {
   initConnection,
   endConnection,
-  purchaseUpdatedListener,
-  purchaseErrorListener,
   Purchase,
-  PurchaseError,
   requestPurchase,
   getSubscriptions,
   finishTransaction,
   getAvailablePurchases,
-  acknowledgePurchaseAndroid,
   Subscription,
   ProductPurchase,
 } from 'react-native-iap';
@@ -20,7 +16,7 @@ import { SubscriptionService } from './subscriptionService';
 import { UserService } from './userService';
 import { IAP_PRODUCT_IDS } from '../types/subscription';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
-import { captureIAPError, addBreadcrumb, trackUserAction } from './sentryUtils';
+import { captureIAPError, addBreadcrumb } from './sentryUtils';
 
 type InitializationResult = {
   success: boolean;
@@ -89,7 +85,6 @@ export class IAPService {
       await initConnection();
       this.isInitialized = true;
       this.isAvailable = true;
-      this.setupPurchaseListeners();
       return { success: true };
     } catch (error) {
       console.error('IAP initialization failed:', error);
@@ -139,111 +134,6 @@ export class IAPService {
     // 3. 기본값: Production (App Store)
     console.log('🏪 Using Production: App Store environment');
     return false;
-  }
-
-  private static setupPurchaseListeners() {
-    if (this.purchaseUpdateSubscription) {
-      this.purchaseUpdateSubscription.remove();
-      this.purchaseUpdateSubscription = null;
-    }
-    this.purchaseUpdateSubscription = purchaseUpdatedListener(
-      async (purchase: Purchase) => {
-        // Use transaction ID as primary identifier to prevent duplicate processing of same transaction
-        const transactionId =
-          purchase.originalTransactionIdentifierIOS || purchase.purchaseToken;
-        const purchaseId = __DEV__
-          ? purchase.productId
-          : transactionId || purchase.productId;
-
-        // 이미 처리된 구매인지 확인 (중복 처리 방지)
-        if (this.processedPurchases.has(purchaseId)) {
-          console.log(`Purchase already processed: ${purchaseId}`);
-          return;
-        }
-
-        // 복원 처리 중이면 리스너 무시 (무한 루프 방지)
-        if (this.isProcessingRestore) {
-          console.log('Restore in progress - skipping purchase listener');
-          return;
-        }
-
-        console.log(
-          '🎉 New purchase detected:',
-          purchase.productId,
-          'ID:',
-          purchaseId
-        );
-
-        // Sentry에 구매 시작 추적
-        trackUserAction('purchase_detected', {
-          product_id: purchase.productId,
-          purchase_id: purchaseId,
-          platform: Platform.OS,
-        });
-
-        try {
-          this.processedPurchases.add(purchaseId);
-
-          const isValid = await this.validatePurchase(purchase);
-
-          if (isValid) {
-            // Check if this is a restored purchase (app restart) vs new purchase
-            const existingTransactionId =
-              await UserService.getCurrentTransactionId();
-            const isRestoredPurchase =
-              existingTransactionId ===
-              purchase.originalTransactionIdentifierIOS;
-
-            if (isRestoredPurchase) {
-              // This is a restored purchase - preserve usage
-              console.log('🔄 Restored purchase detected, preserving usage');
-              await this.handleSuccessfulPurchaseQuietly(purchase);
-            } else {
-              // This is a new purchase - reset usage
-              console.log('🎉 New purchase detected, resetting usage');
-              await this.handleSuccessfulPurchase(purchase);
-            }
-
-            await finishTransaction({
-              purchase,
-              isConsumable: false,
-              developerPayloadAndroid: undefined,
-            });
-          } else {
-            this.processedPurchases.delete(purchaseId);
-          }
-        } catch (error) {
-          console.error('Purchase validation error:', error);
-
-          // Sentry에 IAP 에러 전송
-          captureIAPError(error as Error, {
-            productId: purchase.productId,
-            transactionId:
-              purchase.originalTransactionIdentifierIOS ||
-              purchase.purchaseToken,
-            step: 'purchase_validation',
-          });
-
-          Alert.alert('구매 오류', '구매 처리 중 오류가 발생했습니다.');
-          // 에러 발생 시 처리됨 표시 제거 (재시도 가능하게)
-          this.processedPurchases.delete(purchaseId);
-        }
-      }
-    );
-
-    // 구매 실패 리스너
-    this.purchaseErrorSubscription = purchaseErrorListener(
-      (error: PurchaseError) => {
-        console.error('Purchase error in listener:', error);
-
-        if (error.code !== 'E_USER_CANCELLED') {
-          Alert.alert(
-            '구매 실패',
-            error.message || '구매 중 오류가 발생했습니다.'
-          );
-        }
-      }
-    );
   }
 
   // 구독 상품 목록 가져오기
@@ -327,7 +217,7 @@ export class IAPService {
   // 구독 구매 실행
   static async purchaseSubscription(
     productId: string
-  ): Promise<ProductPurchase | null> {
+  ): Promise<ProductPurchase | ProductPurchase[] | null> {
     if (!this.ensureIAPAvailability()) {
       return null;
     }
@@ -340,7 +230,56 @@ export class IAPService {
 
     try {
       const result = await requestPurchase({ sku: productId });
-      return result ? (result as ProductPurchase) : null;
+
+      if (result) {
+        const purchases = Array.isArray(result) ? result : [result];
+        const purchase = purchases[0] as Purchase;
+
+        const purchaseId = __DEV__
+          ? purchase.productId
+          : `${purchase.productId}_${purchase.originalTransactionIdentifierIOS}`;
+
+        if (this.processedPurchases.has(purchaseId)) {
+          console.log(`Purchase already processed: ${purchaseId}`);
+          return result;
+        }
+
+        this.processedPurchases.add(purchaseId);
+
+        try {
+          const isValid = await this.validatePurchase(purchase);
+
+          if (isValid) {
+            await this.handleSuccessfulPurchase(purchase);
+
+            await finishTransaction({
+              purchase: purchase,
+              isConsumable: false,
+              developerPayloadAndroid: undefined,
+            });
+
+            console.log('Purchase completed successfully');
+          } else {
+            console.error('Purchase validation failed');
+            this.processedPurchases.delete(purchaseId);
+            return null;
+          }
+        } catch (processingError) {
+          console.error('Purchase processing failed:', processingError);
+
+          this.processedPurchases.delete(purchaseId);
+
+          await finishTransaction({
+            purchase: purchase,
+            isConsumable: false,
+            developerPayloadAndroid: undefined,
+          });
+
+          throw processingError;
+        }
+      }
+
+      return result || null;
     } catch (error: any) {
       console.error('Purchase failed:', error);
 
@@ -483,10 +422,7 @@ export class IAPService {
       for (const purchase of restored) {
         const purchaseId = __DEV__
           ? purchase.productId
-          : `${purchase.productId}_${
-              purchase.originalTransactionIdentifierIOS ||
-              purchase.purchaseToken
-            }`;
+          : `${purchase.productId}_${purchase.originalTransactionIdentifierIOS}`;
         this.processedPurchases.add(purchaseId);
         console.log(`Marked as processed: ${purchaseId} (DEV: ${__DEV__})`);
       }
@@ -505,9 +441,11 @@ export class IAPService {
   private static handleRestoreError(): void {
     const message = __DEV__
       ? '실제 복원에 실패했습니다.\n\n개발 모드에서는 설정에서 구독을 직접 관리할 수 있습니다.'
-      : '구매 복원 중 오류가 발생했습니다.';
+      : i18n.t('subscription.restoreErrorMessage');
 
-    Alert.alert('복원 실패', message, [{ text: '확인' }]);
+    Alert.alert(i18n.t('subscription.restoreError'), message, [
+      { text: i18n.t('alert.confirm') },
+    ]);
   }
 
   private static async validatePurchase(purchase: Purchase): Promise<boolean> {
@@ -597,7 +535,7 @@ export class IAPService {
     console.log(
       'Android validation not fully implemented - accepting purchase'
     );
-    return !!(purchase.productId && purchase.purchaseToken);
+    return !!(purchase.productId && purchase.originalTransactionIdentifierIOS);
   }
 
   private static handleValidationError(
@@ -609,7 +547,9 @@ export class IAPService {
     const errorMessage = error instanceof Error ? error.message : String(error);
     if (__DEV__ || errorMessage.includes('timeout')) {
       console.log('Validation failed but accepting purchase in development');
-      return !!(purchase.productId && purchase.purchaseToken);
+      return !!(
+        purchase.productId && purchase.originalTransactionIdentifierIOS
+      );
     }
 
     return false;
@@ -669,14 +609,6 @@ export class IAPService {
           [{ text: i18n.t('alert.confirm') }]
         );
         return; // 에러 시 더 이상 진행하지 않음
-      }
-
-      // Android에서 구매 승인
-      if (Platform.OS === 'android' && purchase.purchaseToken) {
-        await acknowledgePurchaseAndroid({
-          token: purchase.purchaseToken,
-          developerPayload: undefined,
-        });
       }
 
       console.log(

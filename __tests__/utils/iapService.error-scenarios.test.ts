@@ -71,7 +71,6 @@ describe('IAPService - Practical Error Scenarios', () => {
         productId: IAP_PRODUCT_IDS.PREMIUM_YEARLY,
         transactionDate: Date.now(),
         originalTransactionIdentifierIOS: 'tx_timeout_test',
-        purchaseToken: 'token_timeout',
         transactionId: 'tx_123',
         transactionReceipt: 'receipt_data'
       } as Purchase;
@@ -96,7 +95,6 @@ describe('IAPService - Practical Error Scenarios', () => {
         productId: IAP_PRODUCT_IDS.PREMIUM_YEARLY,
         transactionDate: Date.now(),
         originalTransactionIdentifierIOS: 'tx_corrupted',
-        purchaseToken: 'corrupted_token',
         transactionId: 'tx_123',
         transactionReceipt: 'corrupted_receipt_data'
       } as Purchase;
@@ -117,7 +115,6 @@ describe('IAPService - Practical Error Scenarios', () => {
         productId: IAP_PRODUCT_IDS.PRO_MONTHLY,
         transactionDate: Date.now() - (35 * 24 * 60 * 60 * 1000), // 35 days ago
         originalTransactionIdentifierIOS: 'tx_expired',
-        purchaseToken: 'expired_token',
         transactionId: 'tx_expired',
         transactionReceipt: 'expired_receipt'
       } as Purchase;
