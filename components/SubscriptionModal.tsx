@@ -141,16 +141,13 @@ export default function SubscriptionModal({
         }
       } catch (error) {
         console.warn('Failed to check Apple subscription status:', error);
-        // Fallback to local subscription state
         currentApplePlanId = currentSubscription?.planId || 'free';
       }
 
-      // Check if this is a downgrade scenario
       const currentTier = getPlanTier(currentApplePlanId);
       const newTier = getPlanTier(planId);
 
       if (currentTier > 0 && newTier < currentTier) {
-        // This is a downgrade - redirect to iOS Settings
         Alert.alert(
           t('subscription.manageSubscription'),
           t('subscription.downgradeMessage', {
@@ -162,9 +159,7 @@ export default function SubscriptionModal({
             {
               text: t('subscription.openSettings'),
               onPress: () =>
-                Linking.openURL(
-                  'App-prefs:APPLE_ID&path=SUBSCRIPTIONS_AND_BILLING'
-                ),
+                Linking.openURL('https://apps.apple.com/account/subscriptions'),
             },
           ]
         );

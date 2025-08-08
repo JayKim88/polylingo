@@ -330,6 +330,7 @@
     },
     "manageSubscription": "Manage Subscription",
     "manageSubscriptionMessage": "To cancel or modify your subscription, please use your device's subscription settings. This ensures proper cancellation and prevents unwanted charges.",
+    "downgradeMessage": "To change from {{currentPlan}} to {{newPlan}}, please use iOS Settings. This change will take effect at your next billing cycle.",
     "openSettings": "Open Settings",
     "switchToFree": "Switch to Free",
     "subscriptionSuccess": "Subscription Updated! 🎉",

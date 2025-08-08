@@ -331,6 +331,7 @@
     },
     "manageSubscription": "管理订阅",
     "manageSubscriptionMessage": "要取消或修改您的订阅，请使用设备的订阅设置。这样可以确保正确取消并防止产生不必要的费用。",
+    "downgradeMessage": "要从{{currentPlan}}更改为{{newPlan}}，请使用iOS设置。此更改将在下一个计费周期生效。",
     "openSettings": "打开设置",
     "switchToFree": "切换到免费版",
     "subscriptionSuccess": "订阅更新成功！🎉",
