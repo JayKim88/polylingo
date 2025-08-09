@@ -20,7 +20,11 @@ import {
 import { useTheme } from '../contexts/ThemeContext';
 import { IAPService } from '../utils/iapService';
 import { SubscriptionService } from '../utils/subscriptionService';
-import { SUBSCRIPTION_PLANS, UserSubscription } from '../types/subscription';
+import {
+  IAP_PRODUCT_IDS,
+  SUBSCRIPTION_PLANS,
+  UserSubscription,
+} from '../types/subscription';
 import { useSubscriptionStore } from '@/stores/subscriptionStore';
 
 type ExtendedSubscription = Subscription & {
@@ -125,19 +129,18 @@ export default function SubscriptionModal({
         });
 
         if (activePurchases.length > 0) {
-          const latestPurchase = activePurchases.sort(
-            (a: Purchase, b: Purchase) =>
-              (b.transactionDate || 0) - (a.transactionDate || 0)
-          )[0];
+          const latestPurchase = IAPService.getLatestPurchase(activePurchases);
+          const isValid = await IAPService.validatePurchase(latestPurchase);
 
           const productToPlanMap: { [key: string]: string } = {
-            'com.polylingo.pro.monthly': 'pro_monthly',
-            'com.polylingo.promax.monthly': 'pro_max_monthly',
-            'com.polylingo.premium.yearly': 'premium_yearly',
+            [IAP_PRODUCT_IDS.PRO_MONTHLY]: 'pro_monthly',
+            [IAP_PRODUCT_IDS.PRO_MAX_MONTHLY]: 'pro_max_monthly',
+            [IAP_PRODUCT_IDS.PREMIUM_YEARLY]: 'premium_yearly',
           };
 
-          currentApplePlanId =
-            productToPlanMap[latestPurchase.productId] || 'free';
+          currentApplePlanId = isValid
+            ? productToPlanMap[latestPurchase.productId] || 'free'
+            : 'free';
         }
       } catch (error) {
         console.warn('Failed to check Apple subscription status:', error);
@@ -147,7 +150,9 @@ export default function SubscriptionModal({
       const currentTier = getPlanTier(currentApplePlanId);
       const newTier = getPlanTier(planId);
 
-      if (currentTier > 0 && newTier < currentTier) {
+      const isDownGrade = currentTier > 0 && newTier < currentTier;
+
+      if (isDownGrade) {
         Alert.alert(
           t('subscription.manageSubscription'),
           t('subscription.downgradeMessage', {
@@ -305,9 +310,9 @@ export default function SubscriptionModal({
 
     // Map plan ID to product ID
     const productIdMap: { [key: string]: string } = {
-      pro_monthly: 'com.polylingo.pro.monthly',
-      pro_max_monthly: 'com.polylingo.promax.monthly',
-      premium_yearly: 'com.polylingo.premium.yearly',
+      pro_monthly: IAP_PRODUCT_IDS.PRO_MONTHLY,
+      pro_max_monthly: IAP_PRODUCT_IDS.PRO_MAX_MONTHLY,
+      premium_yearly: IAP_PRODUCT_IDS.PREMIUM_YEARLY,
     };
 
     const product = products.find((p) => p.productId === productIdMap[plan.id]);

@@ -353,9 +353,12 @@ export class IAPService {
       const restorePromise = getAvailablePurchases({
         onlyIncludeActiveItems: true,
       });
-      const restored = await Promise.race([restorePromise, timeoutPromise]);
+      const activePurchases = await Promise.race([
+        restorePromise,
+        timeoutPromise,
+      ]);
 
-      if (restored.length === 0) {
+      if (activePurchases.length === 0) {
         Alert.alert(
           i18n.t('subscription.restoreComplete'),
           i18n.t('subscription.noItemsToRestore')
@@ -363,7 +366,7 @@ export class IAPService {
         return false;
       }
 
-      return this.processRestoredPurchases(restored);
+      return this.processRestoredPurchases(activePurchases);
     } catch (error) {
       console.error('Restore failed:', error);
 
@@ -395,11 +398,7 @@ export class IAPService {
     this.isProcessingRestore = true;
 
     try {
-      // 가장 최신 구매만 처리 (오래된 구매들은 무시)
-      const latestPurchase = restored.sort(
-        (a: Purchase, b: Purchase) =>
-          (b.transactionDate || 0) - (a.transactionDate || 0)
-      )[0];
+      const latestPurchase = IAPService.getLatestPurchase(restored);
 
       if (latestPurchase) {
         const isValid = await this.validatePurchase(latestPurchase);
@@ -448,7 +447,7 @@ export class IAPService {
     ]);
   }
 
-  private static async validatePurchase(purchase: Purchase): Promise<boolean> {
+  public static async validatePurchase(purchase: Purchase): Promise<boolean> {
     try {
       const timeoutPromise = this.createTimeoutPromise();
       const validationPromise = this.performPlatformValidation(purchase);
@@ -677,6 +676,14 @@ export class IAPService {
     }
   }
 
+  public static getLatestPurchase = (purchases: Purchase[]) => {
+    return purchases.sort((a: Purchase, b: Purchase) => {
+      const dateA = a.transactionDate || 0;
+      const dateB = b.transactionDate || 0;
+      return dateB - dateA;
+    })[0];
+  };
+
   static async setSubscriptionFreeWithPreserve() {
     await SubscriptionService.setSubscription('free', {
       isActive: true,
@@ -729,17 +736,19 @@ export class IAPService {
 
       console.log('Checking subscription status...');
 
-      let restored: Purchase[] = [];
+      let activePurchases: Purchase[] = [];
       let detectedSubscriptionPlan = 'free';
       let originalTransactionId: string | undefined;
 
       try {
         // 구매 복원 (Apple ID 인증 없이)
-        restored = await getAvailablePurchases({
+        activePurchases = await getAvailablePurchases({
           onlyIncludeActiveItems: true,
         });
 
-        console.log(`Found ${restored.length} total purchases from Apple`);
+        console.log(
+          `Found ${activePurchases.length} total purchases from Apple`
+        );
       } catch (purchaseError) {
         console.warn('Failed to get available purchases:', purchaseError);
         // Failed to access purchases - set to free plan
@@ -747,20 +756,13 @@ export class IAPService {
         return;
       }
 
-      if (restored.length === 0) {
+      if (activePurchases.length === 0) {
         console.log(
           'No purchases found - user may have cancelled subscription'
         );
         detectedSubscriptionPlan = 'free';
       } else {
-        // transactionDate만으로 정렬 (가장 신뢰할 수 있는 기준) - 가장 최신 결제 상품
-        const sortedPurchases = restored.sort((a: Purchase, b: Purchase) => {
-          const dateA = a.transactionDate || 0;
-          const dateB = b.transactionDate || 0;
-          return dateB - dateA;
-        });
-
-        const latestPurchase = sortedPurchases[0];
+        const latestPurchase = this.getLatestPurchase(activePurchases);
 
         originalTransactionId = latestPurchase.originalTransactionIdentifierIOS;
 
