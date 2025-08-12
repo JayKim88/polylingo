@@ -130,7 +130,9 @@ export default function SubscriptionModal({
 
         if (activePurchases.length > 0) {
           const latestPurchase = IAPService.getLatestPurchase(activePurchases);
-          const isValid = await IAPService.validatePurchase(latestPurchase);
+          const validationResult = await IAPService.validatePurchase(
+            latestPurchase
+          );
 
           const productToPlanMap: { [key: string]: string } = {
             [IAP_PRODUCT_IDS.PRO_MONTHLY]: 'pro_monthly',
@@ -138,7 +140,7 @@ export default function SubscriptionModal({
             [IAP_PRODUCT_IDS.PREMIUM_YEARLY]: 'premium_yearly',
           };
 
-          currentApplePlanId = isValid
+          currentApplePlanId = validationResult.isValid
             ? productToPlanMap[latestPurchase.productId] || 'free'
             : 'free';
         }

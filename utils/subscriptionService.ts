@@ -13,6 +13,8 @@ const STORAGE_KEYS = {
 type SubscriptionUpdateOptions = {
   isActive?: boolean;
   preserveUsage?: boolean;
+  startDate?: number; // Apple-provided start date
+  endDate?: number; // Apple-provided end date
 };
 
 export class SubscriptionService {
@@ -118,7 +120,12 @@ export class SubscriptionService {
     subscription: UserSubscription
   ): Promise<void> {
     const today = getTodayDateString();
-    const dailyUsageCount = await UserService.getDailyUsage(today);
+    const dailyUsageCount = await UserService.getDailyUsage(
+      today,
+      subscription.originalTransactionIdentifierIOS,
+      subscription.startDate,
+      subscription.endDate
+    );
     subscription.dailyUsage = { date: today, count: dailyUsageCount };
   }
 
@@ -177,6 +184,7 @@ export class SubscriptionService {
     }
 
     this.isUpdating = true;
+    
     try {
       const plan = this.validatePlan(planId);
 
@@ -209,13 +217,6 @@ export class SubscriptionService {
     }
   }
 
-  private static async validateAndAdjustPlanId(
-    planId: string
-  ): Promise<string> {
-    // Allow any plan ID - validation will happen during purchase
-    return planId;
-  }
-
   private static validatePlan(planId: string) {
     const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
     if (!plan) {
@@ -231,8 +232,11 @@ export class SubscriptionService {
     originalTransactionIdentifierIOS?: string
   ): Promise<UserSubscription> {
     const existingSubscription = await this.getExistingSubscriptionInLocal();
-    const now = Date.now();
-    const endDate = this.calculateEndDate(plan, now);
+
+    const startDate = options.startDate || Date.now();
+    const endDate =
+      options.endDate ||
+      (planId === 'free' ? 0 : this.calculateEndDate(plan, startDate));
     const today = getTodayDateString();
     const finalTransactionId =
       originalTransactionIdentifierIOS ||
@@ -240,10 +244,16 @@ export class SubscriptionService {
 
     const todayUsageFromServer = await UserService.getDailyUsage(
       today,
-      finalTransactionId
+      finalTransactionId,
+      options.startDate,
+      options.endDate
     );
     const serverSubscription =
-      await UserService.getLatestSubscriptionFromServer(finalTransactionId);
+      await UserService.getLatestSubscriptionFromServer(
+        finalTransactionId,
+        options.startDate,
+        options.endDate
+      );
 
     const currentPlan = serverSubscription
       ? serverSubscription.plan_id
@@ -264,8 +274,8 @@ export class SubscriptionService {
     return {
       planId,
       isActive: options.isActive ?? true,
-      startDate: now,
-      endDate: planId === 'free' ? 0 : endDate,
+      startDate,
+      endDate,
       dailyUsage: {
         date: today,
         count: finalUsage,
@@ -311,11 +321,15 @@ export class SubscriptionService {
         UserService.syncSubscription(
           subscription.planId,
           subscription.isActive,
+          subscription.startDate,
+          subscription.endDate,
           finalTransactionId
         ),
         UserService.syncDailyUsage(
           subscription.dailyUsage.date,
           subscription.dailyUsage.count,
+          subscription.startDate,
+          subscription.endDate,
           finalTransactionId
         ),
       ]);
@@ -474,6 +488,8 @@ export class SubscriptionService {
       UserService.syncDailyUsage(
         today,
         subscription.dailyUsage.count,
+        subscription.startDate,
+        subscription.endDate,
         subscription.originalTransactionIdentifierIOS
       ).catch((error) => {
         console.warn('Failed to sync daily usage to server:', error);
@@ -527,8 +543,26 @@ export class SubscriptionService {
       const today = getTodayDateString();
       let used = 0;
 
-      if (subscription.dailyUsage.date === today) {
-        used = subscription.dailyUsage.count;
+      if (subscription.originalTransactionIdentifierIOS) {
+        try {
+          const serverUsage = await UserService.getDailyUsage(
+            today,
+            subscription.originalTransactionIdentifierIOS,
+            subscription.startDate,
+            subscription.endDate
+          );
+          used = serverUsage;
+        } catch (error) {
+          console.warn('Failed to get server usage, using local:', error);
+          if (subscription.dailyUsage.date === today) {
+            used = subscription.dailyUsage.count;
+          }
+        }
+      } else {
+        // No transaction ID, use local data
+        if (subscription.dailyUsage.date === today) {
+          used = subscription.dailyUsage.count;
+        }
       }
 
       const result = {

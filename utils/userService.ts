@@ -74,6 +74,8 @@ export class UserService {
   static async syncSubscription(
     planId: string,
     isActive: boolean,
+    startDate: number,
+    endDate: number,
     originalTransactionIdentifierIOS?: string
   ): Promise<boolean> {
     if (!originalTransactionIdentifierIOS || !isSupabaseAvailable()) {
@@ -85,26 +87,32 @@ export class UserService {
     await this.saveTransactionId(originalTransactionIdentifierIOS);
 
     try {
-      // 현재 활성 구독 확인 (Transaction ID로)
       const currentSubscription = await this.getLatestSubscriptionFromServer(
-        originalTransactionIdentifierIOS
+        originalTransactionIdentifierIOS,
+        startDate,
+        endDate
       );
+
+      const startDateInISO = new Date(startDate).toISOString();
+      const endDateInISO = new Date(endDate).toISOString();
 
       const isIdenticalSubscription =
         currentSubscription &&
         currentSubscription.plan_id === planId &&
+        currentSubscription.is_active === isActive &&
+        currentSubscription.start_date === startDateInISO &&
+        currentSubscription.end_date === endDateInISO;
+
+      const keepCurrentFreeSubscription =
+        planId === 'free' &&
+        currentSubscription &&
+        currentSubscription.plan_id === 'free' &&
         currentSubscription.is_active === isActive;
 
       // 구독 변경 없음
-      if (isIdenticalSubscription) return true;
+      if (isIdenticalSubscription || keepCurrentFreeSubscription) return true;
 
       const now = new Date().toISOString();
-      const endDate =
-        planId === 'free'
-          ? null
-          : planId.includes('yearly')
-          ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // 기존 활성 구독 비활성화 (Transaction ID로)
       await supabase!
@@ -122,8 +130,8 @@ export class UserService {
           plan_id: planId,
           is_active: isActive,
           original_transaction_identifier_ios: originalTransactionIdentifierIOS,
-          start_date: now,
-          end_date: endDate,
+          start_date: startDateInISO,
+          end_date: endDate && endDate > 0 ? endDateInISO : null,
         },
       ]);
 
@@ -140,9 +148,11 @@ export class UserService {
     }
   }
 
-  // 서버에서 최신 구독 정보 가져오기 (Transaction ID 기반)
+  // 서버에서 최신 구독 정보 가져오기 (Transaction ID + Apple dates 기반)
   static async getLatestSubscriptionFromServer(
-    transactionId?: string | null
+    transactionId?: string | null,
+    expectedStartDate?: number,
+    expectedEndDate?: number
   ): Promise<DatabaseSubscription | null> {
     // Transaction ID가 없으면 저장된 것을 가져오기 시도
     const finalTransactionId =
@@ -153,20 +163,59 @@ export class UserService {
     }
 
     try {
-      const { data, error } = await supabase!
-        .from('user_subscriptions')
-        .select('*')
-        .eq('original_transaction_identifier_ios', finalTransactionId)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      let data: any = null;
+      let error: any = null;
 
-      const invalidJWTTokenFromPostgREST = error && error.code !== 'PGRST116';
+      if (expectedStartDate && expectedEndDate) {
+        const startDateISO = new Date(expectedStartDate).toISOString();
+        const endDateISO =
+          expectedEndDate > 0 ? new Date(expectedEndDate).toISOString() : null;
 
-      if (invalidJWTTokenFromPostgREST) {
-        console.error('Failed to fetch subscription:', error);
-        return null;
+        let exactQuery = supabase!
+          .from('user_subscriptions')
+          .select('*')
+          .eq('original_transaction_identifier_ios', finalTransactionId)
+          .eq('is_active', true)
+          .eq('start_date', startDateISO);
+
+        if (endDateISO) {
+          exactQuery = exactQuery.eq('end_date', endDateISO);
+        } else {
+          exactQuery = exactQuery.is('end_date', null);
+        }
+
+        const exactResult = await exactQuery
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        data = exactResult.data;
+        error = exactResult.error;
+
+        if (data) {
+          return data;
+        }
+      }
+
+      if (!data || error) {
+        const fallbackResult = await supabase!
+          .from('user_subscriptions')
+          .select('*')
+          .eq('original_transaction_identifier_ios', finalTransactionId)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        data = fallbackResult.data;
+        error = fallbackResult.error;
+
+        const invalidJWTTokenFromPostgREST = error && error.code !== 'PGRST116';
+
+        if (invalidJWTTokenFromPostgREST) {
+          console.error('Failed to fetch subscription:', error);
+          return null;
+        }
       }
 
       return data || null;
@@ -179,6 +228,8 @@ export class UserService {
   static async syncDailyUsage(
     date: string,
     usageCount: number,
+    startDate: number,
+    endDate: number,
     originalTransactionIdentifierIOS?: string
   ): Promise<boolean> {
     const finalTransactionId =
@@ -198,26 +249,29 @@ export class UserService {
     try {
       const now = new Date().toISOString();
 
-      const result = await supabase!.from('daily_usage').upsert(
-        [
-          {
-            original_transaction_identifier_ios: finalTransactionId,
-            date,
-            usage_count: usageCount,
-            updated_at: now,
-          },
-        ],
-        {
-          onConflict: 'original_transaction_identifier_ios,date',
-        }
-      );
+      const usageData: any = {
+        original_transaction_identifier_ios: finalTransactionId,
+        date,
+        usage_count: usageCount,
+        updated_at: now,
+      };
+
+      if (startDate) {
+        usageData.start_date = new Date(startDate).toISOString();
+      }
+      if (endDate && endDate > 0) {
+        usageData.end_date = new Date(endDate).toISOString();
+      }
+
+      const result = await supabase!.from('daily_usage').upsert([usageData], {
+        onConflict: 'original_transaction_identifier_ios,date',
+      });
 
       if (result.error) {
         console.error('Failed to sync daily usage:', result.error);
         return false;
       }
 
-      console.log('Daily usage synced:', date, usageCount);
       return true;
     } catch (error) {
       console.error('Daily usage sync error:', error);
@@ -225,10 +279,11 @@ export class UserService {
     }
   }
 
-  // 서버에서 일일 사용량 가져오기 (Transaction ID 기반)
   static async getDailyUsage(
     date: string,
-    originalTransactionIdentifierIOS?: string | null
+    originalTransactionIdentifierIOS?: string | null,
+    expectedStartDate?: number,
+    expectedEndDate?: number
   ): Promise<number> {
     const finalTransactionId =
       originalTransactionIdentifierIOS ||
@@ -239,16 +294,51 @@ export class UserService {
     }
 
     try {
-      const { data, error } = await supabase!
-        .from('daily_usage')
-        .select('usage_count')
-        .eq('original_transaction_identifier_ios', finalTransactionId)
-        .eq('date', date)
-        .single();
+      let data: any = null;
+      let error: any = null;
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Failed to fetch daily usage:', error);
-        return 0;
+      if (expectedStartDate && expectedEndDate) {
+        const startDateISO = new Date(expectedStartDate).toISOString();
+        const endDateISO =
+          expectedEndDate > 0 ? new Date(expectedEndDate).toISOString() : null;
+
+        let exactQuery = supabase!
+          .from('daily_usage')
+          .select('usage_count, start_date, end_date')
+          .eq('original_transaction_identifier_ios', finalTransactionId)
+          .eq('date', date)
+          .eq('start_date', startDateISO);
+
+        if (endDateISO) {
+          exactQuery = exactQuery.eq('end_date', endDateISO);
+        } else {
+          exactQuery = exactQuery.is('end_date', null);
+        }
+
+        const result = await exactQuery.single();
+        data = result.data;
+        error = result.error;
+
+        if (data) {
+          return data.usage_count || 0;
+        }
+      }
+
+      if (!data || error) {
+        const fallbackResult = await supabase!
+          .from('daily_usage')
+          .select('usage_count, start_date, end_date')
+          .eq('original_transaction_identifier_ios', finalTransactionId)
+          .eq('date', date)
+          .single();
+
+        data = fallbackResult.data;
+        error = fallbackResult.error;
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Failed to fetch daily usage:', error);
+          return 0;
+        }
       }
 
       return data?.usage_count || 0;

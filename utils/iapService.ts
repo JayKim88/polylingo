@@ -247,10 +247,14 @@ export class IAPService {
         this.processedPurchases.add(purchaseId);
 
         try {
-          const isValid = await this.validatePurchase(purchase);
+          const validationResult = await this.validatePurchase(purchase);
 
-          if (isValid) {
-            await this.handleSuccessfulPurchase(purchase);
+          if (validationResult.isValid) {
+            await this.handleSuccessfulPurchase(
+              purchase,
+              validationResult.startDate,
+              validationResult.endDate
+            );
 
             await finishTransaction({
               purchase: purchase,
@@ -401,10 +405,14 @@ export class IAPService {
       const latestPurchase = IAPService.getLatestPurchase(restored);
 
       if (latestPurchase) {
-        const isValid = await this.validatePurchase(latestPurchase);
+        const validationResult = await this.validatePurchase(latestPurchase);
 
-        if (isValid) {
-          await this.handleSuccessfulPurchaseQuietly(latestPurchase);
+        if (validationResult.isValid) {
+          await this.handleSuccessfulPurchaseQuietly(
+            latestPurchase,
+            validationResult.startDate,
+            validationResult.endDate
+          );
           return true;
         } else {
           Alert.alert(
@@ -447,19 +455,31 @@ export class IAPService {
     ]);
   }
 
-  public static async validatePurchase(purchase: Purchase): Promise<boolean> {
+  public static async validatePurchase(purchase: Purchase): Promise<{
+    isValid: boolean;
+    startDate?: number;
+    endDate?: number;
+  }> {
     try {
-      const timeoutPromise = this.createTimeoutPromise();
+      const timeoutPromise = this.createTimeoutPromiseWithDates();
       const validationPromise = this.performPlatformValidation(purchase);
 
       return await Promise.race([validationPromise, timeoutPromise]);
     } catch (error) {
-      return this.handleValidationError(error, purchase);
+      return this.handleValidationErrorWithDates(error, purchase);
     }
   }
 
-  private static createTimeoutPromise(): Promise<boolean> {
-    return new Promise<boolean>((_, reject) => {
+  private static createTimeoutPromiseWithDates(): Promise<{
+    isValid: boolean;
+    startDate?: number;
+    endDate?: number;
+  }> {
+    return new Promise<{
+      isValid: boolean;
+      startDate?: number;
+      endDate?: number;
+    }>((_, reject) => {
       setTimeout(
         () => reject(new Error('Validation timeout')),
         CONSTANTS.VALIDATION_TIMEOUT
@@ -469,17 +489,13 @@ export class IAPService {
 
   private static async performPlatformValidation(
     purchase: Purchase
-  ): Promise<boolean> {
-    if (Platform.OS === 'ios') {
-      return await this.validateIOSPurchase(purchase);
-    } else {
-      return this.validateAndroidPurchase(purchase);
-    }
+  ): Promise<{ isValid: boolean; startDate?: number; endDate?: number }> {
+    return await this.validateIOSPurchase(purchase);
   }
 
   private static async validateIOSPurchase(
     purchase: Purchase
-  ): Promise<boolean> {
+  ): Promise<{ isValid: boolean; startDate?: number; endDate?: number }> {
     try {
       // Use server-side validation API
       const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -508,54 +524,64 @@ export class IAPService {
 
       if (!result.isValid) {
         console.log('❌ Apple validation failed on server');
-        return false;
+        return { isValid: false };
       }
 
-      // expiresDate가 있는 경우 현재 시간과 비교하여 만료 여부 확인
+      let startDate: number | undefined;
+      let endDate: number | undefined;
+
+      if (result.startDate) {
+        startDate = new Date(result.startDate).getTime();
+      }
       if (result.expiresDate) {
-        const expiresTime = new Date(result.expiresDate).getTime();
-        const now = Date.now();
-        const isActive = now < expiresTime;
-
-        return isActive;
+        endDate = new Date(result.expiresDate).getTime();
       }
 
-      return result.isValid;
+      let isActive = true;
+      if (endDate) {
+        const now = Date.now();
+        isActive = now < endDate;
+      }
+
+      return {
+        isValid: isActive,
+        startDate,
+        endDate,
+      };
     } catch (error) {
       console.error('Server validation failed:', error);
       if (__DEV__) {
-        return !!(purchase.productId && purchase.transactionReceipt);
+        const isValid = !!(purchase.productId && purchase.transactionReceipt);
+        return { isValid };
       }
-      return false;
+      return { isValid: false };
     }
   }
 
-  private static validateAndroidPurchase(purchase: Purchase): boolean {
-    console.log(
-      'Android validation not fully implemented - accepting purchase'
-    );
-    return !!(purchase.productId && purchase.originalTransactionIdentifierIOS);
-  }
-
-  private static handleValidationError(
+  private static handleValidationErrorWithDates(
     error: unknown,
     purchase: Purchase
-  ): boolean {
+  ): { isValid: boolean; startDate?: number; endDate?: number } {
     console.error('Purchase validation error:', error);
 
     const errorMessage = error instanceof Error ? error.message : String(error);
     if (__DEV__ || errorMessage.includes('timeout')) {
       console.log('Validation failed but accepting purchase in development');
-      return !!(
+      const isValid = !!(
         purchase.productId && purchase.originalTransactionIdentifierIOS
       );
+      return { isValid };
     }
 
-    return false;
+    return { isValid: false };
   }
 
   // 성공적인 구매 처리 - 트랜잭션 ID를 사용자 식별자로 사용
-  private static async handleSuccessfulPurchase(purchase: Purchase) {
+  private static async handleSuccessfulPurchase(
+    purchase: Purchase,
+    startDate?: number,
+    endDate?: number
+  ) {
     try {
       const productId = purchase.productId;
       const transactionId = purchase.originalTransactionIdentifierIOS;
@@ -584,15 +610,14 @@ export class IAPService {
       await UserService.saveTransactionId(transactionId);
 
       // 새 구매 시 사용량 초기화하여 구독 상태 업데이트 (트랜잭션 ID 기반)
-      console.log(
-        `🔄 Activating subscription for transaction: ${transactionId}`
-      );
       try {
         await SubscriptionService.setSubscription(
           planId,
           {
             isActive: true,
             preserveUsage: false,
+            startDate,
+            endDate,
           },
           transactionId
         );
@@ -619,8 +644,11 @@ export class IAPService {
     }
   }
 
-  // 복원 시 조용히 처리 (리스너 트리거 방지) - 트랜잭션 ID를 사용자 식별자로 사용
-  private static async handleSuccessfulPurchaseQuietly(purchase: Purchase) {
+  private static async handleSuccessfulPurchaseQuietly(
+    purchase: Purchase,
+    startDate?: number,
+    endDate?: number
+  ) {
     try {
       const productId = purchase.productId;
       const transactionId = purchase.originalTransactionIdentifierIOS;
@@ -655,6 +683,8 @@ export class IAPService {
           {
             isActive: true,
             preserveUsage: true,
+            startDate,
+            endDate,
           },
           transactionId
         );
@@ -739,6 +769,8 @@ export class IAPService {
       let activePurchases: Purchase[] = [];
       let detectedSubscriptionPlan = 'free';
       let originalTransactionId: string | undefined;
+      let appleStartDate: number | undefined;
+      let appleEndDate: number | undefined;
 
       try {
         // 구매 복원 (Apple ID 인증 없이)
@@ -768,10 +800,17 @@ export class IAPService {
 
         // 서버를 통해 실제 구독 상태 검증 (만료/취소 여부 확인)
         try {
-          const isValid = await this.validatePurchase(latestPurchase);
+          const validationResult = await this.validatePurchase(latestPurchase);
 
-          if (isValid) {
-            await this.handleSuccessfulPurchaseQuietly(latestPurchase);
+          if (validationResult.isValid) {
+            appleStartDate = validationResult.startDate;
+            appleEndDate = validationResult.endDate;
+
+            await this.handleSuccessfulPurchaseQuietly(
+              latestPurchase,
+              validationResult.startDate,
+              validationResult.endDate
+            );
 
             /**
              * @description cannot return free
@@ -810,7 +849,9 @@ export class IAPService {
 
       // 서버의 기존 구독과 감지된 상태 비교 (앱 재설치 시 로컬 데이터가 없을 수 있음)
       const serverSub = await UserService.getLatestSubscriptionFromServer(
-        originalTransactionId
+        originalTransactionId,
+        appleStartDate,
+        appleEndDate
       );
       const isNewSubscription = serverSub?.plan_id !== detectedSubscriptionPlan;
 
@@ -829,6 +870,8 @@ export class IAPService {
             {
               isActive: true,
               preserveUsage: false, // 사용량 초기화
+              startDate: appleStartDate,
+              endDate: appleEndDate,
             },
             originalTransactionId
           );
@@ -849,6 +892,8 @@ export class IAPService {
             {
               isActive: true,
               preserveUsage: true,
+              startDate: appleStartDate,
+              endDate: appleEndDate,
             },
             originalTransactionId
           );
