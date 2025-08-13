@@ -217,9 +217,9 @@ export class IAPService {
   // 구독 구매 실행
   static async purchaseSubscription(
     productId: string
-  ): Promise<ProductPurchase | ProductPurchase[] | null> {
+  ): Promise<boolean> {
     if (!this.ensureIAPAvailability()) {
-      return null;
+      return false;
     }
 
     if (!this.isInitialized) {
@@ -234,17 +234,6 @@ export class IAPService {
       if (result) {
         const purchases = Array.isArray(result) ? result : [result];
         const purchase = purchases[0] as Purchase;
-
-        const purchaseId = __DEV__
-          ? purchase.productId
-          : `${purchase.productId}_${purchase.originalTransactionIdentifierIOS}`;
-
-        if (this.processedPurchases.has(purchaseId)) {
-          console.log(`Purchase already processed: ${purchaseId}`);
-          return result;
-        }
-
-        this.processedPurchases.add(purchaseId);
 
         try {
           const validationResult = await this.validatePurchase(purchase);
@@ -263,15 +252,13 @@ export class IAPService {
             });
 
             console.log('Purchase completed successfully');
+            return true;
           } else {
             console.error('Purchase validation failed');
-            this.processedPurchases.delete(purchaseId);
-            return null;
+            return false;
           }
         } catch (processingError) {
           console.error('Purchase processing failed:', processingError);
-
-          this.processedPurchases.delete(purchaseId);
 
           await finishTransaction({
             purchase: purchase,
@@ -283,7 +270,7 @@ export class IAPService {
         }
       }
 
-      return result || null;
+      return false;
     } catch (error: any) {
       console.error('Purchase failed:', error);
 
@@ -303,7 +290,7 @@ export class IAPService {
         throw error; // 취소 에러를 상위로 전달
       }
 
-      return null;
+      return false;
     }
   }
 
