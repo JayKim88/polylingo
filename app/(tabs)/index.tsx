@@ -17,6 +17,7 @@ import { Languages, Volume2, Mic, Search, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import NetInfo from '@react-native-community/netinfo';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
+import { useFocusEffect } from '@react-navigation/native';
 
 import LanguageSelector from '../../components/LanguageSelector';
 import SearchInput from '../../components/SearchInput';
@@ -31,7 +32,6 @@ import { SpeechService } from '../../utils/speechService';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
 import { SUBSCRIPTION_PLANS } from '../../types/subscription';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
-import { useSubscription } from '@/hooks/useSubscription';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '../../utils/subscriptionService';
@@ -53,7 +53,6 @@ export type TranslationState = {
 export default function SearchTab() {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { refreshSubscription } = useSubscription();
 
   const [searchText, setSearchText] = useState('');
   const [results, setResults] = useState<(TranslationResult | null)[]>([]);
@@ -149,6 +148,14 @@ export default function SearchTab() {
     setIsVoiceAvailable(available);
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      SubscriptionService.shouldShowAds().then((result) =>
+        setShouldShowAds(result)
+      );
+    }, [])
+  );
+
   const handleFocus = useCallback(async () => {
     loadFavorites();
     // 탭 포커스 시 언어 설정을 다시 로드하여 구독 변경 사항 반영
@@ -171,10 +178,6 @@ export default function SearchTab() {
     }
 
     setIsHeaderVisible(true);
-
-    // Check if ads should be shown
-    const shouldShow = await SubscriptionService.shouldShowAds();
-    setShouldShowAds(shouldShow);
   }, [loadFavorites, loadSelectedLanguages, checkVoiceAvailability]);
 
   const handleScrollDirectionChange = useCallback(
@@ -585,7 +588,6 @@ export default function SearchTab() {
     setSelectedLanguages(languages);
     await StorageService.saveSelectedLanguages(languages);
     setShowLanguageModal(false);
-    refreshSubscription();
   };
 
   const startVoiceRecording = async () => {

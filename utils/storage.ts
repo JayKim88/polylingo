@@ -1,11 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FavoriteItem, HistoryItem } from '../types/dictionary';
-import { SUBSCRIPTION_KEY } from './subscriptionService';
 
 const FAVORITES_KEY = 'dictionary_favorites';
 const HISTORY_KEY = 'dictionary_history';
 const SELECTED_LANGUAGES_KEY = 'selected_languages';
-const LANGUAGE_ORDER_KEY = 'language_order';
 const VOICE_SETTINGS_KEY = 'voice_settings';
 const APP_LANGUAGE_KEY = 'app_language';
 const THEME_KEY = 'app_theme';

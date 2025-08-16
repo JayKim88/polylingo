@@ -15,6 +15,7 @@ import { ANIMATION_DURATION, hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '@/utils/subscriptionService';
 import { NEW_AD_TERM } from './favorites';
 import { unitIds } from '@/constants/bannerAds';
+import { getDateString } from '@/utils/userService';
 
 export default function HistoryTab() {
   const { t } = useTranslation();
@@ -44,18 +45,14 @@ export default function HistoryTab() {
       // Extract unique dates
       const dates = [
         ...new Set(
-          hist.map(
-            (item) => new Date(item.searchedAt).toISOString().split('T')[0]
-          )
+          hist.map((item) => getDateString(new Date(item.searchedAt)))
         ),
       ];
       setHistoryDates(dates);
 
       if (selectedDate) {
         const filtered = hist.filter(
-          (hist) =>
-            new Date(hist.searchedAt).toISOString().split('T')[0] ===
-            selectedDate
+          (hist) => getDateString(new Date(hist.searchedAt)) === selectedDate
         );
         setFilteredHistory(filtered);
       } else {
@@ -86,7 +83,7 @@ export default function HistoryTab() {
 
     if (date) {
       const filtered = history.filter(
-        (item) => new Date(item.searchedAt).toISOString().split('T')[0] === date
+        (item) => getDateString(new Date(item.searchedAt)) === date
       );
       setFilteredHistory(filtered);
     } else {

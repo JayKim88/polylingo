@@ -27,7 +27,6 @@ import {
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
-import { useSubscription } from '@/hooks/useSubscription';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
@@ -42,7 +41,7 @@ import { VersionService } from '../../utils/version';
 import { NEW_AD_TERM } from './favorites';
 import { StorageService } from '../../utils/storage';
 import { TranslationAPI } from '../../utils/translationAPI';
-import { UserService } from '../../utils/userService';
+import { getDateString } from '../../utils/userService';
 import { unitIds } from '@/constants/bannerAds';
 
 type SettingItemProps = {
@@ -59,7 +58,6 @@ export default function SettingsTab() {
   const { t } = useTranslation();
   const { animatedStyle } = useTabSlideAnimation();
   const { theme, colors, toggleTheme } = useTheme();
-  const { refreshSubscription } = useSubscription();
 
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -222,9 +220,7 @@ export default function SettingsTab() {
         }
       });
 
-      const fileName = `polylingo-data-${
-        new Date().toISOString().split('T')[0]
-      }.csv`;
+      const fileName = `polylingo-data-${getDateString()}.csv`;
 
       // Show export options
       Alert.alert(
@@ -724,7 +720,6 @@ export default function SettingsTab() {
         visible={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
         onSubscriptionChange={async () => {
-          await refreshSubscription();
           const newSub = await SubscriptionService.getCurrentSubscription();
           setShowAd(newSub?.planId === 'free');
         }}

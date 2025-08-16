@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, Dimensions } from 'react-native';
+import { getDateString } from './userService';
 
 const DEVICE_USAGE_KEY = 'device_usage_tracking';
 const DEVICE_ID_KEY = 'stable_device_id';
@@ -120,15 +121,12 @@ export class DeviceUsageService {
    * 새 디바이스 사용량 데이터 생성
    */
   private static createNewDeviceUsage(deviceId: string): DeviceUsageData {
-    const now = new Date();
-    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
-
     return {
       deviceId,
       dailyUsage: {},
       totalUsage: 0,
-      firstInstallDate: today,
-      lastUsageDate: today,
+      firstInstallDate: getDateString(),
+      lastUsageDate: getDateString(),
     };
   }
 
@@ -142,8 +140,7 @@ export class DeviceUsageService {
   }> {
     try {
       const data = await this.getDeviceUsageData();
-      const now = new Date();
-      const today = now.toISOString().split('T')[0];
+      const today = getDateString();
 
       // 현재 일일 사용량 계산
       const dailyUsage = data.dailyUsage[today] || 0;
@@ -183,8 +180,7 @@ export class DeviceUsageService {
   }> {
     try {
       const data = await this.getDeviceUsageData();
-      const now = new Date();
-      const today = now.toISOString().split('T')[0];
+      const today = getDateString();
 
       const dailyUsed = data.dailyUsage[today] || 0;
       const DAILY_LIMIT = 100;
@@ -217,7 +213,7 @@ export class DeviceUsageService {
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
       // 30일 이전 일일 사용량 데이터 삭제
-      const cutoffDate = thirtyDaysAgo.toISOString().split('T')[0];
+      const cutoffDate = getDateString(thirtyDaysAgo);
 
       Object.keys(data.dailyUsage).forEach((date) => {
         if (date < cutoffDate) {

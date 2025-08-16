@@ -4,17 +4,25 @@ import {
   isSupabaseAvailable,
   DatabaseSubscription,
 } from './supabase';
+import { getTimeZone } from 'react-native-localize';
 
-// Utility function to get consistent date format (YYYY-MM-DD)
-export const getTodayDateString = (): string => {
+/**
+ * @description Utility function to get consistent date format (YYYY-MM-DD)
+ */
+export const getDateString = (date?: Date): string => {
+  const currentTimeZone = getTimeZone();
   const today = new Date();
-  return today.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: currentTimeZone,
+  }).format(date ?? today);
 };
 
 const TRANSACTION_ID_KEY = 'original_transaction_identifier_ios';
 
 export class UserService {
   private static currentTransactionId: string | null = null;
+  private static syncLocks = new Map<string, Promise<boolean>>();
 
   // Transaction ID 관리 메소드들
   static async saveTransactionId(transactionId: string): Promise<void> {
@@ -83,6 +91,36 @@ export class UserService {
       return false;
     }
 
+    const lockKey = `${originalTransactionIdentifierIOS}_${startDate}_${endDate}`;
+    if (this.syncLocks.has(lockKey)) {
+      return await this.syncLocks.get(lockKey)!;
+    }
+
+    const syncPromise = this.performSyncSubscription(
+      planId,
+      isActive,
+      startDate,
+      endDate,
+      originalTransactionIdentifierIOS
+    );
+
+    this.syncLocks.set(lockKey, syncPromise);
+
+    try {
+      const result = await syncPromise;
+      return result;
+    } finally {
+      this.syncLocks.delete(lockKey);
+    }
+  }
+
+  private static async performSyncSubscription(
+    planId: string,
+    isActive: boolean,
+    startDate: number,
+    endDate: number,
+    originalTransactionIdentifierIOS: string
+  ): Promise<boolean> {
     // Transaction ID 저장
     await this.saveTransactionId(originalTransactionIdentifierIOS);
 
@@ -94,14 +132,19 @@ export class UserService {
       );
 
       const startDateInISO = new Date(startDate).toISOString();
-      const endDateInISO = new Date(endDate).toISOString();
+      const endDateInISO =
+        endDate && endDate > 0 ? new Date(endDate).toISOString() : null;
 
       const isIdenticalSubscription =
         currentSubscription &&
         currentSubscription.plan_id === planId &&
         currentSubscription.is_active === isActive &&
-        currentSubscription.start_date === startDateInISO &&
-        currentSubscription.end_date === endDateInISO;
+        new Date(currentSubscription.start_date).getTime() === startDate &&
+        (endDate > 0
+          ? currentSubscription.end_date
+            ? new Date(currentSubscription.end_date).getTime() === endDate
+            : false
+          : !currentSubscription.end_date);
 
       const keepCurrentFreeSubscription =
         planId === 'free' &&
@@ -124,16 +167,22 @@ export class UserService {
         )
         .eq('is_active', true);
 
-      // 새 구독 추가
-      const { error } = await supabase!.from('user_subscriptions').insert([
+      const { error } = await supabase!.from('user_subscriptions').upsert(
+        [
+          {
+            plan_id: planId,
+            is_active: isActive,
+            original_transaction_identifier_ios:
+              originalTransactionIdentifierIOS,
+            start_date: startDateInISO,
+            end_date: endDateInISO,
+          },
+        ],
         {
-          plan_id: planId,
-          is_active: isActive,
-          original_transaction_identifier_ios: originalTransactionIdentifierIOS,
-          start_date: startDateInISO,
-          end_date: endDate && endDate > 0 ? endDateInISO : null,
-        },
-      ]);
+          onConflict: 'original_transaction_identifier_ios,start_date,end_date',
+          ignoreDuplicates: false,
+        }
+      );
 
       if (error) {
         console.error('Failed to sync subscription:', error);

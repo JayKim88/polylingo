@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import { getDateString } from '@/utils/userService';
 
 type CalendarViewProps = {
   markedDates: string[];
@@ -52,12 +53,19 @@ export default function CalendarView({
     const firstDay = getFirstDayOfMonth(currentDate);
 
     const days = [];
-    const weekDays = t('calendar.weekDays', { returnObjects: true }) as string[];
+    const weekDays = t('calendar.weekDays', {
+      returnObjects: true,
+    }) as string[];
 
     // Week day headers
     const weekHeaders = weekDays.map((day, index) => (
       <View key={`header-${index}`} className="flex-1 items-center py-2">
-        <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>{day}</Text>
+        <Text
+          className="text-sm font-semibold"
+          style={{ color: colors.textSecondary }}
+        >
+          {day}
+        </Text>
       </View>
     ));
 
@@ -73,20 +81,20 @@ export default function CalendarView({
       const dateString = formatDateString(year, month, day);
       const isMarked = markedDates.includes(dateString);
       const isSelected = selectedDate === dateString;
-      const isToday = dateString === new Date().toISOString().split('T')[0];
+      const isToday = dateString === getDateString();
 
       days.push(
         <TouchableOpacity
           key={day}
           className="relative justify-center items-center rounded-lg"
-          style={{ 
-            width: '14.28%', 
+          style={{
+            width: '14.28%',
             aspectRatio: 1,
             backgroundColor: isSelected
               ? colors.primary
               : isToday
               ? colors.primaryContainer
-              : 'transparent'
+              : 'transparent',
           }}
           onPress={() => onDateSelect(isSelected ? null : dateString)}
         >
@@ -98,7 +106,7 @@ export default function CalendarView({
                 : isToday
                 ? colors.primary
                 : colors.text,
-              fontWeight: isSelected || isToday ? 'bold' : 'normal'
+              fontWeight: isSelected || isToday ? 'bold' : 'normal',
             }}
           >
             {day}
@@ -106,8 +114,8 @@ export default function CalendarView({
           {isMarked && (
             <View
               className="absolute bottom-1 w-1.5 h-1.5 rounded-full"
-              style={{ 
-                backgroundColor: isSelected ? '#FFFFFF' : markColor 
+              style={{
+                backgroundColor: isSelected ? '#FFFFFF' : markColor,
               }}
             />
           )}
@@ -126,7 +134,10 @@ export default function CalendarView({
   const monthNames = t('calendar.months', { returnObjects: true }) as string[];
 
   return (
-    <View className="m-5 rounded-2xl p-5 shadow-sm" style={{ backgroundColor: colors.surface }}>
+    <View
+      className="m-5 rounded-2xl p-5 shadow-sm"
+      style={{ backgroundColor: colors.surface }}
+    >
       <View className="flex-row justify-between items-center mb-5">
         <TouchableOpacity
           className="p-2 rounded-lg"
@@ -151,13 +162,18 @@ export default function CalendarView({
 
       {renderCalendar()}
 
-      <View className="flex-row justify-between items-center pt-4 border-t" style={{ borderTopColor: colors.borderLight }}>
+      <View
+        className="flex-row justify-between items-center pt-4 border-t"
+        style={{ borderTopColor: colors.borderLight }}
+      >
         <View className="flex-row items-center">
           <View
             className="w-2 h-2 rounded-full mr-2"
             style={{ backgroundColor: markColor }}
           />
-          <Text className="text-sm" style={{ color: colors.textSecondary }}>기록이 있는 날</Text>
+          <Text className="text-sm" style={{ color: colors.textSecondary }}>
+            기록이 있는 날
+          </Text>
         </View>
         {selectedDate && (
           <TouchableOpacity
@@ -165,7 +181,10 @@ export default function CalendarView({
             style={{ backgroundColor: colors.background }}
             onPress={() => onDateSelect(null)}
           >
-            <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+            <Text
+              className="text-sm font-semibold"
+              style={{ color: colors.text }}
+            >
               {t('datePicker.all')}
             </Text>
           </TouchableOpacity>

@@ -4,7 +4,6 @@ import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Calendar } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
-import NetInfo from '@react-native-community/netinfo';
 
 import { useTabSlideAnimation } from '../../hooks/useTabSlideAnimation';
 import FavoritesList from '../../components/FavoritesList';
@@ -15,6 +14,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { ANIMATION_DURATION, hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '@/utils/subscriptionService';
 import { unitIds } from '@/constants/bannerAds';
+import { getDateString } from '@/utils/userService';
 
 /**
  * 3s
@@ -44,15 +44,14 @@ export default function FavoritesTab() {
 
   const loadFavorites = useCallback(async () => {
     setIsLoading(true);
+
     try {
       const favs = await StorageService.getFavorites();
       setFavorites(favs);
 
       // Extract unique dates
       const dates = [
-        ...new Set(
-          favs.map((fav) => new Date(fav.createdAt).toISOString().split('T')[0])
-        ),
+        ...new Set(favs.map((fav) => getDateString(new Date(fav.createdAt)))),
       ];
       // Use it for marking in calendar
       setFavoriteDates(dates);
@@ -60,8 +59,7 @@ export default function FavoritesTab() {
       // Show all favorites initially (respect current date filter)
       if (selectedDate) {
         const filtered = favs.filter(
-          (fav) =>
-            new Date(fav.createdAt).toISOString().split('T')[0] === selectedDate
+          (fav) => getDateString(new Date(fav.createdAt)) === selectedDate
         );
         setFilteredFavorites(filtered);
       } else {
@@ -77,7 +75,7 @@ export default function FavoritesTab() {
 
     if (date) {
       const filtered = favorites.filter(
-        (fav) => new Date(fav.createdAt).toISOString().split('T')[0] === date
+        (fav) => getDateString(new Date(fav.createdAt)) === date
       );
       setFilteredFavorites(filtered);
     } else {
@@ -125,13 +123,6 @@ export default function FavoritesTab() {
       }),
     ]).start();
   }, [headerAnimValue, contentAnimValue, isHeaderVisible]);
-
-  const hasInternet = async () => {
-    // 네트워크 연결 상태 확인
-    const netInfo = await NetInfo.fetch();
-
-    return netInfo.isConnected;
-  };
 
   useFocusEffect(
     useCallback(() => {

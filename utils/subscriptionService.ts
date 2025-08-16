@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserSubscription, SUBSCRIPTION_PLANS } from '../types/subscription';
 import { SUPPORTED_LANGUAGES } from '../types/dictionary';
-import { UserService, getTodayDateString } from './userService';
+import { UserService, getDateString } from './userService';
 import { DeviceUsageService } from './deviceUsageService';
 
 const STORAGE_KEYS = {
@@ -92,7 +92,7 @@ export class SubscriptionService {
       endDate: serverSubscription.end_date
         ? new Date(serverSubscription.end_date).getTime()
         : 0,
-      dailyUsage: { date: getTodayDateString(), count: 0 },
+      dailyUsage: { date: getDateString(), count: 0 },
       isTrialUsed: false,
       originalTransactionIdentifierIOS:
         serverSubscription.original_transaction_identifier_ios,
@@ -119,7 +119,7 @@ export class SubscriptionService {
   private static async updateDailyUsage(
     subscription: UserSubscription
   ): Promise<void> {
-    const today = getTodayDateString();
+    const today = getDateString();
     const dailyUsageCount = await UserService.getDailyUsage(
       today,
       subscription.originalTransactionIdentifierIOS,
@@ -184,7 +184,7 @@ export class SubscriptionService {
     }
 
     this.isUpdating = true;
-    
+
     try {
       const plan = this.validatePlan(planId);
 
@@ -237,7 +237,7 @@ export class SubscriptionService {
     const endDate =
       options.endDate ||
       (planId === 'free' ? 0 : this.calculateEndDate(plan, startDate));
-    const today = getTodayDateString();
+    const today = getDateString();
     const finalTransactionId =
       originalTransactionIdentifierIOS ||
       (await UserService.getCurrentTransactionId());
@@ -360,7 +360,7 @@ export class SubscriptionService {
       startDate: Date.now(),
       endDate: 0,
       dailyUsage: {
-        date: getTodayDateString(),
+        date: getDateString(),
         count: 0,
       },
       isTrialUsed: false,
@@ -389,7 +389,7 @@ export class SubscriptionService {
         return deviceStats.daily.remaining >= usageIncrement;
       }
 
-      const today = getTodayDateString();
+      const today = getDateString();
       const resetRequired = subscription.dailyUsage.date !== today;
 
       // 날짜가 바뀌면 카운트 리셋
@@ -450,7 +450,7 @@ export class SubscriptionService {
         return true;
       }
 
-      const today = getTodayDateString();
+      const today = getDateString();
       const resetRequired = subscription.dailyUsage.date !== today;
 
       if (resetRequired) {
@@ -540,7 +540,7 @@ export class SubscriptionService {
         return freeUsage;
       }
 
-      const today = getTodayDateString();
+      const today = getDateString();
       let used = 0;
 
       if (subscription.originalTransactionIdentifierIOS) {
