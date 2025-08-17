@@ -3,6 +3,7 @@ import { UserSubscription, SUBSCRIPTION_PLANS } from '../types/subscription';
 import { SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { UserService, getDateString } from './userService';
 import { DeviceUsageService } from './deviceUsageService';
+import { IAPService } from './iapService';
 
 const STORAGE_KEYS = {
   SUBSCRIPTION: 'user_subscription',
@@ -22,7 +23,9 @@ export class SubscriptionService {
   private static subscriptionPromise: Promise<UserSubscription | null> | null =
     null;
 
-  static async getCurrentSubscription(): Promise<UserSubscription | null> {
+  static async getCurrentSubscription(
+    isSearching?: boolean
+  ): Promise<UserSubscription | null> {
     // 이미 요청이 진행 중이면 같은 Promise 반환
     if (this.subscriptionPromise) {
       return await this.subscriptionPromise;
@@ -35,7 +38,7 @@ export class SubscriptionService {
       return await this.getLocalSubscriptionOrDefault();
     }
 
-    this.subscriptionPromise = this.fetchSubscription();
+    this.subscriptionPromise = this.fetchSubscription(isSearching);
 
     try {
       const result = await this.subscriptionPromise;
@@ -45,13 +48,18 @@ export class SubscriptionService {
     }
   }
 
-  private static async fetchSubscription(): Promise<UserSubscription | null> {
+  private static async fetchSubscription(
+    isSearching?: boolean
+  ): Promise<UserSubscription | null> {
     try {
       // Try to get subscription by transaction ID first (if available from purchases)
       const serverSubscription =
         await this.getServerSubscriptionByTransaction();
       if (serverSubscription) {
-        return await this.processServerSubscription(serverSubscription);
+        return await this.processServerSubscription(
+          serverSubscription,
+          isSearching
+        );
       }
 
       return await this.getLocalSubscriptionOrDefault();
@@ -83,7 +91,8 @@ export class SubscriptionService {
   // Apple ID login check removed - using transaction-based identification
 
   private static async processServerSubscription(
-    serverSubscription: any
+    serverSubscription: any,
+    isSearching?: boolean
   ): Promise<UserSubscription> {
     const subscription: UserSubscription = {
       planId: serverSubscription.plan_id,
@@ -97,6 +106,9 @@ export class SubscriptionService {
       originalTransactionIdentifierIOS:
         serverSubscription.original_transaction_identifier_ios,
     };
+
+    // 검색중에는 검증을 위해 free 로 초기화 하지 않음
+    if (isSearching) return subscription;
 
     if (this.isSubscriptionExpired(subscription)) {
       subscription.planId = 'free';
@@ -370,15 +382,33 @@ export class SubscriptionService {
   // 번역 사용 가능 여부 확인 (실제 사용량은 증가시키지 않음)
   static async canUseTranslation(languageCount: number = 1): Promise<boolean> {
     try {
-      const subscription = await this.getCurrentSubscription();
+      let subscription = await this.getCurrentSubscription(true);
+
+      const isPaidExpired =
+        subscription?.planId !== 'free' &&
+        subscription?.endDate &&
+        subscription.endDate > 0 &&
+        Date.now() > subscription.endDate;
+
+      if (isPaidExpired) {
+        try {
+          await IAPService.checkSubscriptionStatusAndUpdate();
+          subscription = await this.getCurrentSubscription();
+        } catch (error) {
+          console.warn(
+            '❌ Failed to refresh subscription status in searching:',
+            error
+          );
+        }
+      }
+
       if (!subscription) return false;
 
-      // For free users without purchases, use device-based usage tracking
-      if (
+      const isFreeUserNOPurchaseHistory =
         subscription.planId === 'free' &&
-        !subscription.originalTransactionIdentifierIOS
-      ) {
-        // Device-based usage check (doesn't actually increment)
+        !subscription.originalTransactionIdentifierIOS;
+
+      if (isFreeUserNOPurchaseHistory) {
         const plan = SUBSCRIPTION_PLANS.find((p) => p.id === 'free');
         if (!plan) return false;
 

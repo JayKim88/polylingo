@@ -3,10 +3,11 @@ const { withNativeWind } = require('nativewind/metro');
 
 const config = getDefaultConfig(__dirname);
 
-// Metro config optimizations for better development experience
+// Disable web platform to prevent bundling errors
 config.resolver = {
   ...config.resolver,
   unstable_enablePackageExports: true,
+  platforms: ['ios'], // Explicitly exclude web
 };
 
 // Enable watchman for better file watching

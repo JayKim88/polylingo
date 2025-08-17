@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Search, Heart, Clock, Settings } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 

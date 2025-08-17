@@ -7,9 +7,8 @@ import {
   finishTransaction,
   getAvailablePurchases,
   Subscription,
-  ProductPurchase,
 } from 'react-native-iap';
-import { Platform, Alert } from 'react-native';
+import { Alert } from 'react-native';
 import i18n from '../i18n';
 
 import { SubscriptionService } from './subscriptionService';
@@ -113,10 +112,6 @@ export class IAPService {
     return this.isAvailable;
   }
 
-  // Apple authentication methods removed - using transaction-based identification
-
-  // Apple authentication methods removed - using transaction-based identification only
-
   // TestFlight/Sandbox 환경 감지
   private static determineTestEnvironment(): boolean {
     // 1. 개발 모드는 무조건 Sandbox
@@ -215,9 +210,7 @@ export class IAPService {
   }
 
   // 구독 구매 실행
-  static async purchaseSubscription(
-    productId: string
-  ): Promise<boolean> {
+  static async purchaseSubscription(productId: string): Promise<boolean> {
     if (!this.ensureIAPAvailability()) {
       return false;
     }
@@ -728,7 +721,6 @@ export class IAPService {
     // 이미 체크 중이면 중복 실행 방지
     const store = useSubscriptionStore.getState();
     if (store.isCheckingSubscription) {
-      console.log('Subscription check already in progress - skipping');
       return;
     }
     store.setIsCheckingSubscription(true);

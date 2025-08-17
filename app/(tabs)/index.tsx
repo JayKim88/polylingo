@@ -77,7 +77,7 @@ export default function SearchTab() {
   const [showBannerAd, setShowBannerAd] = useState(false);
   const [shouldShowAds, setShouldShowAds] = useState(true);
   const [adKey, setAdKey] = useState(0); // 새로운 광고를 위한 키
-  const [isHeaderVisible, setIsHeaderVisible] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
   const isInitialFocus = useRef(true);
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -108,39 +108,61 @@ export default function SearchTab() {
   const loadSelectedLanguages = useCallback(async () => {
     const cachedlangs = await StorageService.getSelectedLanguages();
 
-    // 현재 구독 정보에 맞는 최대 언어 수 확인
-    const subscription = await SubscriptionService.getCurrentSubscription();
-    const plan = SUBSCRIPTION_PLANS.find(
-      (p) => p.id === (subscription?.planId || 'free')
-    );
-    const maxLanguages =
-      subscription?.planId === 'free'
-        ? 3
-        : Math.min((plan?.maxLanguages || 2) + 1, 6);
-
     if (cachedlangs.length > 0) {
-      // 캐시된 언어가 현재 플랜 제한을 초과하는 경우 조정
-      if (cachedlangs.length > maxLanguages) {
-        const adjustedLanguages = cachedlangs.slice(0, maxLanguages);
-
-        setSelectedLanguages(adjustedLanguages);
-        setSourceLanguage(adjustedLanguages[0]);
-        await StorageService.saveSelectedLanguages(adjustedLanguages);
-        return;
-      }
       setSelectedLanguages(cachedlangs);
       setSourceLanguage(cachedlangs[0]);
+
+      SubscriptionService.getCurrentSubscription()
+        .then((subscription) => {
+          const plan = SUBSCRIPTION_PLANS.find(
+            (p) => p.id === (subscription?.planId || 'free')
+          );
+          const maxLanguages =
+            subscription?.planId === 'free'
+              ? 3
+              : Math.min((plan?.maxLanguages || 2) + 1, 6);
+
+          // 캐시된 언어가 현재 플랜 제한을 초과하는 경우 조정
+          if (cachedlangs.length > maxLanguages) {
+            const adjustedLanguages = cachedlangs.slice(0, maxLanguages);
+            setSelectedLanguages(adjustedLanguages);
+            setSourceLanguage(adjustedLanguages[0]);
+            StorageService.saveSelectedLanguages(adjustedLanguages);
+          }
+        })
+        .catch((error) => {
+          console.warn('Failed to check subscription limits:', error);
+        });
+
       return;
     }
 
-    const defaultLanguages = SUPPORTED_LANGUAGES.map((v) => v.code).slice(
-      0,
-      maxLanguages
-    );
-
+    const defaultLanguages = SUPPORTED_LANGUAGES.map((v) => v.code).slice(0, 3); // Start with free tier limit
     setSelectedLanguages(defaultLanguages);
     setSourceLanguage(defaultLanguages[0]);
     await StorageService.saveSelectedLanguages(defaultLanguages);
+
+    SubscriptionService.getCurrentSubscription()
+      .then((subscription) => {
+        const plan = SUBSCRIPTION_PLANS.find(
+          (p) => p.id === (subscription?.planId || 'free')
+        );
+        const maxLanguages =
+          subscription?.planId === 'free'
+            ? 3
+            : Math.min((plan?.maxLanguages || 2) + 1, 6);
+
+        if (maxLanguages > 3) {
+          const expandedLanguages = SUPPORTED_LANGUAGES.map(
+            (v) => v.code
+          ).slice(0, maxLanguages);
+          setSelectedLanguages(expandedLanguages);
+          StorageService.saveSelectedLanguages(expandedLanguages);
+        }
+      })
+      .catch((error) => {
+        console.warn('Failed to check subscription limits:', error);
+      });
   }, []);
 
   const checkVoiceAvailability = useCallback(() => {
@@ -255,6 +277,8 @@ export default function SearchTab() {
       return;
     }
 
+    setIsLoading(true);
+
     // 선택된 언어들 중 소스 언어 제외
     const targetLanguages = selectedLanguages.filter(
       (lang) => lang !== sourceLanguage
@@ -274,6 +298,7 @@ export default function SearchTab() {
             limit: usage.limit,
           })}`
       );
+      setIsLoading(false);
       return;
     }
 
@@ -282,7 +307,6 @@ export default function SearchTab() {
     // Initialize results array with null placeholders for skeleton loading
     const initialResults = new Array(targetLanguages.length).fill(null);
     setResults(initialResults);
-    setIsLoading(true);
 
     // Clear previous translation states
     setTranslationStates(new Map());
@@ -625,7 +649,7 @@ export default function SearchTab() {
 
   const stopVoiceRecording = async () => {
     if (!speechRecognition) return;
-    await speechRecognition.stop();
+    speechRecognition.stop();
     setSpeechRecognition(null);
     setIsVoiceActive(false);
   };
