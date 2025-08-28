@@ -1,8 +1,99 @@
-// Global test setup
+/**
+ * Jest Setup File
+ * Configures mocks and test environment for React Native
+ */
 
 // Define global variables
 global.__DEV__ = true;
 global.process = { ...process, env: { ...process.env, NODE_ENV: 'test' } };
+
+// Mock NetInfo
+jest.mock('@react-native-community/netinfo', () => ({
+  fetch: jest.fn(() => Promise.resolve({
+    isConnected: true,
+    isInternetReachable: true,
+    type: 'wifi'
+  })),
+  addEventListener: jest.fn(() => jest.fn()),
+  useNetInfo: jest.fn(() => ({
+    isConnected: true,
+    isInternetReachable: true,
+    type: 'wifi'
+  }))
+}));
+
+// Mock react-native-localize
+jest.mock('react-native-localize', () => ({
+  getTimeZone: jest.fn(() => 'America/New_York'),
+  getLocales: jest.fn(() => [{ languageCode: 'en', countryCode: 'US' }]),
+  getNumberFormatSettings: jest.fn(() => ({})),
+  getCalendar: jest.fn(() => 'gregorian'),
+  getCountry: jest.fn(() => 'US'),
+  getCurrencies: jest.fn(() => ['USD']),
+  getTemperatureUnit: jest.fn(() => 'fahrenheit'),
+  uses24HourClock: jest.fn(() => false),
+  usesMetricSystem: jest.fn(() => false),
+  usesAutoDateAndTime: jest.fn(() => true),
+  usesAutoTimeZone: jest.fn(() => true),
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn()
+}));
+
+// Mock Expo modules
+jest.mock('expo-speech', () => ({
+  speak: jest.fn(),
+  stop: jest.fn(),
+  pause: jest.fn(),
+  resume: jest.fn(),
+  isSpeakingAsync: jest.fn(() => Promise.resolve(false)),
+  getAvailableVoicesAsync: jest.fn(() => Promise.resolve([])),
+}));
+
+jest.mock('expo-av', () => ({
+  Audio: {
+    setAudioModeAsync: jest.fn(),
+    Sound: {
+      createAsync: jest.fn(),
+    }
+  }
+}));
+
+// Mock @react-native-voice/voice
+jest.mock('@react-native-voice/voice', () => ({
+  default: {
+    onSpeechStart: null,
+    onSpeechRecognized: null,
+    onSpeechEnd: null,
+    onSpeechError: null,
+    onSpeechResults: null,
+    onSpeechPartialResults: null,
+    onSpeechVolumeChanged: null,
+    start: jest.fn(),
+    stop: jest.fn(),
+    cancel: jest.fn(),
+    destroy: jest.fn(),
+    removeAllListeners: jest.fn(),
+    isAvailable: jest.fn(() => Promise.resolve(true)),
+    isRecognitionAvailable: jest.fn(() => Promise.resolve(true)),
+    getSupportedLocales: jest.fn(() => Promise.resolve(['en-US', 'ko-KR']))
+  }
+}));
+
+// Mock global fetch
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(''),
+    status: 200,
+    statusText: 'OK'
+  })
+);
+
+// Environment variables for tests
+process.env.EXPO_PUBLIC_API_BASE_URL = 'http://localhost:3000';
+process.env.EXPO_PUBLIC_TRANSLATE_API_KEY = 'test-api-key';
+process.env.EXPO_PUBLIC_LIBRETRANSLATE_URL = 'http://localhost:5000';
 
 // Mock react-native-iap
 jest.mock('react-native-iap', () => ({
