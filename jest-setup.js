@@ -95,6 +95,21 @@ process.env.EXPO_PUBLIC_API_BASE_URL = 'http://localhost:3000';
 process.env.EXPO_PUBLIC_TRANSLATE_API_KEY = 'test-api-key';
 process.env.EXPO_PUBLIC_LIBRETRANSLATE_URL = 'http://localhost:5000';
 
+// Mock lucide-react-native icons
+jest.mock('lucide-react-native', () => ({
+  Search: 'Search',
+  X: 'X',
+  Mic: 'Mic',
+  Volume2: 'Volume2',
+  Heart: 'Heart',
+  HeartOff: 'HeartOff',
+  Settings: 'Settings',
+  History: 'History',
+  Languages: 'Languages'
+}));
+
+// React Native Testing Library is ready to use
+
 // Mock react-native-iap
 jest.mock('react-native-iap', () => ({
   initConnection: jest.fn(() => Promise.resolve()),
@@ -118,18 +133,21 @@ jest.mock('@invertase/react-native-apple-authentication', () => ({
   isSupported: true,
 }));
 
-// Mock react-native
-jest.mock('react-native', () => ({
-  Platform: {
-    OS: 'ios',
-    select: jest.fn((obj) => obj.ios),
-  },
-  Alert: {
-    alert: jest.fn(),
-    prompt: jest.fn(),
-  },
-  Linking: {
-    openURL: jest.fn(() => Promise.resolve()),
+// Mock Appearance for NativeWind
+global.__DEV__ = true;
+if (typeof global.Appearance === 'undefined') {
+  global.Appearance = {
+    getColorScheme: () => 'light',
+    addChangeListener: jest.fn(),
+    removeChangeListener: jest.fn(),
+  };
+}
+
+// Mock CSS interop appearance observables
+jest.mock('react-native-css-interop/src/runtime/native/appearance-observables', () => ({
+  appearanceObservable: {
+    getSnapshot: () => ({ colorScheme: 'light' }),
+    subscribe: jest.fn(() => () => {}),
   },
 }));
 
@@ -144,6 +162,44 @@ jest.mock('./utils/sentryUtils', () => ({
 jest.mock('./i18n', () => ({
   t: jest.fn((key) => key),
   language: 'en',
+}));
+
+// Mock Supabase
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => ({
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      single: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    })),
+    auth: {
+      signUp: jest.fn(() => Promise.resolve({ data: {}, error: null })),
+      signInWithPassword: jest.fn(() => Promise.resolve({ data: {}, error: null })),
+      signOut: jest.fn(() => Promise.resolve({ error: null })),
+      getUser: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+    },
+  })),
+}));
+
+// Mock Supabase utilities
+jest.mock('./utils/supabase', () => ({
+  supabase: {
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      single: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    })),
+  },
 }));
 
 // Mock zustand stores

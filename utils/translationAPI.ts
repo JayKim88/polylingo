@@ -97,6 +97,9 @@ export class TranslationAPI {
 
   // Clear expired cache entries
   private static cleanupCache(): void {
+    if (!this.translationCache) {
+      return;
+    }
     const now = Date.now();
     for (const [key, entry] of this.translationCache.entries()) {
       if (now - entry.timestamp >= this.CACHE_DURATION) {

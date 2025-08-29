@@ -1,9 +1,6 @@
 module.exports = {
-  testEnvironment: 'node',
+  preset: 'react-native',
   setupFilesAfterEnv: ['<rootDir>/jest-setup.js'],
-  transform: {
-    '^.+\\.tsx?$': 'ts-jest',
-  },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
@@ -13,6 +10,6 @@ module.exports = {
     '**/*.test.(ts|tsx|js)',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|react-native-iap|@invertase))',
+    'node_modules/(?!(react-native|@react-native|react-native-iap|@invertase|lucide-react-native|nativewind))',
   ],
 };

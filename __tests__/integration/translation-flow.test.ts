@@ -33,7 +33,7 @@ describe('Translation Flow Integration Tests', () => {
     
     // Default mocks for successful flow
     mockSubscriptionService.canUseTranslation.mockResolvedValue(true);
-    mockSubscriptionService.incrementUsage.mockResolvedValue();
+    mockSubscriptionService.incrementDailyUsage.mockResolvedValue(true);
     mockTranslationAPI.translate.mockResolvedValue({
       translation: '안녕하세요',
       pronunciation: 'annyeonghaseyo'
@@ -59,17 +59,23 @@ describe('Translation Flow Integration Tests', () => {
       expect(result.translation).toBe('안녕하세요');
       
       // Step 3: Increment usage
-      await SubscriptionService.incrementUsage();
-      expect(mockSubscriptionService.incrementUsage).toHaveBeenCalled();
+      await SubscriptionService.incrementDailyUsage();
+      expect(mockSubscriptionService.incrementDailyUsage).toHaveBeenCalled();
       
       // Step 4: Add to history
       await StorageService.addToHistory({
         sourceText,
-        sourceLanguage
+        sourceLanguage,
+        targetLanguage,
+        translatedText: result.translation,
+        searchedData: [{ lng: targetLanguage, text: result.translation }]
       });
       expect(mockStorageService.addToHistory).toHaveBeenCalledWith({
         sourceText,
-        sourceLanguage
+        sourceLanguage,
+        targetLanguage,
+        translatedText: result.translation,
+        searchedData: [{ lng: targetLanguage, text: result.translation }]
       });
       
       // Step 5: Text-to-speech
@@ -106,7 +112,7 @@ describe('Translation Flow Integration Tests', () => {
       expect(translationResult).toBeUndefined();
       
       // Should not increment usage on failure
-      expect(mockSubscriptionService.incrementUsage).not.toHaveBeenCalled();
+      expect(mockSubscriptionService.incrementDailyUsage).not.toHaveBeenCalled();
     });
   });
 
@@ -160,8 +166,8 @@ describe('Translation Flow Integration Tests', () => {
       expect(results[2].translatedText).toBe('bonjour');
       
       // Should increment usage for multi-language translation
-      await SubscriptionService.incrementUsage();
-      expect(mockSubscriptionService.incrementUsage).toHaveBeenCalled();
+      await SubscriptionService.incrementDailyUsage();
+      expect(mockSubscriptionService.incrementDailyUsage).toHaveBeenCalled();
     });
 
     test('should handle partial failures in multi-language translation', async () => {
@@ -201,10 +207,10 @@ describe('Translation Flow Integration Tests', () => {
         }
       );
       
-      // Step 1: Start speech recognition
+      // Step 1: Start speech recognition  
       const recognition = await SpeechService.startSpeechRecognition(
         'en',
-        (text) => speechResultCallback(text),
+        (text) => { /* This will be captured by the mock implementation */ },
         (error) => console.error(error),
         () => console.log('ended')
       );
@@ -402,12 +408,12 @@ describe('Translation Flow Integration Tests', () => {
         
         if (canUse) {
           await TranslationAPI.translate(`word ${i}`, 'en', 'ko');
-          await SubscriptionService.incrementUsage();
+          await SubscriptionService.incrementDailyUsage();
         }
       }
       
       expect(mockTranslationAPI.translate).toHaveBeenCalledTimes(50);
-      expect(mockSubscriptionService.incrementUsage).toHaveBeenCalledTimes(50);
+      expect(mockSubscriptionService.incrementDailyUsage).toHaveBeenCalledTimes(50);
     });
   });
 
@@ -423,7 +429,10 @@ describe('Translation Flow Integration Tests', () => {
       // Add to both history and favorites
       await StorageService.addToHistory({
         sourceText: translationData.sourceText,
-        sourceLanguage: translationData.sourceLanguage
+        sourceLanguage: translationData.sourceLanguage,
+        targetLanguage: translationData.targetLanguage,
+        translatedText: translationData.translatedText,
+        searchedData: [{ lng: translationData.targetLanguage, text: translationData.translatedText }]
       });
       
       await StorageService.addFavorite(translationData);
@@ -431,7 +440,10 @@ describe('Translation Flow Integration Tests', () => {
       // Verify both calls were made
       expect(mockStorageService.addToHistory).toHaveBeenCalledWith({
         sourceText: 'good morning',
-        sourceLanguage: 'en'
+        sourceLanguage: 'en',
+        targetLanguage: 'ko',
+        translatedText: '좋은 아침',
+        searchedData: [{ lng: 'ko', text: '좋은 아침' }]
       });
       
       expect(mockStorageService.addFavorite).toHaveBeenCalledWith(translationData);
@@ -445,7 +457,10 @@ describe('Translation Flow Integration Tests', () => {
       try {
         await StorageService.addToHistory({
           sourceText: 'hello',
-          sourceLanguage: 'en'
+          sourceLanguage: 'en',
+          targetLanguage: 'ko',
+          translatedText: '안녕하세요',
+          searchedData: [{ lng: 'ko', text: '좋은 아침' }]
         });
       } catch (e) {
         error = e;
@@ -472,7 +487,13 @@ describe('Translation Flow Integration Tests', () => {
 
     test('should handle concurrent storage operations', async () => {
       const storageOperations = [
-        StorageService.addToHistory({ sourceText: 'hello', sourceLanguage: 'en' }),
+        StorageService.addToHistory({ 
+          sourceText: 'hello', 
+          sourceLanguage: 'en',
+          targetLanguage: 'ko',
+          translatedText: '안녕',
+          searchedData: [{ lng: 'ko', text: '좋은 아침' }]
+        }),
         StorageService.addFavorite({
           sourceText: 'hello',
           translatedText: '안녕',

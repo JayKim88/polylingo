@@ -15,7 +15,9 @@ import { captureNetworkError } from '../../utils/sentryUtils';
 
 // Mock external dependencies
 jest.mock('@react-native-community/netinfo');
-jest.mock('../../utils/sentryUtils');
+jest.mock('../../utils/sentryUtils', () => ({
+  captureNetworkError: jest.fn()
+}));
 jest.mock('../../utils/pronunciationService');
 
 // Mock fetch globally
@@ -26,8 +28,12 @@ const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 const mockCaptureNetworkError = captureNetworkError as jest.MockedFunction<typeof captureNetworkError>;
 
 describe('TranslationAPI', () => {
+  let originalEnv: NodeJS.ProcessEnv;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    // Save original environment
+    originalEnv = { ...process.env };
     // Clear cache before each test
     TranslationAPI.clearCache();
     // Mock network as connected by default
@@ -36,6 +42,8 @@ describe('TranslationAPI', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    // Restore original environment
+    process.env = originalEnv;
   });
 
   describe('Cache Management', () => {
@@ -54,29 +62,48 @@ describe('TranslationAPI', () => {
     });
 
     test('should validate cache entries based on 24-hour expiry', () => {
-      const isCacheValid = (TranslationAPI as any).isCacheValid;
+      // Test cache expiry indirectly through cache stats
+      TranslationAPI.clearCache();
+      
+      const translationCache = (TranslationAPI as any).translationCache;
       const CACHE_DURATION = 24 * 60 * 60 * 1000;
       
-      // Fresh entry
-      const freshEntry = { timestamp: Date.now() - 1000 }; // 1 second ago
-      expect(isCacheValid(freshEntry)).toBe(true);
+      // Add fresh entry
+      translationCache.set('fresh_key', {
+        translation: 'fresh',
+        timestamp: Date.now() - 1000 // 1 second ago
+      });
       
-      // Expired entry
-      const expiredEntry = { timestamp: Date.now() - (CACHE_DURATION + 1000) };
-      expect(isCacheValid(expiredEntry)).toBe(false);
+      // Add expired entry  
+      translationCache.set('expired_key', {
+        translation: 'expired',
+        timestamp: Date.now() - (CACHE_DURATION + 1000) // Expired
+      });
+      
+      const stats = TranslationAPI.getCacheStats();
+      expect(stats.size).toBe(2);
+      
+      // Check that entries are marked correctly
+      const freshEntry = stats.entries.find(e => e.key === 'fresh_key');
+      const expiredEntry = stats.entries.find(e => e.key === 'expired_key');
+      
+      expect(freshEntry?.isExpired).toBe(false);
+      expect(expiredEntry?.isExpired).toBe(true);
     });
 
     test('should return cached translation when valid', async () => {
+      // Mock environment variables for consistent behavior
+      process.env.EXPO_PUBLIC_LIBRETRANSLATE_URL = 'http://localhost:5000/translate';
+      
       // First translation to populate cache
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({
-          translation: '안녕하세요',
-          pronunciation: 'annyeonghaseyo'
+          translatedText: '안녕하세요'  // LibreTranslate format
         })
       } as Response);
 
-      const firstResult = await TranslationAPI.translate('hello', 'en', 'ko', { provider: 'claude' });
+      const firstResult = await TranslationAPI.translate('hello', 'en', 'ko');
       expect(firstResult.translation).toBe('안녕하세요');
 
       // Second call should use cache (no fetch call)
@@ -86,6 +113,9 @@ describe('TranslationAPI', () => {
     });
 
     test('should clean up expired cache entries', () => {
+      // Clear any existing cache and reinitialize
+      TranslationAPI.clearCache();
+      
       const translationCache = (TranslationAPI as any).translationCache;
       const CACHE_DURATION = 24 * 60 * 60 * 1000;
       
@@ -105,7 +135,7 @@ describe('TranslationAPI', () => {
       
       // Trigger cleanup
       const cleanupCache = (TranslationAPI as any).cleanupCache;
-      cleanupCache();
+      if (cleanupCache) cleanupCache();
       
       expect(translationCache.size).toBe(1);
       expect(translationCache.has('fresh_key')).toBe(true);
@@ -124,6 +154,10 @@ describe('TranslationAPI', () => {
 
   describe('Claude API Integration', () => {
     test('should successfully translate using Claude API', async () => {
+      // Set up environment variables for the test
+      process.env.EXPO_PUBLIC_API_BASE_URL = 'http://localhost:3000';
+      process.env.EXPO_PUBLIC_TRANSLATE_API_KEY = 'test-api-key';
+      
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({
@@ -137,11 +171,12 @@ describe('TranslationAPI', () => {
       expect(result.translation).toBe('안녕하세요');
       expect(result.pronunciation).toBe('annyeonghaseyo');
       expect(mockFetch).toHaveBeenCalledWith(
-        '/api/translate',
+        'http://localhost:3000/api/translate',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-api-key': 'test-api-key'
           })
         })
       );
@@ -330,15 +365,18 @@ describe('TranslationAPI', () => {
 
   describe('Multiple Language Translation', () => {
     test('should translate to multiple languages concurrently', async () => {
-      // Mock successful translations
+      // Set up LibreTranslate environment for consistent behavior
+      process.env.EXPO_PUBLIC_LIBRETRANSLATE_URL = 'http://localhost:5000/translate';
+      
+      // Mock successful translations using LibreTranslate format
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
-          json: () => Promise.resolve({ translation: '안녕하세요' })
+          json: () => Promise.resolve({ translatedText: '안녕하세요' })
         } as Response)
         .mockResolvedValueOnce({
           ok: true,
-          json: () => Promise.resolve({ translation: 'こんにちは' })
+          json: () => Promise.resolve({ translatedText: 'こんにちは' })
         } as Response);
 
       const results = await TranslationAPI.translateToMultipleLanguages(
