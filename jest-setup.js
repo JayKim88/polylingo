@@ -9,17 +9,19 @@ global.process = { ...process, env: { ...process.env, NODE_ENV: 'test' } };
 
 // Mock NetInfo
 jest.mock('@react-native-community/netinfo', () => ({
-  fetch: jest.fn(() => Promise.resolve({
-    isConnected: true,
-    isInternetReachable: true,
-    type: 'wifi'
-  })),
+  fetch: jest.fn(() =>
+    Promise.resolve({
+      isConnected: true,
+      isInternetReachable: true,
+      type: 'wifi',
+    })
+  ),
   addEventListener: jest.fn(() => jest.fn()),
   useNetInfo: jest.fn(() => ({
     isConnected: true,
     isInternetReachable: true,
-    type: 'wifi'
-  }))
+    type: 'wifi',
+  })),
 }));
 
 // Mock react-native-localize
@@ -36,7 +38,7 @@ jest.mock('react-native-localize', () => ({
   usesAutoDateAndTime: jest.fn(() => true),
   usesAutoTimeZone: jest.fn(() => true),
   addEventListener: jest.fn(),
-  removeEventListener: jest.fn()
+  removeEventListener: jest.fn(),
 }));
 
 // Mock Expo modules
@@ -54,8 +56,8 @@ jest.mock('expo-av', () => ({
     setAudioModeAsync: jest.fn(),
     Sound: {
       createAsync: jest.fn(),
-    }
-  }
+    },
+  },
 }));
 
 // Mock @react-native-voice/voice
@@ -75,8 +77,8 @@ jest.mock('@react-native-voice/voice', () => ({
     removeAllListeners: jest.fn(),
     isAvailable: jest.fn(() => Promise.resolve(true)),
     isRecognitionAvailable: jest.fn(() => Promise.resolve(true)),
-    getSupportedLocales: jest.fn(() => Promise.resolve(['en-US', 'ko-KR']))
-  }
+    getSupportedLocales: jest.fn(() => Promise.resolve(['en-US', 'ko-KR'])),
+  },
 }));
 
 // Mock global fetch
@@ -86,7 +88,7 @@ global.fetch = jest.fn(() =>
     json: () => Promise.resolve({}),
     text: () => Promise.resolve(''),
     status: 200,
-    statusText: 'OK'
+    statusText: 'OK',
   })
 );
 
@@ -105,7 +107,7 @@ jest.mock('lucide-react-native', () => ({
   HeartOff: 'HeartOff',
   Settings: 'Settings',
   History: 'History',
-  Languages: 'Languages'
+  Languages: 'Languages',
 }));
 
 // React Native Testing Library is ready to use
@@ -125,7 +127,9 @@ jest.mock('react-native-iap', () => ({
 
 // Mock Apple Authentication
 jest.mock('@invertase/react-native-apple-authentication', () => ({
-  performRequest: jest.fn(() => Promise.resolve({ user: 'test-user', email: 'test@example.com' })),
+  performRequest: jest.fn(() =>
+    Promise.resolve({ user: 'test-user', email: 'test@example.com' })
+  ),
   getCredentialStateForUser: jest.fn(() => Promise.resolve(1)), // AUTHORIZED
   State: { AUTHORIZED: 1, REVOKED: 2, NOT_FOUND: 3 },
   Operation: { LOGIN: 1, REFRESH: 2, LOGOUT: 3 },
@@ -144,12 +148,15 @@ if (typeof global.Appearance === 'undefined') {
 }
 
 // Mock CSS interop appearance observables
-jest.mock('react-native-css-interop/src/runtime/native/appearance-observables', () => ({
-  appearanceObservable: {
-    getSnapshot: () => ({ colorScheme: 'light' }),
-    subscribe: jest.fn(() => () => {}),
-  },
-}));
+jest.mock(
+  'react-native-css-interop/src/runtime/native/appearance-observables',
+  () => ({
+    appearanceObservable: {
+      getSnapshot: () => ({ colorScheme: 'light' }),
+      subscribe: jest.fn(() => () => {}),
+    },
+  })
+);
 
 // Mock Sentry
 jest.mock('./utils/sentryUtils', () => ({
@@ -179,9 +186,13 @@ jest.mock('@supabase/supabase-js', () => ({
     })),
     auth: {
       signUp: jest.fn(() => Promise.resolve({ data: {}, error: null })),
-      signInWithPassword: jest.fn(() => Promise.resolve({ data: {}, error: null })),
+      signInWithPassword: jest.fn(() =>
+        Promise.resolve({ data: {}, error: null })
+      ),
       signOut: jest.fn(() => Promise.resolve({ error: null })),
-      getUser: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+      getUser: jest.fn(() =>
+        Promise.resolve({ data: { user: null }, error: null })
+      ),
     },
   })),
 }));
@@ -224,5 +235,5 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   multiRemove: jest.fn(() => Promise.resolve()),
 }));
 
-// Global test timeout
-jest.setTimeout(10000);
+// Global test timeout - reduced for faster test execution
+// jest.setTimeout(5000);
