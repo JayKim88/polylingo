@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { TranslationResult } from '../types/dictionary';
 import TranslationCard from './TranslationCard';
 import { useTheme } from '@/contexts/ThemeContext';

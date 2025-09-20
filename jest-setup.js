@@ -234,6 +234,3 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   multiSet: jest.fn(() => Promise.resolve()),
   multiRemove: jest.fn(() => Promise.resolve()),
 }));
-
-// Global test timeout - reduced for faster test execution
-// jest.setTimeout(5000);

@@ -61,11 +61,9 @@ const CircularUsageButton = React.memo(
     // Calculate progress percentage (0-100)
     const usagePercentage = (usage.used / usage.limit) * 100;
 
-    // SVG circle properties
-    const radius = (size - 8) / 2; // Account for stroke width
+    const radius = (size - 8) / 2;
     const circumference = 2 * Math.PI * radius;
     const strokeDasharray = circumference;
-    // For counter-clockwise from 12 o'clock, we use usagePercentage instead of remainingPercentage
     const strokeDashoffset = (usagePercentage / 100) * circumference;
 
     // Determine color based on usage

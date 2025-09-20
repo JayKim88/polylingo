@@ -114,19 +114,16 @@ export class IAPService {
 
   // TestFlight/Sandbox 환경 감지
   private static determineTestEnvironment(): boolean {
-    // 1. 개발 모드는 무조건 Sandbox
     if (__DEV__) {
       console.log('✅ Using Sandbox: Development mode');
       return true;
     }
 
-    // 2. 환경변수로 강제 설정 (TestFlight 배포용)
     if (process.env.EXPO_PUBLIC_IAP_USE_SANDBOX === 'true') {
       console.log('✅ Using Sandbox: Environment variable forced');
       return true;
     }
 
-    // 3. 기본값: Production (App Store)
     console.log('🏪 Using Production: App Store environment');
     return false;
   }

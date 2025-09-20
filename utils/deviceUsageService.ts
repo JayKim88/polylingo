@@ -29,11 +29,9 @@ export class DeviceUsageService {
     if (this.deviceId) return this.deviceId;
 
     try {
-      // 1. 저장된 디바이스 ID 확인
       let storedId = await AsyncStorage.getItem(DEVICE_ID_KEY);
 
       if (!storedId) {
-        // 2. 디바이스 특성 기반 ID 생성
         const deviceFingerprint = await this.generateDeviceFingerprint();
         storedId = `device_${deviceFingerprint}`;
 
@@ -45,7 +43,6 @@ export class DeviceUsageService {
     } catch (error) {
       console.warn('Failed to get device ID, using fallback:', error);
 
-      // Fallback: 타임스탬프 기반 ID (최후 수단)
       let fallbackId = await AsyncStorage.getItem('fallback_device_id');
       if (!fallbackId) {
         fallbackId = `fallback_${Date.now()}_${Math.random()
@@ -69,10 +66,8 @@ export class DeviceUsageService {
       const platform = Platform.OS;
       const version = Platform.Version.toString();
 
-      // 디바이스 특성들을 조합하여 핑거프린트 생성
       const fingerprint = `${platform}_${version}_${width}x${height}`;
 
-      // 해시 생성 (간단한 문자열 해시)
       let hash = 0;
       for (let i = 0; i < fingerprint.length; i++) {
         const char = fingerprint.charCodeAt(i);
@@ -80,7 +75,6 @@ export class DeviceUsageService {
         hash = hash & hash; // 32비트 정수로 변환
       }
 
-      // 양수로 변환하고 16진수로 표현
       const hashedId = Math.abs(hash).toString(16);
 
       return hashedId;
@@ -117,9 +111,6 @@ export class DeviceUsageService {
     }
   }
 
-  /**
-   * 새 디바이스 사용량 데이터 생성
-   */
   private static createNewDeviceUsage(deviceId: string): DeviceUsageData {
     return {
       deviceId,
@@ -130,9 +121,6 @@ export class DeviceUsageService {
     };
   }
 
-  /**
-   * 사용량 증가 및 제한 검사 (일일 제한만)
-   */
   static async incrementUsageWithLimits(increment: number = 1): Promise<{
     allowed: boolean;
     reason?: string;
@@ -161,7 +149,6 @@ export class DeviceUsageService {
       data.totalUsage += increment;
       data.lastUsageDate = today;
 
-      // 저장
       await AsyncStorage.setItem(DEVICE_USAGE_KEY, JSON.stringify(data));
 
       return {

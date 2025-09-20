@@ -11,11 +11,7 @@ import {
 } from 'react-native';
 import { X, Crown, Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import {
-  Subscription,
-  Purchase,
-  getAvailablePurchases,
-} from 'react-native-iap';
+import { Subscription, getAvailablePurchases } from 'react-native-iap';
 
 import { useTheme } from '../contexts/ThemeContext';
 import { IAPService } from '../utils/iapService';

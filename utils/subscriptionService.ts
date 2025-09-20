@@ -88,8 +88,6 @@ export class SubscriptionService {
     }
   }
 
-  // Apple ID login check removed - using transaction-based identification
-
   private static async processServerSubscription(
     serverSubscription: any,
     isSearching?: boolean

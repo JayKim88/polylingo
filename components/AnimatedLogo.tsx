@@ -8,13 +8,11 @@ const { width } = Dimensions.get('window');
 export default function AnimatedLogo() {
   const { colors } = useTheme();
 
-  // Animation values for each language character
   const rotationAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(0.8)).current;
   const charactersOpacity = useRef(new Animated.Value(0)).current;
   const centerLogoScale = useRef(new Animated.Value(0)).current;
 
-  // Language characters with their positions
   const languageCharacters = [
     { char: 'A', angle: 0, lang: 'English' },
     { char: '한', angle: 45, lang: 'Korean' },
@@ -34,9 +32,7 @@ export default function AnimatedLogo() {
   useEffect(() => {
     // Delay to ensure all values are properly initialized
     const initDelay = setTimeout(() => {
-      // Animation sequence
       const animationSequence = Animated.sequence([
-        // Phase 1: Show center logo
         Animated.spring(centerLogoScale, {
           toValue: 1,
           tension: 60,
@@ -44,7 +40,6 @@ export default function AnimatedLogo() {
           useNativeDriver: true,
         }),
 
-        // Phase 2: Show surrounding characters
         Animated.timing(charactersOpacity, {
           toValue: 1,
           duration: 800,
@@ -52,7 +47,6 @@ export default function AnimatedLogo() {
         }),
       ]);
 
-      // Start rotation animation (continuous)
       const rotationAnimation = Animated.loop(
         Animated.timing(rotationAnim, {
           toValue: 1,
@@ -61,7 +55,6 @@ export default function AnimatedLogo() {
         })
       );
 
-      // Start pulse animation (continuous)
       const pulseAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
@@ -77,12 +70,10 @@ export default function AnimatedLogo() {
         ])
       );
 
-      // Start all animations
       animationSequence.start();
       rotationAnimation.start();
       pulseAnimation.start();
 
-      // Cleanup function
       return () => {
         rotationAnimation.stop();
         pulseAnimation.stop();
@@ -94,7 +85,6 @@ export default function AnimatedLogo() {
     };
   }, []);
 
-  // Calculate character positions
   const getCharacterPosition = (angle: number) => {
     const radian = (angle * Math.PI) / 180;
     const x = centerX + radius * Math.cos(radian);
@@ -121,7 +111,6 @@ export default function AnimatedLogo() {
         alignItems: 'center',
       }}
     >
-      {/* Center logo with pulse animation */}
       <Animated.View
         style={{
           width: 90,
@@ -140,7 +129,6 @@ export default function AnimatedLogo() {
           elevation: 4,
         }}
       >
-        {/* Pulse effect background */}
         <Animated.View
           style={{
             position: 'absolute',
@@ -156,11 +144,9 @@ export default function AnimatedLogo() {
           }}
         />
 
-        {/* Center emoji */}
         <Text style={{ fontSize: 32 }}>🌍</Text>
       </Animated.View>
 
-      {/* Rotating language characters */}
       <Animated.View
         style={{
           position: 'absolute',
@@ -209,7 +195,6 @@ export default function AnimatedLogo() {
         })}
       </Animated.View>
 
-      {/* Connecting lines effect (simplified) */}
       <Animated.View
         style={{
           position: 'absolute',

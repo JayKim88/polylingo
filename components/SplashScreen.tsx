@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated } from 'react-native';
-import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
+
+import { useTheme } from '../contexts/ThemeContext';
 import AnimatedLogo from './AnimatedLogo';
 import SplashErrorBoundary from './SplashErrorBoundary';
 import { VersionService } from '../utils/version';
@@ -23,9 +24,7 @@ export default function SplashScreen({
   const accentPulseAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Start the splash animation sequence
     const animationSequence = Animated.sequence([
-      // Phase 1: Fade in and scale up the logo
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -40,7 +39,6 @@ export default function SplashScreen({
         }),
       ]),
 
-      // Phase 2: Show title
       Animated.timing(titleFadeAnim, {
         toValue: 1,
         duration: 600,
@@ -48,7 +46,6 @@ export default function SplashScreen({
         useNativeDriver: true,
       }),
 
-      // Phase 3: Show subtitle
       Animated.timing(subtitleFadeAnim, {
         toValue: 1,
         duration: 500,
@@ -57,10 +54,8 @@ export default function SplashScreen({
       }),
     ]);
 
-    // Start animation and set completion timer
     animationSequence.start();
 
-    // Start accent pulse animation (continuous)
     const pulseAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(accentPulseAnim, {
@@ -76,7 +71,6 @@ export default function SplashScreen({
       ])
     );
 
-    // Start pulse animation after logo appears
     setTimeout(() => {
       pulseAnimation.start();
     }, 800);

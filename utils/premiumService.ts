@@ -3,9 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const PREMIUM_USER_KEY = 'isPremiumUser';
 
 export class PremiumService {
-  /**
-   * 프리미엄 사용자 상태를 확인합니다
-   */
   static async isPremiumUser(): Promise<boolean> {
     try {
       const value = await AsyncStorage.getItem(PREMIUM_USER_KEY);
@@ -16,9 +13,6 @@ export class PremiumService {
     }
   }
 
-  /**
-   * 프리미엄 사용자 상태를 설정합니다
-   */
   static async setPremiumUser(isPremium: boolean): Promise<void> {
     try {
       await AsyncStorage.setItem(PREMIUM_USER_KEY, isPremium.toString());
@@ -27,9 +21,6 @@ export class PremiumService {
     }
   }
 
-  /**
-   * 광고를 표시할지 결정합니다
-   */
   static async shouldShowAds(): Promise<boolean> {
     try {
       const isPremium = await this.isPremiumUser();

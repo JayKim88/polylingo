@@ -96,14 +96,12 @@ export class SpeechService {
     });
   }
 
-  // 음성 재생 중지
   static stop(): void {
     if (!this.isAvailable()) return;
 
     Speech.stop();
   }
 
-  // Get platform information for debugging
   static getPlatformInfo(): string {
     return `Platform: ${Platform.OS}, TTS Available: ${this.isAvailable()}`;
   }

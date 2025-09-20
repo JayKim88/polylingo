@@ -64,17 +64,14 @@ export default function UsageDetailModal({
     }
   }, [visible, isCheckingSubscription]);
 
-  // Calculate usage percentage
   const usagePercentage = (usage.used / usage.limit) * 100;
 
-  // Get status color
   const getStatusColor = () => {
     if (usagePercentage >= 95) return '#EF4444'; // Red
     if (usagePercentage >= 80) return '#F59E0B'; // Orange
     return '#10B981'; // Green
   };
 
-  // Get plan display name
   const getPlanDisplayName = () => {
     switch (planId) {
       case 'free':
@@ -90,7 +87,6 @@ export default function UsageDetailModal({
     }
   };
 
-  // Get usage description
   const getUsageDescription = () => {
     if (planId === 'free') {
       return (
@@ -104,7 +100,6 @@ export default function UsageDetailModal({
     );
   };
 
-  // Animation helper function
   const animateButton = (scale: number) => {
     Animated.spring(okButtonScale, {
       toValue: scale,

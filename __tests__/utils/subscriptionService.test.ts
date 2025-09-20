@@ -5,7 +5,6 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SubscriptionService } from '../../utils/subscriptionService';
-import { SUBSCRIPTION_PLANS } from '../../types/subscription';
 import { UserService, getDateString } from '../../utils/userService';
 
 // Mock dependencies
@@ -17,10 +16,12 @@ jest.mock('../../utils/deviceUsageService', () => ({
   DeviceUsageService: {
     getCurrentUsageStats: jest.fn().mockResolvedValue({
       daily: { used: 0, limit: 100, remaining: 100 },
-      total: 0
+      total: 0,
     }),
-    incrementUsageWithLimits: jest.fn().mockResolvedValue({ allowed: true, newCount: 1 }),
-  }
+    incrementUsageWithLimits: jest
+      .fn()
+      .mockResolvedValue({ allowed: true, newCount: 1 }),
+  },
 }));
 
 // Mock sentryUtils to prevent dynamic import issues
@@ -38,10 +39,10 @@ describe('SubscriptionService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock getDateString to return consistent date
     (getDateString as jest.Mock).mockReturnValue(mockDate);
-    
+
     // Setup default mocks
     mockAsyncStorage.getItem.mockResolvedValue(null);
     mockUserService.getCurrentTransactionId.mockResolvedValue(null);
@@ -54,9 +55,9 @@ describe('SubscriptionService', () => {
   describe('Subscription Management', () => {
     test('returns free subscription when none exists', async () => {
       mockAsyncStorage.getItem.mockResolvedValue(null);
-      
+
       const subscription = await SubscriptionService.getCurrentSubscription();
-      
+
       expect(subscription?.planId).toBe('free');
       expect(subscription?.isActive).toBe(true);
     });
@@ -67,20 +68,24 @@ describe('SubscriptionService', () => {
         isActive: true,
         startDate: new Date().toISOString(),
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        dailyUsage: {}
+        dailyUsage: {},
       };
       mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(cachedSub));
 
       const subscription = await SubscriptionService.getCurrentSubscription();
-      
+
       expect(subscription?.planId).toBe('pro_monthly');
     });
 
     test('sets subscription successfully', async () => {
       mockAsyncStorage.setItem.mockResolvedValue();
 
-      await SubscriptionService.setSubscription('pro_monthly', { isActive: true }, 'tx_123');
-      
+      await SubscriptionService.setSubscription(
+        'pro_monthly',
+        { isActive: true },
+        'tx_123'
+      );
+
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
         'user_subscription',
         expect.stringContaining('"planId":"pro_monthly"')
@@ -89,7 +94,9 @@ describe('SubscriptionService', () => {
 
     test('validates plan ID before setting', async () => {
       await expect(
-        SubscriptionService.setSubscription('invalid_plan' as any, { isActive: true })
+        SubscriptionService.setSubscription('invalid_plan' as any, {
+          isActive: true,
+        })
       ).rejects.toThrow('Invalid plan ID');
     });
 
@@ -109,31 +116,37 @@ describe('SubscriptionService', () => {
         isActive: true,
         startDate: new Date().toISOString(),
         endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-        dailyUsage: {}
+        dailyUsage: {},
       };
       mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(premiumSub));
 
       const result = await SubscriptionService.incrementDailyUsage();
-      
+
       expect(result).toBe(true);
     });
 
     test('enforces limits for free plan', async () => {
       // Mock hitting usage limit
-      const mockDeviceUsage = require('../../utils/deviceUsageService').DeviceUsageService;
-      mockDeviceUsage.incrementUsageWithLimits.mockResolvedValue({ allowed: false, newCount: 101 });
+      const mockDeviceUsage =
+        require('../../utils/deviceUsageService').DeviceUsageService;
+      mockDeviceUsage.incrementUsageWithLimits.mockResolvedValue({
+        allowed: false,
+        newCount: 101,
+      });
 
       const result = await SubscriptionService.incrementDailyUsage();
-      
+
       expect(result).toBe(false);
     });
 
     test('handles usage sync errors gracefully', async () => {
-      mockUserService.syncDailyUsage.mockRejectedValue(new Error('Network error'));
+      mockUserService.syncDailyUsage.mockRejectedValue(
+        new Error('Network error')
+      );
 
       // Should still succeed locally even if sync fails
       const result = await SubscriptionService.incrementDailyUsage();
-      
+
       expect(typeof result).toBe('boolean');
     });
   });
@@ -144,9 +157,11 @@ describe('SubscriptionService', () => {
       await expect(
         SubscriptionService.setSubscription('free', { isActive: true })
       ).resolves.not.toThrow();
-      
+
       await expect(
-        SubscriptionService.setSubscription('invalid_plan' as any, { isActive: true })
+        SubscriptionService.setSubscription('invalid_plan' as any, {
+          isActive: true,
+        })
       ).rejects.toThrow();
     });
 
@@ -156,12 +171,12 @@ describe('SubscriptionService', () => {
         isActive: true,
         startDate: new Date(Date.now() - 1000).toISOString(),
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        dailyUsage: {}
+        dailyUsage: {},
       };
       mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(activeSub));
 
       const subscription = await SubscriptionService.getCurrentSubscription();
-      
+
       expect(subscription?.isActive).toBe(true);
       expect(subscription?.planId).toBe('pro_monthly');
     });
@@ -172,12 +187,12 @@ describe('SubscriptionService', () => {
         isActive: true,
         startDate: new Date().toISOString(),
         endDate: null,
-        dailyUsage: {}
+        dailyUsage: {},
       };
       mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(lifetimeSub));
 
       const subscription = await SubscriptionService.getCurrentSubscription();
-      
+
       expect(subscription?.isActive).toBe(true);
       expect(subscription?.planId).toBe('premium_yearly');
     });
@@ -188,7 +203,7 @@ describe('SubscriptionService', () => {
       mockAsyncStorage.getItem.mockRejectedValue(new Error('Storage error'));
 
       const subscription = await SubscriptionService.getCurrentSubscription();
-      
+
       expect(subscription?.planId).toBe('free');
       expect(subscription?.isActive).toBe(true);
     });
@@ -197,12 +212,14 @@ describe('SubscriptionService', () => {
       mockAsyncStorage.getItem.mockResolvedValue('invalid json');
 
       const subscription = await SubscriptionService.getCurrentSubscription();
-      
+
       expect(subscription?.planId).toBe('free');
     });
 
     test('handles server sync errors gracefully', async () => {
-      mockUserService.syncSubscription.mockRejectedValue(new Error('Network error'));
+      mockUserService.syncSubscription.mockRejectedValue(
+        new Error('Network error')
+      );
 
       // Should not throw error, just log and continue
       await expect(
@@ -215,7 +232,9 @@ describe('SubscriptionService', () => {
     test('prevents concurrent subscription fetches', async () => {
       // Mock slow response
       let resolvePromise: (value: any) => void;
-      const slowPromise = new Promise(resolve => { resolvePromise = resolve; });
+      const slowPromise = new Promise((resolve) => {
+        resolvePromise = resolve;
+      });
       mockAsyncStorage.getItem.mockReturnValue(slowPromise as any);
 
       // Start two concurrent requests
@@ -226,7 +245,7 @@ describe('SubscriptionService', () => {
       resolvePromise!(null);
 
       const [result1, result2] = await Promise.all([promise1, promise2]);
-      
+
       // Should return the same result and only call storage once
       expect(result1).toEqual(result2);
       expect(mockAsyncStorage.getItem).toHaveBeenCalledTimes(1);
@@ -234,12 +253,12 @@ describe('SubscriptionService', () => {
 
     test('queues subscription requests properly', async () => {
       // This test ensures that concurrent subscription operations don't interfere
-      const promises = Array.from({ length: 3 }, () => 
+      const promises = Array.from({ length: 3 }, () =>
         SubscriptionService.setSubscription('pro_monthly', { isActive: true })
       );
 
       await Promise.all(promises);
-      
+
       // All operations should complete without error
       expect(mockAsyncStorage.setItem).toHaveBeenCalledTimes(3);
     });

@@ -3,7 +3,6 @@ import { Animated } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useNavigationState } from '@react-navigation/native';
 
-// Global direction state to avoid multiple tracking
 let globalDirection: 'left' | 'right' | 'none' = 'none';
 let globalPreviousIndex: number | null = null;
 let listeners: Set<() => void> = new Set();
@@ -32,7 +31,6 @@ export const useTabSlideAnimation = (
   // Track navigation state globally (only one instance will actually track)
   const currentIndex = useNavigationState((state) => state?.index ?? 0);
 
-  // Global direction tracking
   useEffect(() => {
     // Update global direction if this is the first hook or index changed
     if (globalPreviousIndex !== null && globalPreviousIndex !== currentIndex) {
@@ -52,31 +50,25 @@ export const useTabSlideAnimation = (
 
   useFocusEffect(
     useCallback(() => {
-      // Call onFocus callback if provided
       onFocus?.();
 
-      // Get current direction from global state
       const currentDirection = globalDirection;
 
-      // Determine slide start position based on direction
       let startX = 0;
       if (currentDirection === 'right') {
-        startX = slideDistance; // Coming from left, slide from right
+        startX = slideDistance;
       } else if (currentDirection === 'left') {
-        startX = -slideDistance; // Coming from right, slide from left
+        startX = -slideDistance;
       }
 
-      // Reset global direction to 'none' after using it
       globalDirection = 'none';
 
-      // Reset animation values
       fadeAnim.setValue(0);
       slideAnim.setValue(startX);
       if (includeScale) {
         scaleAnim.setValue(0.95);
       }
 
-      // Create animations array
       const animations = [
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -100,7 +92,6 @@ export const useTabSlideAnimation = (
         );
       }
 
-      // Start animations
       Animated.parallel(animations).start();
     }, [onFocus, duration, slideDistance, includeScale])
   );

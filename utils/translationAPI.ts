@@ -30,7 +30,6 @@ export class TranslationAPI {
   private static translationCache = new Map<string, CacheEntry>();
   private static readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24시간
 
-  // Generate cache key
   private static getCacheKey(
     text: string,
     sourceLanguage: string,
@@ -39,12 +38,10 @@ export class TranslationAPI {
     return `${text.toLowerCase()}_${sourceLanguage}_${targetLanguage}`;
   }
 
-  // Check if cache entry is valid
   private static isCacheValid(entry: CacheEntry): boolean {
     return Date.now() - entry.timestamp < this.CACHE_DURATION;
   }
 
-  // Get from cache
   private static getFromCache(
     text: string,
     sourceLanguage: string,
@@ -62,7 +59,6 @@ export class TranslationAPI {
       };
     }
 
-    // Remove expired entry
     if (entry) {
       this.translationCache.delete(key);
     }
@@ -95,7 +91,6 @@ export class TranslationAPI {
     });
   }
 
-  // Clear expired cache entries
   private static cleanupCache(): void {
     if (!this.translationCache) {
       return;
@@ -107,7 +102,7 @@ export class TranslationAPI {
       }
     }
   }
-  // LibreTranslate API를 사용한 번역 (가장 정확함)
+
   static async translateWithLibreTranslate(
     text: string,
     sourceLanguage: string,
@@ -147,7 +142,6 @@ export class TranslationAPI {
     }
   }
 
-  // MyMemory API를 사용한 번역
   static async translateWithMyMemory(
     text: string,
     sourceLanguage: string,

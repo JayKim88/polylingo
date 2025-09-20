@@ -18,7 +18,6 @@ export class VersionService {
     const version = expoConfig?.version || '1.0.0';
     const appName = expoConfig?.name || 'PolyLingo';
 
-    // Build number (iOS) or version code (Android)
     const buildNumber =
       Constants.nativeAppVersion || Constants.nativeBuildVersion;
 
@@ -30,30 +29,18 @@ export class VersionService {
     };
   }
 
-  /**
-   * Get formatted version string for display
-   */
   static getFormattedVersion(): string {
     return this.getVersionInfo().formattedVersion;
   }
 
-  /**
-   * Get app name
-   */
   static getAppName(): string {
     return this.getVersionInfo().appName;
   }
 
-  /**
-   * Get raw version number
-   */
   static getVersion(): string {
     return this.getVersionInfo().version;
   }
 
-  /**
-   * Get build information
-   */
   static getBuildInfo(): string {
     const { version, buildNumber } = this.getVersionInfo();
     const buildDate = new Date().toISOString().split('T')[0]; // Current date as build date

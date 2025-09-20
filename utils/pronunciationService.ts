@@ -1,11 +1,7 @@
-// import translate from 'google-translate-api-x';
-
 export class PronunciationService {
-  // Free pronunciation API endpoint for english
   private static readonly PHONEME_API =
     'https://api.dictionaryapi.dev/api/v2/entries/en';
 
-  // Get pronunciation using Google Translate API
   static async getPronunciation(
     word: string,
     languageCode: string

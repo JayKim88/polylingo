@@ -153,7 +153,6 @@ export const updateSubscriptionContext = async (subscription?: any) => {
   }
 };
 
-// 현재 일일 사용량을 실시간으로 가져오는 함수
 const getCurrentDailyUsage = async () => {
   try {
     const { SubscriptionService } = await import('./subscriptionService');
@@ -164,7 +163,6 @@ const getCurrentDailyUsage = async () => {
   }
 };
 
-// 앱 상태 변경 시 컨텍스트 업데이트
 export const updateAppStateContext = (state: string) => {
   Sentry.setContext('app_state', {
     current_state: state,
@@ -197,7 +195,6 @@ export const captureNetworkError = (
   });
 };
 
-// 성능 이슈 추적
 export const trackPerformance = (
   action: string,
   duration: number,

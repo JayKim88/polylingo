@@ -1,12 +1,13 @@
 /**
  * SearchInput Component Test Suite - Simplified
- * 
+ *
  * Basic tests for the SearchInput component functionality
  */
 
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { TouchableOpacity } from 'react-native';
+
 import SearchInput from '../../components/SearchInput';
 
 // Mock the theme context
@@ -17,9 +18,9 @@ jest.mock('../../contexts/ThemeContext', () => ({
       background: '#FFFFFF',
       text: '#000000',
       border: '#E5E5E5',
-      primary: '#007AFF'
-    }
-  })
+      primary: '#007AFF',
+    },
+  }),
 }));
 
 describe('SearchInput Component', () => {
@@ -31,7 +32,7 @@ describe('SearchInput Component', () => {
     placeholder: 'Enter text to translate',
     isLoading: false,
     maxLength: 1000,
-    disabled: false
+    disabled: false,
   };
 
   beforeEach(() => {
@@ -40,8 +41,10 @@ describe('SearchInput Component', () => {
 
   describe('Basic Rendering', () => {
     test('should render with placeholder text', () => {
-      const { getByPlaceholderText } = render(<SearchInput {...defaultProps} />);
-      
+      const { getByPlaceholderText } = render(
+        <SearchInput {...defaultProps} />
+      );
+
       expect(getByPlaceholderText('Enter text to translate')).toBeTruthy();
     });
 
@@ -49,7 +52,7 @@ describe('SearchInput Component', () => {
       const { getByDisplayValue } = render(
         <SearchInput {...defaultProps} value="hello world" />
       );
-      
+
       expect(getByDisplayValue('hello world')).toBeTruthy();
     });
 
@@ -57,7 +60,7 @@ describe('SearchInput Component', () => {
       const { getByPlaceholderText } = render(
         <SearchInput {...defaultProps} disabled={true} />
       );
-      
+
       const input = getByPlaceholderText('Enter text to translate');
       expect(input.props.editable).toBe(false);
     });
@@ -65,11 +68,13 @@ describe('SearchInput Component', () => {
 
   describe('Text Input Functionality', () => {
     test('should call onChangeText when text changes', () => {
-      const { getByPlaceholderText } = render(<SearchInput {...defaultProps} />);
+      const { getByPlaceholderText } = render(
+        <SearchInput {...defaultProps} />
+      );
       const input = getByPlaceholderText('Enter text to translate');
-      
+
       fireEvent.changeText(input, 'hello');
-      
+
       expect(defaultProps.onChangeText).toHaveBeenCalledWith('hello');
     });
 
@@ -78,7 +83,7 @@ describe('SearchInput Component', () => {
         <SearchInput {...defaultProps} maxLength={10} />
       );
       const input = getByPlaceholderText('Enter text to translate');
-      
+
       expect(input.props.maxLength).toBe(10);
     });
   });
@@ -88,10 +93,10 @@ describe('SearchInput Component', () => {
       const { getByPlaceholderText } = render(
         <SearchInput {...defaultProps} value="hello" />
       );
-      
+
       const input = getByPlaceholderText('Enter text to translate');
       fireEvent(input, 'onSubmitEditing');
-      
+
       expect(defaultProps.onSearch).toHaveBeenCalled();
     });
 
@@ -100,23 +105,21 @@ describe('SearchInput Component', () => {
       const component = render(
         <SearchInput {...defaultProps} value="hello" onClear={onClearMock} />
       );
-      
+
       // Find the TouchableOpacity element (clear button)
       const root = component.root;
       const touchableOpacities = root.findAllByType(TouchableOpacity);
-      
+
       expect(touchableOpacities).toHaveLength(1);
-      
+
       // Press the clear button
       fireEvent.press(touchableOpacities[0]);
       expect(onClearMock).toHaveBeenCalled();
     });
 
     test('should not show clear button when value is empty', () => {
-      const component = render(
-        <SearchInput {...defaultProps} value="" />
-      );
-      
+      const component = render(<SearchInput {...defaultProps} value="" />);
+
       const root = component.root;
       const touchableOpacities = root.findAllByType(TouchableOpacity);
       // Should have no touchable elements when value is empty
@@ -124,10 +127,8 @@ describe('SearchInput Component', () => {
     });
 
     test('should show clear button when value has text', () => {
-      const component = render(
-        <SearchInput {...defaultProps} value="hello" />
-      );
-      
+      const component = render(<SearchInput {...defaultProps} value="hello" />);
+
       const root = component.root;
       const touchableOpacities = root.findAllByType(TouchableOpacity);
       // Should have one touchable element (clear button) when value has text
@@ -140,7 +141,7 @@ describe('SearchInput Component', () => {
       const component = render(
         <SearchInput {...defaultProps} isLoading={true} />
       );
-      
+
       // Component should render without errors when loading
       expect(component).toBeTruthy();
     });
@@ -149,7 +150,7 @@ describe('SearchInput Component', () => {
       const component = render(
         <SearchInput {...defaultProps} isLoading={false} />
       );
-      
+
       // Component should render without errors when not loading
       expect(component).toBeTruthy();
     });
@@ -160,7 +161,7 @@ describe('SearchInput Component', () => {
       const { getByPlaceholderText } = render(
         <SearchInput {...defaultProps} value="" />
       );
-      
+
       const input = getByPlaceholderText('Enter text to translate');
       expect(input.props.value).toBe('');
     });
@@ -170,7 +171,7 @@ describe('SearchInput Component', () => {
       const { getByDisplayValue } = render(
         <SearchInput {...defaultProps} value={longText} />
       );
-      
+
       expect(getByDisplayValue(longText)).toBeTruthy();
     });
 
@@ -179,7 +180,7 @@ describe('SearchInput Component', () => {
       const { getByDisplayValue } = render(
         <SearchInput {...defaultProps} value={specialText} />
       );
-      
+
       expect(getByDisplayValue(specialText)).toBeTruthy();
     });
   });
@@ -202,9 +203,9 @@ describe('SearchInput Component', () => {
         onSearch: jest.fn(),
         onClear: jest.fn(),
         placeholder: 'Test',
-        maxLength: 100
+        maxLength: 100,
       };
-      
+
       const component = render(<SearchInput {...minimalProps} />);
       expect(component).toBeTruthy();
     });
