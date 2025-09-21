@@ -12,39 +12,21 @@ This mobile app achieves commercial-grade completeness through a subscription-ba
 
 <br/>
 
+
 ## 📱 UI & UX Video Screenshot
 
-<div style="
-  display: flex;
-  flex-wrap: no-wrap;
-  justify-content: center;
-  gap: 24px;        
-">
-  <div style="text-align:start;">
-    <strong>Search Function</strong><br/>
-    <video controls width="240">
-      <source src="./videos/search-function-ffmpeg-30.mp4" type="video/mp4">
-      Your browser does not support the video tag.
-    </video>
-  </div>
-  <div style="text-align:start;">
-    <strong>Change Language</strong><br/>
-    <video controls width="240">
-      <source src="./videos/change-lang-ffmpeg-30.mp4" type="video/mp4">
-      Your browser does not support the video tag.
-    </video>
-  </div>
-  <div style="text-align:start;">
-    <strong>Other Pages</strong><br/>
-    <video controls width="240">
-      <source src="./videos/other-pages-ffmpeg-30.mp4" type="video/mp4">
-      Your browser does not support the video tag.
-    </video>
-  </div>
+### Search Function & Change Language & Other Pages
 
+<div style="display: flex; gap: 16px; overflow-x: auto;">  
+  <img src="https://github.com/user-attachments/assets/6f433dc2-e6fb-420e-a9b8-5211640e325b"
+       style="width: 240px; height: auto;" />
+  <img src="https://github.com/user-attachments/assets/03a6d96b-5c30-47fc-b286-4751101abcc5"
+       style="width: 240px; height: auto;" />
+  <img src="https://github.com/user-attachments/assets/65635f39-dfb1-40fb-8c8b-52f7c0f52d77"
+       style="width: 240px; height: auto;" />  
 </div>
 
-#### Screen Shots
+### Screen Shots
 
 <div style="display:flex;gap:8px;white-space:nowrap;">
       <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 16 26 23" src="https://github.com/user-attachments/assets/69f1a699-d7d4-4c0e-bcf7-a80685e703af" />
