@@ -14,6 +14,36 @@ This mobile app achieves commercial-grade completeness through a subscription-ba
 
 ## 📱 UI & UX Video Screenshot
 
+<div style="
+  display: flex;
+  flex-wrap: no-wrap;
+  justify-content: center;
+  gap: 24px;        
+">
+  <div style="text-align:start;">
+    <strong>Search Function</strong><br/>
+    <video controls width="240">
+      <source src="./videos/search-function-ffmpeg-30.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+  <div style="text-align:start;">
+    <strong>Change Language</strong><br/>
+    <video controls width="240">
+      <source src="./videos/change-lang-ffmpeg-30.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+  <div style="text-align:start;">
+    <strong>Other Pages</strong><br/>
+    <video controls width="240">
+      <source src="./videos/other-pages-ffmpeg-30.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+
+</div>
+
 #### Screen Shots
 
 <div style="display:flex;gap:8px;white-space:nowrap;">
