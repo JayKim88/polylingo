@@ -496,7 +496,6 @@ components/                     # Reusable UI components
 ├── SearchInput.tsx            # Translation input with voice
 ├── TranslationList.tsx        # Results display with gestures
 ├── SubscriptionModal.tsx      # Premium upgrade interface
-├── CalendarView.tsx           # Usage analytics visualization
 └── CircularUsageButton.tsx    # Real-time usage indicator
 
 utils/                         # Business logic services
