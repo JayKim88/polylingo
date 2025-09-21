@@ -1,3 +1,12 @@
+<div style="display: flex; gap: 16px; overflow-x: auto;">  
+  <img src="https://github.com/user-attachments/assets/6f433dc2-e6fb-420e-a9b8-5211640e325b"
+       style="width: 240px; height: auto;" />
+  <img src="https://github.com/user-attachments/assets/03a6d96b-5c30-47fc-b286-4751101abcc5"
+       style="width: 240px; height: auto;" />
+  <img src="https://github.com/user-attachments/assets/65635f39-dfb1-40fb-8c8b-52f7c0f52d77"
+       style="width: 240px; height: auto;" />  
+</div>
+
 # PolyLingo
 
 A real-time multi-language translation mobile application developed using React Native and Expo.
@@ -9,35 +18,6 @@ Supporting 14 languages, it provides parallel simultaneous translation for up to
 Advanced features such as speech recognition, offline caching, and real-time state management optimize the user experience.
 
 This mobile app achieves commercial-grade completeness through a subscription-based monetization model and full Apple ecosystem integration.
-
-<br/>
-
-
-## 📱 UI & UX Video Screenshot
-
-### Search Function & Change Language & Other Pages
-
-<div style="display: flex; gap: 16px; overflow-x: auto;">  
-  <img src="https://github.com/user-attachments/assets/6f433dc2-e6fb-420e-a9b8-5211640e325b"
-       style="width: 240px; height: auto;" />
-  <img src="https://github.com/user-attachments/assets/03a6d96b-5c30-47fc-b286-4751101abcc5"
-       style="width: 240px; height: auto;" />
-  <img src="https://github.com/user-attachments/assets/65635f39-dfb1-40fb-8c8b-52f7c0f52d77"
-       style="width: 240px; height: auto;" />  
-</div>
-
-### Screen Shots
-
-<div style="display:flex;gap:8px;white-space:nowrap;">
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 16 26 23" src="https://github.com/user-attachments/assets/69f1a699-d7d4-4c0e-bcf7-a80685e703af" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 16 26 52" src="https://github.com/user-attachments/assets/ea53a950-4d15-46ac-9d76-0b4b61d367f2" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 30 45" src="https://github.com/user-attachments/assets/c3de7323-f8d6-45f6-9d53-e828bae2da26" />      
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 00" src="https://github.com/user-attachments/assets/1d32757e-65b3-4995-a0eb-cd53e0e84346" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 09" src="https://github.com/user-attachments/assets/a81b2dc9-01d8-4fa9-a22c-2dc386f29892" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 18" src="https://github.com/user-attachments/assets/82344002-e48f-4a44-a9e9-2790d76cc074" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 45" src="https://github.com/user-attachments/assets/aef6ed6a-4b85-4742-82af-b30a64e2f82d" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 58" src="https://github.com/user-attachments/assets/8cef6317-7b2d-41e2-85a2-f62290bed623" />
-</div>
 
 <br/>
 
@@ -56,9 +36,8 @@ This mobile app achieves commercial-grade completeness through a subscription-ba
 
 - **Claude API** for AI-powered translation with phonetic transcription
 - **Wiktionary REST API** for real-time word definitions, part-of-speech classification, and contextual meanings lookup
-- **Supabase PostgreSQL** for user data and subscription management
 - **MyMemory API** as intelligent fallback translation provider
-- **Custom Next.js API** with mobile app signature verification
+- **Supabase PostgreSQL** for user data and subscription management
 - **Sentry** for real-time error tracking and performance monitoring
 
 **Platform Integrations**
@@ -84,7 +63,6 @@ This mobile app achieves commercial-grade completeness through a subscription-ba
 **Core Translation Features**
 
 - **Multi-Language Parallel Translation**: Support for 14 languages with simultaneous translation to up to 5 languages (premium) or 3 languages (free)
-- **Comprehensive Word Dictionary**: Real-time word definitions with up to 5 contextual meanings per word, including part-of-speech classification (noun, verb, adjective, etc.) sourced from Wiktionary API
 - **Parallel Processing Optimization**: Asynchronous translation per language to minimize user wait time
 - **Smart Caching System**: 24-hour memory caching with offline access support
 - **Translation Error Recovery**: Auto-retry logic, API fallback, and individual language state management
@@ -95,16 +73,8 @@ This mobile app achieves commercial-grade completeness through a subscription-ba
 - **Pronunciation Guides**: Claude AI-powered phonetic transcription with audio output
 - **Multi-Language Voice Support**: Speech recognition across all 14 supported languages
 
-**Smart UI/UX Innovation**
-
-- **Real-Time Translation Status**: Visual indicators for loading/completed/retry states per language
-- **Auto Hide/Show Navigation**: Header and tab bar automatically adjust based on scroll direction
-- **Skeleton Loading Architecture**: Seamless user experience with intelligent loading placeholders
-- **Smooth Animation Transitions**: React Native Reanimated-based fluid interactions
-
 **Business Model & Monetization**
 
-- **Transaction-Only Architecture**: User-account-free design using Apple's `originalTransactionIdentifierIOS` as sole identifier
 - **Subscription-Based Monetization**: Usage limits and ad management through free/premium tiers
 - **Apple Ecosystem Integration**: Native Apple Sign-In and iOS In-App Purchase support
 - **Privacy-First Design**: Minimal data collection with local-first storage approach
@@ -235,55 +205,59 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
 #### Smart Translation Caching (`utils/translationAPI.ts`)
 
 ```typescript
-interface CacheEntry {
-  translation: string;
-  meanings?: TranslationMeaning[];
-  pronunciation?: string;
-  timestamp: number;
+// Save to cache (only when online)
+private static async saveToCache(
+  text: string,
+  sourceLanguage: string,
+  targetLanguage: string,
+  translation: string,
+  meanings?: TranslationMeaning[],
+  pronunciation?: string
+): Promise<void> {
+  // Check network connectivity before caching
+  const netInfo = await NetInfo.fetch();
+  if (!netInfo.isConnected) return;
+
+  const key = this.getCacheKey(text, sourceLanguage, targetLanguage);
+  this.translationCache.set(key, {
+    translation,
+    meanings,
+    pronunciation,
+    timestamp: Date.now(),
+  });
 }
 
-export class TranslationAPI {
-  private static translationCache = new Map<string, CacheEntry>();
-  private static readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-  private static readonly CLEANUP_PROBABILITY = 0.1; // 10% chance per request
-
-  // Memory-efficient cache with probabilistic cleanup
-  private static cleanupCache(): void {
-    if (Math.random() < this.CLEANUP_PROBABILITY) {
-      const now = Date.now();
-      let cleaned = 0;
-
-      for (const [key, entry] of this.translationCache.entries()) {
-        if (now - entry.timestamp > this.CACHE_DURATION) {
-          this.translationCache.delete(key);
-          cleaned++;
-        }
-      }
-
-      console.log(`🧹 Cache cleanup: ${cleaned} entries removed`);
-    }
-  }
-
-  // Parallel processing for multi-language translation
-  static async translateToMultipleLanguages(
+static async translate(
     text: string,
-    fromLang: string,
-    targetLanguages: string[]
-  ): Promise<TranslationResult[]> => {
-    const translationPromises = targetLanguages.map(async (toLang) => {
-      try {
-        const result = await this.translate(text, fromLang, toLang, 'claude');
-        return { success: true, language: toLang, result };
-      } catch (error) {
-        // Individual language fallback
-        const fallbackResult = await this.translate(text, fromLang, toLang, 'mymemory');
-        return { success: true, language: toLang, result: fallbackResult };
-      }
-    });
+    sourceLanguage: string,
+    targetLanguage: string,
+    options?: { provider?: 'claude' | 'default' }
+  ): Promise<{
+    translation: string;
+    meanings?: TranslationMeaning[];
+    pronunciation?: string;
+  }> {
+    if (!text.trim()) return { translation: '' };
+    if (sourceLanguage === targetLanguage) return { translation: text };
 
-    return Promise.allSettled(translationPromises);
-  }
-}
+    const cached = this.getFromCache(text, sourceLanguage, targetLanguage);
+    if (cached) {
+      // Check if cached translation is URL-encoded and fix it
+      let translation = cached.translation;
+      if (translation.includes('%')) {
+        try {
+          const decoded = decodeURIComponent(translation);
+
+          // Update cache with fixed version
+          await this.saveToCache(
+            text,
+            sourceLanguage,
+            targetLanguage,
+            decoded,
+            cached.meanings,
+            cached.pronunciation
+          );
+...
 ```
 
 #### Subscription State Synchronization (`utils/subscriptionService.ts`)
@@ -312,20 +286,24 @@ export class SubscriptionService {
     }
   }
 
-  // Multi-language usage calculation with proportional limits
-  static async canTranslate(languageCount: number): Promise<boolean> {
-    const subscription = await this.getCurrentSubscription(true);
-    if (!subscription) return false;
+  private static async fetchSubscription(
+    isSearching?: boolean
+  ): Promise<UserSubscription | null> {
+    try {
+      // Try to get subscription by transaction ID first (if available from purchases)
+      const serverSubscription =
+        await this.getServerSubscriptionByTransaction();
+      if (serverSubscription) {
+        return await this.processServerSubscription(
+          serverSubscription,
+          isSearching
+        );
+      }
 
-    const plan = SUBSCRIPTION_PLANS.find((p) => p.id === subscription.planId);
-    if (!plan) return false;
-
-    const maxLanguages = plan.maxLanguages;
-    const usageIncrement = languageCount / maxLanguages;
-
-    return (
-      subscription.dailyUsage.count + usageIncrement <= plan.dailyTranslations
-    );
+      return await this.getLocalSubscriptionOrDefault();
+    } catch (error) {
+      return await this.handleSubscriptionError(error);
+    }
   }
 }
 ```
@@ -347,45 +325,8 @@ export class UserService {
         transactionId
       );
       this.currentTransactionId = transactionId;
-      console.log('✅ Transaction ID saved:', transactionId);
     } catch (error) {
-      console.error('❌ Failed to save transaction ID:', error);
-    }
-  }
-
-  // Apple date synchronization with composite validation
-  static async syncSubscription(
-    planId: string,
-    isActive: boolean,
-    startDate: number,
-    endDate: number,
-    originalTransactionIdentifierIOS?: string
-  ): Promise<boolean> {
-    if (!originalTransactionIdentifierIOS || !isSupabaseAvailable()) {
-      return false;
-    }
-
-    const lockKey = `${originalTransactionIdentifierIOS}_${startDate}_${endDate}`;
-
-    // Prevent race conditions during concurrent updates
-    if (this.syncLocks.has(lockKey)) {
-      return await this.syncLocks.get(lockKey)!;
-    }
-
-    const syncPromise = this.performSyncSubscription(
-      planId,
-      isActive,
-      startDate,
-      endDate,
-      originalTransactionIdentifierIOS
-    );
-
-    this.syncLocks.set(lockKey, syncPromise);
-
-    try {
-      return await syncPromise;
-    } finally {
-      this.syncLocks.delete(lockKey);
+      console.error('Failed to save transaction ID:', error);
     }
   }
 
@@ -419,102 +360,9 @@ export class UserService {
         }
       );
 
-      if (error) {
-        console.error('❌ Subscription sync failed:', error);
-        return false;
-      }
+      if (error) return false;
 
-      console.log('✅ Subscription synced successfully:', planId);
       return true;
-    } catch (error) {
-      console.error('❌ Subscription sync error:', error);
-      return false;
-    }
-  }
-}
-```
-
-#### Apple In-App Purchase Lifecycle (`utils/iapService.ts`)
-
-```typescript
-export class IAPService {
-  private static processedPurchases = new Set<string>();
-  private static isProcessingRestore = false;
-  private static lastSubscriptionCheck = 0;
-  private static SUBSCRIPTION_CHECK_INTERVAL = 2 * 60 * 1000; // 2 minutes
-
-  // Environment-aware initialization
-  private static determineTestEnvironment(): boolean {
-    if (__DEV__) {
-      console.log('✅ Using Sandbox: Development mode');
-      return true;
-    }
-
-    if (process.env.EXPO_PUBLIC_IAP_USE_SANDBOX === 'true') {
-      console.log('✅ Using Sandbox: Environment variable forced');
-      return true;
-    }
-
-    console.log('🏪 Using Production: App Store environment');
-    return false;
-  }
-
-  // Comprehensive subscription status verification
-  static async checkSubscriptionStatusAndUpdate(
-    checkFromActive?: boolean
-  ): Promise<void> {
-    if (checkFromActive) {
-      const now = Date.now();
-      const isRecentlyChecked =
-        now - this.lastSubscriptionCheck < this.SUBSCRIPTION_CHECK_INTERVAL;
-      if (isRecentlyChecked) return;
-      this.lastSubscriptionCheck = now;
-    }
-
-    const store = useSubscriptionStore.getState();
-    if (store.isCheckingSubscription) return;
-
-    store.setIsCheckingSubscription(true);
-
-    try {
-      // Apple purchase restoration with validation
-      const activePurchases = await getAvailablePurchases({
-        onlyIncludeActiveItems: true,
-      });
-
-      if (activePurchases.length === 0) {
-        await this.setSubscriptionFreeWithPreserve();
-        return;
-      }
-
-      const latestPurchase = this.getLatestPurchase(activePurchases);
-      const validationResult = await this.validatePurchase(latestPurchase);
-
-      if (validationResult.isValid) {
-        await this.handleSuccessfulPurchaseQuietly(
-          latestPurchase,
-          validationResult.startDate,
-          validationResult.endDate
-        );
-
-        // Map Apple product IDs to internal plan IDs
-        const planMapping = {
-          [IAP_PRODUCT_IDS.PRO_MONTHLY]: 'pro_monthly',
-          [IAP_PRODUCT_IDS.PRO_MAX_MONTHLY]: 'pro_max_monthly',
-          [IAP_PRODUCT_IDS.PREMIUM_YEARLY]: 'premium_yearly',
-        };
-
-        const detectedPlan = planMapping[latestPurchase.productId] || 'free';
-        await SubscriptionService.setSubscription(detectedPlan, {
-          isActive: true,
-          startDate: validationResult.startDate,
-          endDate: validationResult.endDate,
-        });
-      }
-    } catch (error) {
-      console.error('❌ Subscription check failed:', error);
-    } finally {
-      store.setIsCheckingSubscription(false);
     }
   }
 }
@@ -705,6 +553,19 @@ assets/                     # Static resources
 ```
 
 <br/>
+
+## 📱 UI & UX Screenshots
+
+<div style="display:flex;gap:8px;white-space:nowrap;">
+      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 16 26 23" src="https://github.com/user-attachments/assets/69f1a699-d7d4-4c0e-bcf7-a80685e703af" />
+      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 16 26 52" src="https://github.com/user-attachments/assets/ea53a950-4d15-46ac-9d76-0b4b61d367f2" />
+      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 30 45" src="https://github.com/user-attachments/assets/c3de7323-f8d6-45f6-9d53-e828bae2da26" />      
+      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 00" src="https://github.com/user-attachments/assets/1d32757e-65b3-4995-a0eb-cd53e0e84346" />
+      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 09" src="https://github.com/user-attachments/assets/a81b2dc9-01d8-4fa9-a22c-2dc386f29892" />
+      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 18" src="https://github.com/user-attachments/assets/82344002-e48f-4a44-a9e9-2790d76cc074" />
+      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 45" src="https://github.com/user-attachments/assets/aef6ed6a-4b85-4742-82af-b30a64e2f82d" />
+      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 58" src="https://github.com/user-attachments/assets/8cef6317-7b2d-41e2-85a2-f62290bed623" />
+</div>
 
 ---
 
