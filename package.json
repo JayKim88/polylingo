@@ -1,7 +1,7 @@
 {
   "name": "poly-lingo",
   "main": "index.js",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "private": true,
   "scripts": {
     "dev": "EXPO_NO_TELEMETRY=1 expo start",
