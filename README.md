@@ -88,7 +88,7 @@ Built as a commercial-ready application with subscription monetization, Apple In
 
 ## 🏗 Architecture & Data Management
 
-### Hybrid Data Architecture - Privacy-First Design
+### Hybrid Data Architecture
 
 **Local-First with Cloud Sync**
 
@@ -96,13 +96,13 @@ Built as a commercial-ready application with subscription monetization, Apple In
 - **Multi-Layer Caching**: Translation results (24h memory), user sessions, and subscription state
 - **Race Condition Prevention**: Subscription update locks and concurrent request handling
 
-**Transaction-Only Database Design**
+**Transaction-Only Database Design (Abstract schema example below)**
 
 ```sql
 -- Production-Ready PostgreSQL Schema
 -- Pure transaction-based architecture eliminating user accounts
 
- -- Subscription Management (Pure transaction-based)
+ -- Subscription Management
   CREATE TABLE tbl_sub (
     k1 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     plan_ref TEXT NOT NULL,                               -- Plan reference identifier
