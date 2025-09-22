@@ -9,15 +9,13 @@
 
 # PolyLingo
 
-A real-time multi-language translation mobile application developed using React Native and Expo.
+A real-time multi-language translation mobile application built with React Native and Expo.
 
-By combining Claude AI's high-quality translation engine with the Wiktionary API, this app goes beyond simple translation to provide a premium language learning tool that offers diverse word meanings and pronunciation information.
+Integrating Claude AI's translation capabilities with Wiktionary's dictionary data, this app provides detailed word definitions, pronunciations, and contextual meanings alongside accurate translations.
 
-Supporting 14 languages, it provides parallel simultaneous translation for up to 3 languages (free plan) and 5 languages (premium plan) with a single search.
+Supporting 14 languages with parallel translation to multiple targets simultaneously (3 for free users, 5 for premium), the app includes advanced features like speech recognition, offline caching, and real-time state synchronization.
 
-Advanced features such as speech recognition, offline caching, and real-time state management optimize the user experience.
-
-This mobile app achieves commercial-grade completeness through a subscription-based monetization model and full Apple ecosystem integration.
+Built as a commercial-ready application with subscription monetization, Apple In-App Purchases, and full iOS ecosystem integration.
 
 <br/>
 
