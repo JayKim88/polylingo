@@ -31,6 +31,10 @@ yarn-error.*
 .env*.local
 .env
 
+# development tools
+.bolt/
+.claude/
+
 # typescript
 *.tsbuildinfo
 
