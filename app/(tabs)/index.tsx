@@ -32,7 +32,6 @@ import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
 import { SubscriptionService } from '../../utils/subscriptionService';
-import { IAPService } from '../../utils/iapService';
 import { unitIds } from '@/constants/bannerAds';
 
 const MAX_LENGTH = 50;
@@ -201,15 +200,8 @@ export default function SearchTab() {
     onFocus: handleFocus,
   });
 
-  const handleCleanupIap = async () =>
-    await IAPService.cleanup().catch(console.error);
-
   useEffect(() => {
     checkVoiceAvailability();
-
-    return () => {
-      handleCleanupIap();
-    };
   }, [checkVoiceAvailability]);
 
   const handleSearch = async () => {

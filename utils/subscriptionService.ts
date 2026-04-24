@@ -3,7 +3,6 @@ import { UserSubscription, SUBSCRIPTION_PLANS } from '../types/subscription';
 import { SUPPORTED_LANGUAGES } from '../types/dictionary';
 import { UserService, getDateString } from './userService';
 import { DeviceUsageService } from './deviceUsageService';
-import { IAPService } from './iapService';
 
 const STORAGE_KEYS = {
   SUBSCRIPTION: 'user_subscription',
@@ -392,7 +391,6 @@ export class SubscriptionService {
 
       if (isPaidExpired) {
         try {
-          await IAPService.checkSubscriptionStatusAndUpdate();
           subscription = await this.getCurrentSubscription();
         } catch (error) {
           console.warn(

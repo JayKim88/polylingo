@@ -32,10 +32,10 @@ import { hideTabBar, showTabBar } from './_layout';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 
 import AppLanguageModal from '../../components/AppLanguageModal';
-import {
-  APPLE_EULA_LINK,
-  PRIVACY_POLICY_LINK,
-} from '../../components/SubscriptionModal';
+const PRIVACY_POLICY_LINK =
+  'https://jay-global.notion.site/PolyLingo-Privacy-Policy-234e5ccd65b18054b73dcfb9fe6982a0';
+const APPLE_EULA_LINK =
+  'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 import { SubscriptionService } from '../../utils/subscriptionService';
 import { VersionService } from '../../utils/version';
 import { NEW_AD_TERM } from './favorites';

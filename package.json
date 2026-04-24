@@ -1,7 +1,7 @@
 {
   "name": "poly-lingo",
   "main": "index.js",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "scripts": {
     "dev": "EXPO_NO_TELEMETRY=1 expo start",
@@ -22,7 +22,6 @@
     "@expo-google-fonts/inter": "^0.2.3",
     "@expo/prebuild-config": "~9.0.0",
     "@expo/vector-icons": "^14.1.0",
-    "@invertase/react-native-apple-authentication": "^2.4.1",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-clipboard/clipboard": "^1.16.3",
     "@react-native-community/netinfo": "11.4.1",
@@ -59,7 +58,6 @@
     "react-native-draggable-flatlist": "^4.0.3",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-google-mobile-ads": "^15.4.0",
-    "react-native-iap": "^12.16.4",
     "react-native-localize": "^3.4.2",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "^5.4.0",
