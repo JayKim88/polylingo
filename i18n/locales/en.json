@@ -109,7 +109,7 @@
     "csvHistory": "History",
     "aboutTitle": "About PolyLingo",
     "aboutVersion": "Version 1.0.0",
-    "aboutSubtitle": "Your AI-powered multilingual translator",
+    "aboutSubtitle": "Free. Fast. Multilingual.",
     "aboutFeatures": "Features:\n• Up to 13 languages simultaneously\n• Voice input and text-to-speech\n• Favorite translations for quick access\n• Translation history with date filtering\n• Dark/Light theme support\n• Beautiful, intuitive interface",
     "aboutBuiltWith": "Built with React Native",
     "aboutCopyright": "© 2025 PolyLingo Team",
@@ -162,7 +162,13 @@
     "reset": "Reset",
     "notSupported": "Voice function is not supported on this device.",
     "testError": "An error occurred during voice test.",
-    "saveError": "An error occurred while saving settings."
+    "saveError": "An error occurred while saving settings.",
+    "engine": "Voice Engine",
+    "engineGoogle": "Google TTS",
+    "engineGoogleDesc": "High quality",
+    "engineSystem": "System Voice",
+    "engineSystemDesc": "Speed & Pitch control",
+    "pitchNotSupported": "N/A (Google TTS)"
   },
   "datePicker": {
     "title": "Select Date",
@@ -199,7 +205,7 @@
   },
   "featuresModal": {
     "title": "Key Features",
-    "message": "• Simultaneous multi-language translation\n• Detailed ambiguous meaning display\n• Drag-and-drop language order change\n• Calendar-based favorites/history management\n• Voice playback and copy function"
+    "message": "• Simultaneous multi-language translation\n• Drag-and-drop language order change\n• Calendar-based favorites/history management\n• Voice playback and copy function"
   },
   "languageSupportModal": {
     "title": "Supported Languages",

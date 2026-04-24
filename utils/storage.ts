@@ -13,6 +13,7 @@ export interface VoiceSettings {
   volume: number; // 0.0 - 1.0
   rate: number; // 0.1 - 2.0
   pitch: number; // 0.0 - 2.0
+  engine: 'google' | 'system'; // google: high quality, no pitch; system: full control
 }
 
 export class StorageService {
@@ -174,20 +175,13 @@ export class StorageService {
   static async getVoiceSettings(): Promise<VoiceSettings> {
     try {
       const data = await AsyncStorage.getItem(VOICE_SETTINGS_KEY);
-      return data
-        ? JSON.parse(data)
-        : {
-            volume: 1.0,
-            rate: 0.8,
-            pitch: 1.0,
-          };
+      const parsed = data ? JSON.parse(data) : null;
+      return parsed
+        ? { engine: 'google', ...parsed }
+        : { volume: 1.0, rate: 0.8, pitch: 1.0, engine: 'google' };
     } catch (error) {
       console.error('Error loading voice settings:', error);
-      return {
-        volume: 1.0,
-        rate: 0.8,
-        pitch: 1.0,
-      };
+      return { volume: 1.0, rate: 0.8, pitch: 1.0, engine: 'google' };
     }
   }
 

@@ -566,7 +566,7 @@ export default function SearchTab() {
       const recognition = await SpeechService.startSpeechRecognition(
         sourceLanguage,
         (text: string) => {
-          setSearchText(text);
+          setSearchText(text.slice(0, MAX_LENGTH));
         },
         (error: string) => {
           Alert.alert(t('alert.error'), error);

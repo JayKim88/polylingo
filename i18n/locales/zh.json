@@ -163,7 +163,13 @@
     "reset": "重置",
     "notSupported": "此设备不支持语音功能。",
     "testError": "语音测试过程中发生错误。",
-    "saveError": "保存设置时发生错误。"
+    "saveError": "保存设置时发生错误。",
+    "engine": "语音引擎",
+    "engineGoogle": "Google TTS",
+    "engineGoogleDesc": "高品质",
+    "engineSystem": "系统语音",
+    "engineSystemDesc": "速度与音调调节",
+    "pitchNotSupported": "不支持 (Google TTS)"
   },
   "datePicker": {
     "title": "选择日期",

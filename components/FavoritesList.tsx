@@ -123,7 +123,7 @@ export default function FavoritesList({
         </View>
         <View className="flex-row items-center flex-wrap">
           <Text
-            className="text-lg font-semibold"
+            className="text-xl font-semibold"
             style={{ color: colors.text }}
           >
             {item.sourceText}
@@ -135,7 +135,7 @@ export default function FavoritesList({
             →
           </Text>
           <Text
-            className="text-lg font-semibold"
+            className="text-xl font-semibold"
             style={{ color: colors.text }}
           >
             {item.translatedText}

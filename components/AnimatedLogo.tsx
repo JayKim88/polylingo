@@ -4,6 +4,7 @@ import { View, Animated, Dimensions, Text } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 
 const { width } = Dimensions.get('window');
+const SCALE = 1.4;
 
 export default function AnimatedLogo() {
   const { colors } = useTheme();
@@ -24,7 +25,7 @@ export default function AnimatedLogo() {
     { char: 'ñ', angle: 315, lang: 'Spanish' },
   ];
 
-  const logoSize = Math.min(width * 0.6, 240);
+  const logoSize = Math.min(width * 0.6, 240) * SCALE;
   const radius = logoSize / 3;
   const centerX = logoSize / 2;
   const centerY = logoSize / 2;
@@ -113,9 +114,9 @@ export default function AnimatedLogo() {
     >
       <Animated.View
         style={{
-          width: 90,
-          height: 90,
-          borderRadius: 45,
+          width: 90 * SCALE,
+          height: 90 * SCALE,
+          borderRadius: 45 * SCALE,
           backgroundColor: colors.surface,
           borderWidth: 2,
           borderColor: colors.border,
@@ -132,9 +133,9 @@ export default function AnimatedLogo() {
         <Animated.View
           style={{
             position: 'absolute',
-            width: 80,
-            height: 80,
-            borderRadius: 40,
+            width: 80 * SCALE,
+            height: 80 * SCALE,
+            borderRadius: 40 * SCALE,
             backgroundColor: colors.primary,
             opacity: pulseAnim.interpolate({
               inputRange: [0.8, 1],
@@ -144,7 +145,7 @@ export default function AnimatedLogo() {
           }}
         />
 
-        <Text style={{ fontSize: 32 }}>🌍</Text>
+        <Text style={{ fontSize: 32 * SCALE }}>🌍</Text>
       </Animated.View>
 
       <Animated.View
@@ -163,14 +164,14 @@ export default function AnimatedLogo() {
               key={index}
               style={{
                 position: 'absolute',
-                left: position.x - 15,
-                top: position.y - 15,
-                width: 30,
-                height: 30,
+                left: position.x - 15 * SCALE,
+                top: position.y - 15 * SCALE,
+                width: 30 * SCALE,
+                height: 30 * SCALE,
                 justifyContent: 'center',
                 alignItems: 'center',
                 backgroundColor: colors.surface,
-                borderRadius: 15,
+                borderRadius: 15 * SCALE,
                 borderWidth: 1,
                 borderColor: colors.border,
                 shadowColor: '#000',
@@ -182,7 +183,7 @@ export default function AnimatedLogo() {
             >
               <Animated.Text
                 style={{
-                  fontSize: 14,
+                  fontSize: 14 * SCALE,
                   fontWeight: 'bold',
                   color: colors.text,
                   transform: [{ rotate: counterSpin }],
@@ -220,7 +221,7 @@ export default function AnimatedLogo() {
                   Math.sqrt(
                     Math.pow(centerX - position.x, 2) +
                       Math.pow(centerY - position.y, 2)
-                  ) - 45,
+                  ) - 45 * SCALE,
                 backgroundColor: colors.border,
                 opacity: 0.3,
                 transform: [

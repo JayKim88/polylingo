@@ -64,7 +64,7 @@
     "switchToLightTheme": "라이트 테마로 전환",
     "switchToDarkTheme": "다크 테마로 전환",
     "about": "앱 상세 정보",
-    "aboutSubtitle": "AI 기반 다국어 번역기",
+    "aboutSubtitle": "Free. Fast. Multilingual.",
     "aboutTitle": "PolyLingo 정보",
     "aboutVersion": "버전 1.0.0",
     "aboutFeatures": "기능:\n• 최대 13개 언어 동시 번역\n• 음성 입력 및 텍스트 음성 변환\n• 빠른 액세스를 위한 즐겨찾기 번역\n• 날짜 필터링이 있는 번역 기록\n• 다크/라이트 테마 지원\n• 아름답고 직관적인 인터페이스",
@@ -162,7 +162,13 @@
     "reset": "초기화",
     "notSupported": "이 기기에서는 음성 기능을 지원하지 않습니다.",
     "testError": "음성 테스트 중 오류가 발생했습니다.",
-    "saveError": "설정 저장 중 오류가 발생했습니다."
+    "saveError": "설정 저장 중 오류가 발생했습니다.",
+    "engine": "음성 엔진",
+    "engineGoogle": "Google TTS",
+    "engineGoogleDesc": "고품질",
+    "engineSystem": "시스템 음성",
+    "engineSystemDesc": "속도 & 음높이 조절",
+    "pitchNotSupported": "미지원 (Google TTS)"
   },
   "datePicker": {
     "title": "날짜 선택",
@@ -199,7 +205,7 @@
   },
   "featuresModal": {
     "title": "주요 기능",
-    "message": "• 다국어 동시 번역\n• 상세한 모호한 의미 표시\n• 드래그 앤 드롭으로 언어 순서 변경\n• 캘린더 기반 즐겨찾기/히스토리 관리\n• 음성 재생 및 복사 기능"
+    "message": "• 다국어 동시 번역\n• 드래그 앤 드롭으로 언어 순서 변경\n• 캘린더 기반 즐겨찾기/히스토리 관리\n• 음성 재생 및 복사 기능"
   },
   "languageSupportModal": {
     "title": "지원 언어",

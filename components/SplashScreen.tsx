@@ -166,7 +166,7 @@ export default function SplashScreen({
             lineHeight: 24,
           }}
         >
-          {t('main.subtitle', { count: 5 })}
+          {t('main.subtitle', { count: 13 })}
         </Text>
         <Text
           style={{
@@ -177,7 +177,7 @@ export default function SplashScreen({
             fontStyle: 'italic',
           }}
         >
-          AI-powered multilingual translator
+          Free. Fast. Multilingual.
         </Text>
       </Animated.View>
 

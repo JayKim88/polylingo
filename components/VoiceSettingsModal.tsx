@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -39,6 +39,7 @@ export default function VoiceSettingsModal({
     volume: 0.9,
     rate: 0.8,
     pitch: 1.0,
+    engine: 'google',
   });
   const [isTesting, setIsTesting] = useState(false);
 
@@ -58,12 +59,12 @@ export default function VoiceSettingsModal({
   };
 
   const handleReset = () => {
-    const defaultSettings = {
-      volume: RNPlatform.OS === 'ios' ? settings.volume : 1.0, // iOS에서는 기존 볼륨 유지
+    setSettings({
+      volume: RNPlatform.OS === 'ios' ? settings.volume : 1.0,
       rate: 0.9,
       pitch: 1.0,
-    };
-    setSettings(defaultSettings);
+      engine: 'google',
+    });
   };
 
   const handleTest = async () => {
@@ -159,6 +160,57 @@ export default function VoiceSettingsModal({
                 }}
                 showsVerticalScrollIndicator={false}
               >
+                {/* Engine Selection */}
+                <View className="mb-8">
+                  <Text
+                    className="text-base font-semibold mb-3"
+                    style={{ color: colors.text }}
+                  >
+                    {t('voice.engine')}
+                  </Text>
+                  <View className="flex-row gap-2">
+                    {(['google', 'system'] as const).map((eng) => (
+                      <TouchableOpacity
+                        key={eng}
+                        className="flex-1 py-3 px-4 rounded-xl items-center border-2"
+                        style={{
+                          backgroundColor:
+                            settings.engine === eng
+                              ? colors.primaryContainer
+                              : colors.surface,
+                          borderColor:
+                            settings.engine === eng
+                              ? colors.primary
+                              : colors.border,
+                        }}
+                        onPress={() => setSettings({ ...settings, engine: eng })}
+                      >
+                        <Text
+                          className="text-sm font-semibold"
+                          style={{
+                            color:
+                              settings.engine === eng
+                                ? colors.primary
+                                : colors.textSecondary,
+                          }}
+                        >
+                          {eng === 'google'
+                            ? t('voice.engineGoogle')
+                            : t('voice.engineSystem')}
+                        </Text>
+                        <Text
+                          className="text-xs mt-1"
+                          style={{ color: colors.textTertiary }}
+                        >
+                          {eng === 'google'
+                            ? t('voice.engineGoogleDesc')
+                            : t('voice.engineSystemDesc')}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
                 {RNPlatform.OS !== 'ios' && (
                   <View className="mb-8">
                     <View className="flex-row justify-between items-center mb-4">
@@ -204,7 +256,7 @@ export default function VoiceSettingsModal({
                   </View>
                 )}
 
-                <View className="mb-8">
+                <View className="mb-8" style={{ opacity: settings.engine === 'google' ? 0.4 : 1 }}>
                   <View className="flex-row justify-between items-center mb-4">
                     <Text
                       className="text-base font-semibold"
@@ -214,9 +266,13 @@ export default function VoiceSettingsModal({
                     </Text>
                     <Text
                       className="text-sm font-medium"
-                      style={{ color: colors.primary }}
+                      style={{
+                        color: settings.engine === 'google' ? colors.textTertiary : colors.primary,
+                      }}
                     >
-                      {getRateText(settings.rate)} ({settings.rate.toFixed(1)}x)
+                      {settings.engine === 'google'
+                        ? t('voice.pitchNotSupported')
+                        : `${getRateText(settings.rate)} (${settings.rate.toFixed(1)}x)`}
                     </Text>
                   </View>
                   <Slider
@@ -229,6 +285,7 @@ export default function VoiceSettingsModal({
                     }
                     minimumTrackTintColor={colors.primary}
                     maximumTrackTintColor={colors.borderLight}
+                    disabled={settings.engine === 'google'}
                   />
                   <View className="flex-row justify-between mt-2">
                     <Text
@@ -246,7 +303,7 @@ export default function VoiceSettingsModal({
                   </View>
                 </View>
 
-                <View>
+                <View style={{ opacity: settings.engine === 'google' ? 0.4 : 1 }}>
                   <View className="flex-row justify-between items-center mb-4">
                     <Text
                       className="text-base font-semibold"
@@ -256,10 +313,16 @@ export default function VoiceSettingsModal({
                     </Text>
                     <Text
                       className="text-sm font-medium"
-                      style={{ color: colors.primary }}
+                      style={{
+                        color:
+                          settings.engine === 'google'
+                            ? colors.textTertiary
+                            : colors.primary,
+                      }}
                     >
-                      {getPitchText(settings.pitch)} (
-                      {settings.pitch.toFixed(1)})
+                      {settings.engine === 'google'
+                        ? t('voice.pitchNotSupported')
+                        : `${getPitchText(settings.pitch)} (${settings.pitch.toFixed(1)})`}
                     </Text>
                   </View>
                   <Slider
@@ -272,6 +335,7 @@ export default function VoiceSettingsModal({
                     }
                     minimumTrackTintColor={colors.primary}
                     maximumTrackTintColor={colors.borderLight}
+                    disabled={settings.engine === 'google'}
                   />
                   <View className="flex-row justify-between mt-2">
                     <Text

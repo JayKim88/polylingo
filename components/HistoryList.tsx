@@ -139,7 +139,7 @@ export default function HistoryList({
         </View>
 
         <Text
-          className="text-base font-semibold mb-4"
+          className="text-xl font-semibold mb-4"
           style={{ color: colors.text }}
         >
           {item.sourceText}

@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, TextInput, TouchableOpacity, Text } from 'react-native';
 import { Search, X } from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
@@ -9,7 +8,6 @@ interface SearchInputProps {
   onSearch: () => void;
   onClear: () => void;
   placeholder: string;
-  isLoading?: boolean;
   maxLength: number;
   disabled?: boolean;
 }
@@ -20,7 +18,6 @@ export default function SearchInput({
   onSearch,
   onClear,
   placeholder,
-  isLoading,
   maxLength,
   disabled = false,
 }: SearchInputProps) {
@@ -39,7 +36,9 @@ export default function SearchInput({
             color: disabled ? colors.textTertiary : colors.text,
           }}
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={(text) => {
+            if (!disabled) onChangeText(text);
+          }}
           placeholder={placeholder}
           placeholderTextColor={colors.textTertiary}
           onSubmitEditing={onSearch}
@@ -50,7 +49,9 @@ export default function SearchInput({
           returnKeyType="search"
           textAlignVertical="center"
           maxLength={maxLength}
-          editable={!disabled}
+          selection={
+            disabled ? { start: value.length, end: value.length } : undefined
+          }
         />
         <View className="absolute right-4 flex-row items-center h-full">
           {value ? (

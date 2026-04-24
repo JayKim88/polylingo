@@ -65,14 +65,18 @@ export class SpeechService {
     return languageMap[languageCode] || 'en-US';
   }
 
-  static async speakWithGoogle(text: string, languageCode: string): Promise<void> {
+  static async speakWithGoogle(text: string, languageCode: string, rate?: number): Promise<void> {
     const tl = GOOGLE_TTS_LANG_MAP[languageCode] ?? languageCode;
+    // Map expo-speech rate (0.1–1.5) to Google TTS ttsspeed (0.3–1.0)
+    const ttsspeed = rate != null
+      ? Math.min(1.0, Math.max(0.3, rate)).toFixed(2)
+      : '0.9';
     const params = new URLSearchParams([
       ['ie', 'UTF-8'],
       ['q', text],
       ['tl', tl],
       ['client', 'gtx'],
-      ['ttsspeed', '0.9'],
+      ['ttsspeed', ttsspeed],
     ]);
 
     const url = `${GOOGLE_TTS_URL}?${params}`;
@@ -99,7 +103,6 @@ export class SpeechService {
     });
   }
 
-  // 텍스트를 음성으로 읽기 — Google TTS 우선, expo-speech fallback
   static speak(
     text: string,
     languageCode: string,
@@ -111,22 +114,39 @@ export class SpeechService {
         return;
       }
 
-      // 1차: Google TTS
+      const voiceSettings = customSettings || (await StorageService.getVoiceSettings());
+
+      if (voiceSettings.engine === 'system') {
+        // System Voice: expo-speech with full pitch/rate/volume control
+        try {
+          await this.initializeAudio();
+          Speech.speak(text, {
+            language: this.getVoiceLanguage(languageCode),
+            rate: voiceSettings.rate,
+            pitch: voiceSettings.pitch,
+            volume: voiceSettings.volume,
+            onDone: () => resolve(),
+            onError: () => reject(new Error('An error occurred while playing the voice.')),
+          });
+        } catch (error) {
+          console.error('🔊 expo-speech error:', error);
+          reject(error);
+        }
+        return;
+      }
+
+      // Google TTS (default): high quality, speed only
       try {
-        await this.speakWithGoogle(text, languageCode);
+        await this.speakWithGoogle(text, languageCode, voiceSettings.rate);
         resolve();
         return;
       } catch (error) {
         console.log('🔊 Google TTS failed, falling back to expo-speech:', error);
       }
 
-      // 2차: expo-speech fallback
+      // Fallback to expo-speech if Google TTS fails
       try {
-        const voiceSettings =
-          customSettings || (await StorageService.getVoiceSettings());
-
         await this.initializeAudio();
-
         Speech.speak(text, {
           language: this.getVoiceLanguage(languageCode),
           rate: voiceSettings.rate,
@@ -195,12 +215,18 @@ export class SpeechService {
       };
 
       Voice.onSpeechError = (event: any) => {
-        console.log('🎤 Speech recognition error:', JSON.stringify(event));
-        onError(
-          `Speech recognition error: ${
-            event.error?.message || event.error || 'Unknown error'
-          }`
-        );
+        const errorCode = event.error?.code;
+        const errorMessage = event.error?.message || String(event.error || '');
+        // 1110 = no speech detected (user was silent) — silently end
+        if (
+          errorCode === '1110' ||
+          errorCode === 1110 ||
+          errorMessage.includes('1110')
+        ) {
+          onEnd();
+          return;
+        }
+        onError(`Speech recognition error: ${errorMessage || 'Unknown error'}`);
       };
 
       Voice.onSpeechResults = (event: any) => {

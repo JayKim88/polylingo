@@ -467,7 +467,7 @@ export default function TranslationCard({
             style={{
               color: colors.text,
             }}
-            className={`text-lg leading-7 mb-1 ${
+            className={`text-xl leading-8 mb-1 ${
               result.confidence === 0 ? 'text-red-500 italic' : ''
             }`}
           >
