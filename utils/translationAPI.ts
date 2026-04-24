@@ -10,6 +10,13 @@ import { captureNetworkError } from './sentryUtils';
 const MYMEMORY_BASE_URL = 'https://mymemory.translated.net/api/get';
 const LIBRETRANSLATE_BASE_URL =
   process.env.EXPO_PUBLIC_LIBRETRANSLATE_URL ?? '';
+const GOOGLE_TRANSLATE_URL =
+  'https://translate.googleapis.com/translate_a/single';
+
+// Google uses different codes for some languages
+const GOOGLE_LANG_MAP: Record<string, string> = {
+  zh: 'zh-TW', // Traditional Chinese
+};
 
 // Cache interface
 interface CacheEntry {
@@ -51,7 +58,6 @@ export class TranslationAPI {
     const entry = this.translationCache.get(key);
 
     if (entry && this.isCacheValid(entry)) {
-      console.log('💾 Using cached translation');
       return {
         translation: entry.translation,
         meanings: entry.meanings,
@@ -259,7 +265,56 @@ export class TranslationAPI {
     return [];
   }
 
-  static async translateWithClaude(
+  static async translateWithGoogle(
+    text: string,
+    sourceLanguage: string,
+    targetLanguage: string
+  ): Promise<{ translation: string; pronunciation?: string } | null> {
+    try {
+      const sl = GOOGLE_LANG_MAP[sourceLanguage] ?? sourceLanguage;
+      const tl = GOOGLE_LANG_MAP[targetLanguage] ?? targetLanguage;
+
+      const params = new URLSearchParams([
+        ['client', 'gtx'],
+        ['q', text],
+        ['sl', sl],
+        ['tl', tl],
+        ['dj', '1'],
+        ['hl', tl],
+        ['dt', 't'],
+        ['dt', 'rm'], // 발음 로마자 표기
+      ]);
+
+      const response = await fetch(`${GOOGLE_TRANSLATE_URL}?${params}`);
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      const sentences: { trans?: string; translit?: string }[] = data?.sentences ?? [];
+
+      const translation = sentences
+        .filter((s) => 'trans' in s)
+        .map((s) => s.trans)
+        .join('')
+        .replace(/\n /g, '\n')
+        .trim();
+
+      if (!translation) return null;
+
+      const pronunciation = sentences
+        .map((s) => s.translit ?? '')
+        .join('')
+        .trim() || undefined;
+
+      console.log(`✅ Google Translate: ${sourceLanguage}→${targetLanguage} "${text.slice(0, 20)}" → "${translation.slice(0, 20)}"${pronunciation ? ` [${pronunciation.slice(0, 20)}]` : ''}`);
+
+      return { translation, pronunciation };
+    } catch (error) {
+      console.log('💥 Google Translate error:', error);
+      return null;
+    }
+  }
+
+  static async translateWithServer(
     text: string,
     sourceLanguage: string,
     targetLanguage: string
@@ -286,7 +341,6 @@ export class TranslationAPI {
           text,
           sourceLanguage: sourceLangName,
           targetLanguage: targetLangName,
-          provider: 'claude',
         }),
       });
 
@@ -305,19 +359,17 @@ export class TranslationAPI {
         pronunciation: result.pronunciation,
       };
     } catch (error) {
-      console.log('💥 Claude API error:', error);
+      console.log('💥 Server (OpenAI) translation error:', error);
 
-      // Sentry에 Claude API 에러 전송 (개인정보 보호를 위해 텍스트 제외)
       captureNetworkError(error as Error, {
         url: `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/translate`,
         method: 'POST',
         requestBody: {
-          textLength: text.length, // 길이만 로깅 (개인정보 보호)
+          textLength: text.length,
           sourceLanguage,
           targetLanguage,
-          provider: 'claude',
         },
-        api_provider: 'Claude',
+        api_provider: 'OpenAI',
       });
 
       return { translation: '' };
@@ -329,7 +381,7 @@ export class TranslationAPI {
     text: string,
     sourceLanguage: string,
     targetLanguage: string,
-    options?: { provider?: 'claude' | 'default' }
+    _options?: Record<string, unknown>
   ): Promise<{
     translation: string;
     meanings?: TranslationMeaning[];
@@ -386,61 +438,39 @@ export class TranslationAPI {
 
     let translation: string | null = null;
     let pronunciation: string | null = null;
-    if (options?.provider === 'claude') {
-      const result = await this.translateWithClaude(
-        text,
-        sourceLanguage,
-        targetLanguage
-      );
-      translation = result.translation;
-      pronunciation = result.pronunciation || null;
-    } else if (LIBRETRANSLATE_BASE_URL) {
-      console.log('🔄 Falling back to LibreTranslate...');
-      translation = await this.translateWithLibreTranslate(
-        text,
-        sourceLanguage,
-        targetLanguage
-      );
+
+    // 1차: Google Translate (무료, 발음 포함)
+    const googleResult = await this.translateWithGoogle(text, sourceLanguage, targetLanguage);
+    if (googleResult) {
+      translation = googleResult.translation;
+      pronunciation = googleResult.pronunciation || null;
     }
 
-    if (translation === null) {
+    // 2차: MyMemory — Google 실패 시
+    if (!translation) {
+      console.log('🔄 Google failed, falling back to MyMemory...');
+      translation = await this.translateWithMyMemory(text, sourceLanguage, targetLanguage);
+    }
+
+    if (!translation) {
       return { translation: '번역을 찾을 수 없습니다' };
     }
 
-    // 번역된 단어의 다중 의미 조회 (항상 실행)
-    const meanings = await this.generateWordMeanings(
-      translation.toLowerCase(),
-      targetLanguage
-    );
-
-    pronunciation =
-      pronunciation ||
-      (await PronunciationService.getPronunciation(
-        translation,
-        targetLanguage
-      ));
-
     const result: {
       translation: string;
-      meanings?: TranslationMeaning[];
       pronunciation?: string;
     } = { translation };
-
-    if (meanings.length > 0) {
-      result.meanings = meanings;
-    }
 
     if (pronunciation) {
       result.pronunciation = pronunciation;
     }
 
-    // 성공한 번역을 캐시에 저장
     await this.saveToCache(
       text,
       sourceLanguage,
       targetLanguage,
       translation,
-      meanings,
+      undefined,
       pronunciation || undefined
     );
 

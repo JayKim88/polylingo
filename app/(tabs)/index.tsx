@@ -24,13 +24,10 @@ import SearchInput from '../../components/SearchInput';
 import TranslationList from '../../components/TranslationList';
 import LanguageModal from '../../components/LanguageModal';
 import VoiceSettingsModal from '../../components/VoiceSettingsModal';
-import CircularUsageButton from '../../components/CircularUsageButton';
-import UsageDetailModal from '../../components/UsageDetailModal';
 import { TranslationAPI } from '../../utils/translationAPI';
 import { StorageService } from '../../utils/storage';
 import { SpeechService } from '../../utils/speechService';
 import { TranslationResult, SUPPORTED_LANGUAGES } from '../../types/dictionary';
-import { SUBSCRIPTION_PLANS } from '../../types/subscription';
 import { useTabSlideAnimation } from '@/hooks/useTabSlideAnimation';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hideTabBar, showTabBar } from './_layout';
@@ -38,7 +35,6 @@ import { SubscriptionService } from '../../utils/subscriptionService';
 import { IAPService } from '../../utils/iapService';
 import { unitIds } from '@/constants/bannerAds';
 
-const TRANSLATION_PROVIDER = 'claude';
 const MAX_LENGTH = 50;
 
 export type TranslationState = {
@@ -63,8 +59,7 @@ export default function SearchTab() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showVoiceSettingsModal, setShowVoiceSettingsModal] = useState(false);
-  const [showUsageDetailModal, setShowUsageDetailModal] = useState(false);
-  const [usageRefreshTrigger, setUsageRefreshTrigger] = useState(0);
+
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [sourceLanguage, setSourceLanguage] = useState(selectedLanguages[0]);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
@@ -112,57 +107,14 @@ export default function SearchTab() {
       setSelectedLanguages(cachedlangs);
       setSourceLanguage(cachedlangs[0]);
 
-      SubscriptionService.getCurrentSubscription()
-        .then((subscription) => {
-          const plan = SUBSCRIPTION_PLANS.find(
-            (p) => p.id === (subscription?.planId || 'free')
-          );
-          const maxLanguages =
-            subscription?.planId === 'free'
-              ? 3
-              : Math.min((plan?.maxLanguages || 2) + 1, 6);
-
-          // 캐시된 언어가 현재 플랜 제한을 초과하는 경우 조정
-          if (cachedlangs.length > maxLanguages) {
-            const adjustedLanguages = cachedlangs.slice(0, maxLanguages);
-            setSelectedLanguages(adjustedLanguages);
-            setSourceLanguage(adjustedLanguages[0]);
-            StorageService.saveSelectedLanguages(adjustedLanguages);
-          }
-        })
-        .catch((error) => {
-          console.warn('Failed to check subscription limits:', error);
-        });
-
+      // 무료 전환: 언어 수 제한 없음, 캐시된 언어 그대로 사용
       return;
     }
 
-    const defaultLanguages = SUPPORTED_LANGUAGES.map((v) => v.code).slice(0, 3); // Start with free tier limit
+    const defaultLanguages = SUPPORTED_LANGUAGES.map((v) => v.code).slice(0, 5);
     setSelectedLanguages(defaultLanguages);
     setSourceLanguage(defaultLanguages[0]);
     await StorageService.saveSelectedLanguages(defaultLanguages);
-
-    SubscriptionService.getCurrentSubscription()
-      .then((subscription) => {
-        const plan = SUBSCRIPTION_PLANS.find(
-          (p) => p.id === (subscription?.planId || 'free')
-        );
-        const maxLanguages =
-          subscription?.planId === 'free'
-            ? 3
-            : Math.min((plan?.maxLanguages || 2) + 1, 6);
-
-        if (maxLanguages > 3) {
-          const expandedLanguages = SUPPORTED_LANGUAGES.map(
-            (v) => v.code
-          ).slice(0, maxLanguages);
-          setSelectedLanguages(expandedLanguages);
-          StorageService.saveSelectedLanguages(expandedLanguages);
-        }
-      })
-      .catch((error) => {
-        console.warn('Failed to check subscription limits:', error);
-      });
   }, []);
 
   const checkVoiceAvailability = useCallback(() => {
@@ -370,7 +322,6 @@ export default function SearchTab() {
         );
 
         // Trigger usage refresh after successful translations
-        setUsageRefreshTrigger((prev) => prev + 1);
 
         // Show banner ad after successful search with new ad (if ads should be shown)
         if (shouldShowAds) {
@@ -454,7 +405,7 @@ export default function SearchTab() {
         searchText.trim(),
         sourceLanguage,
         targetLang,
-        { provider: TRANSLATION_PROVIDER }
+        {}
       );
 
       clearTimeout(timeoutId);
@@ -520,9 +471,6 @@ export default function SearchTab() {
     if (result) {
       // 재시도 성공 시 사용량 증가 (1개 언어)
       await SubscriptionService.incrementDailyUsage(1);
-
-      // Trigger usage refresh after successful retry
-      setUsageRefreshTrigger((prev) => prev + 1);
 
       // Update results array
       const targetLanguages = selectedLanguages.filter(
@@ -939,11 +887,6 @@ export default function SearchTab() {
             </Text>
           </View>
           <View className="flex-row gap-3">
-            <CircularUsageButton
-              onPress={() => setShowUsageDetailModal(true)}
-              size={40}
-              refreshTrigger={usageRefreshTrigger}
-            />
             <TouchableOpacity
               className="w-11 h-11 rounded-full items-center justify-center"
               style={{ backgroundColor: colors.surface }}
@@ -1032,10 +975,6 @@ export default function SearchTab() {
       <VoiceSettingsModal
         visible={showVoiceSettingsModal}
         onClose={() => setShowVoiceSettingsModal(false)}
-      />
-      <UsageDetailModal
-        visible={showUsageDetailModal}
-        onClose={() => setShowUsageDetailModal(false)}
       />
     </Animated.View>
   );

@@ -134,36 +134,9 @@ export default Sentry.wrap(function RootLayout() {
     initializeAds();
   }, []);
 
-  const handleInitializeIAP = async () => {
-    try {
-      const initPromise = IAPService.initialize();
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('IAP initialization timeout')), 5000)
-      );
-
-      await Promise.race([initPromise, timeoutPromise]);
-      console.log('IAP service initialized successfully');
-
-      await IAPService.checkSubscriptionStatusAndUpdate();
-
-      // 사용자 컨텍스트 초기화
-      await initializeUserContext();
-    } catch (error) {
-      console.error('Failed to initialize IAP service:', error);
-      // Ensure we have a fallback subscription
-      try {
-        await SubscriptionService.setSubscription('free', {
-          isActive: true,
-          preserveUsage: true,
-        });
-      } catch (fallbackError) {
-        console.error('Failed to set fallback subscription:', fallbackError);
-      }
-    }
-  };
-
   useEffect(() => {
-    handleInitializeIAP();
+    // 무료 전환: IAP 초기화 비활성화
+    initializeUserContext().catch(console.error);
   }, []);
 
   if (!fontsLoaded && !fontError) {

@@ -379,6 +379,8 @@ export class SubscriptionService {
 
   // 번역 사용 가능 여부 확인 (실제 사용량은 증가시키지 않음)
   static async canUseTranslation(languageCount: number = 1): Promise<boolean> {
+    return true; // 무료 전환: 제한 없음
+    // eslint-disable-next-line no-unreachable
     try {
       let subscription = await this.getCurrentSubscription(true);
 
@@ -635,16 +637,7 @@ export class SubscriptionService {
 
   // 광고 표시 여부 확인
   static async shouldShowAds(): Promise<boolean> {
-    try {
-      const subscription = await this.getCurrentSubscription();
-      if (!subscription) return true;
-
-      const plan = SUBSCRIPTION_PLANS.find((p) => p.id === subscription.planId);
-      return plan?.hasAds ?? true;
-    } catch (error) {
-      console.error('Error checking ads status:', error);
-      return true;
-    }
+    return true; // 무료 전환: 항상 광고 표시
   }
 
   // 플랜에 맞는 기본 언어 선택 반환 (Free: 3개, 유료: 6개)

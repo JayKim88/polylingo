@@ -3,6 +3,11 @@ import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
 import { StorageService, VoiceSettings } from './storage';
 
+const GOOGLE_TTS_URL = 'https://translate.googleapis.com/translate_tts';
+const GOOGLE_TTS_LANG_MAP: Record<string, string> = {
+  zh: 'zh-TW',
+};
+
 // Safely import Voice module with fallback
 let Voice: any = null;
 try {
@@ -60,7 +65,41 @@ export class SpeechService {
     return languageMap[languageCode] || 'en-US';
   }
 
-  // 텍스트를 음성으로 읽기 (기본 설정 사용)
+  static async speakWithGoogle(text: string, languageCode: string): Promise<void> {
+    const tl = GOOGLE_TTS_LANG_MAP[languageCode] ?? languageCode;
+    const params = new URLSearchParams([
+      ['ie', 'UTF-8'],
+      ['q', text],
+      ['tl', tl],
+      ['client', 'gtx'],
+      ['ttsspeed', '0.9'],
+    ]);
+
+    const url = `${GOOGLE_TTS_URL}?${params}`;
+    await this.initializeAudio();
+
+    const { sound } = await Audio.Sound.createAsync(
+      { uri: url },
+      { shouldPlay: true }
+    );
+
+    return new Promise((resolve, reject) => {
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (!status.isLoaded) return;
+        if (status.didJustFinish) {
+          sound.unloadAsync();
+          resolve();
+        }
+      });
+      // 10초 타임아웃
+      setTimeout(() => {
+        sound.unloadAsync();
+        reject(new Error('Google TTS timeout'));
+      }, 10000);
+    });
+  }
+
+  // 텍스트를 음성으로 읽기 — Google TTS 우선, expo-speech fallback
   static speak(
     text: string,
     languageCode: string,
@@ -72,25 +111,32 @@ export class SpeechService {
         return;
       }
 
-      const voiceSettings =
-        customSettings || (await StorageService.getVoiceSettings());
-
+      // 1차: Google TTS
       try {
+        await this.speakWithGoogle(text, languageCode);
+        resolve();
+        return;
+      } catch (error) {
+        console.log('🔊 Google TTS failed, falling back to expo-speech:', error);
+      }
+
+      // 2차: expo-speech fallback
+      try {
+        const voiceSettings =
+          customSettings || (await StorageService.getVoiceSettings());
+
         await this.initializeAudio();
 
-        const speechOptions = {
+        Speech.speak(text, {
           language: this.getVoiceLanguage(languageCode),
           rate: voiceSettings.rate,
           pitch: voiceSettings.pitch,
           volume: voiceSettings.volume,
           onDone: () => resolve(),
-          onError: () =>
-            reject(new Error('An error occurred while playing the voice.')),
-        };
-
-        Speech.speak(text, speechOptions);
+          onError: () => reject(new Error('An error occurred while playing the voice.')),
+        });
       } catch (error) {
-        console.error('🔊 Enhanced TTS error:', error);
+        console.error('🔊 expo-speech error:', error);
         reject(error);
       }
     });
@@ -135,23 +181,16 @@ export class SpeechService {
             staysActiveInBackground: false,
             playThroughEarpieceAndroid: false,
           });
-          console.log('🎤 Audio session configured for recording');
         } catch (audioError) {
           console.log('🎤 Audio session config warning:', audioError);
         }
       }
 
-      Voice.onSpeechStart = (event: any) => {
-        console.log('🎤 Speech recognition started');
-      };
+      Voice.onSpeechStart = (_event: any) => {};
 
-      Voice.onSpeechRecognized = (event: any) => {
-        console.log('🎤 Speech recognized', JSON.stringify(event));
-      };
+      Voice.onSpeechRecognized = (_event: any) => {};
 
       Voice.onSpeechEnd = () => {
-        console.log('🎤 Speech recognition ended');
-        console.log('🎤 Speech ended - did we get any results before this?');
         onEnd();
       };
 
@@ -167,47 +206,25 @@ export class SpeechService {
       Voice.onSpeechResults = (event: any) => {
         if (event.value && event.value.length > 0) {
           const transcript = event.value[0];
-          console.log('🎤 Transcript:', transcript);
           if (transcript && transcript.trim()) {
             onResult(transcript.trim());
           }
-        } else {
-          console.log('🎤 No results in event:', event);
         }
       };
 
-      // Optional: Handle partial results
-      Voice.onSpeechPartialResults = (event: any) => {
-        console.log('🎤 Partial results:', JSON.stringify(event));
-        // Also try to get partial results for immediate feedback
-        if (event.value && event.value.length > 0) {
-          const transcript = event.value[0];
-          console.log('🎤 Partial transcript:', transcript);
-        }
-      };
+      Voice.onSpeechPartialResults = (_event: any) => {};
 
-      // Reduce volume logging noise
-      Voice.onSpeechVolumeChanged = (event: any) => {
-        // Only log every 10th volume change to reduce noise
-        if (Math.random() < 0.1) {
-          console.log('🔊 Volume changed (sample):', JSON.stringify(event));
-        }
-      };
+      Voice.onSpeechVolumeChanged = (_event: any) => {};
 
-      // Check if Voice is available (includes permission check)
       const isAvailable = await Voice.isAvailable();
-      console.log('🎤 Voice availability check:', isAvailable);
       if (!isAvailable) {
         onError('Microphone or speech recognition permission not granted');
         return null;
       }
 
-      // Initialize Voice module if not loaded
       if (!Voice._loaded) {
-        console.log('🎤 Voice module not loaded, initializing...');
         try {
           await Voice.isAvailable();
-          console.log('🎤 Voice module initialization attempt completed');
         } catch (initError) {
           console.log('🎤 Voice module initialization failed:', initError);
         }
@@ -217,7 +234,6 @@ export class SpeechService {
 
       try {
         if (Platform.OS === 'ios') {
-          console.log('🎤 Requesting iOS speech recognition permissions...');
           try {
             await Voice.start(locale);
           } catch (permError) {
@@ -231,9 +247,6 @@ export class SpeechService {
       return {
         stop: async () => {
           try {
-            console.log('🎤 Stopping voice recognition...');
-
-            // Clear all event listeners first to prevent callbacks
             Voice.onSpeechStart = null;
             Voice.onSpeechRecognized = null;
             Voice.onSpeechEnd = null;
@@ -244,7 +257,6 @@ export class SpeechService {
 
             await Voice.stop();
             await Voice.destroy();
-            console.log('🎤 Voice stopped and destroyed');
           } catch (error) {
             console.error('🎤 Error stopping voice:', error);
           }

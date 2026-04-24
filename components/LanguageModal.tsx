@@ -37,24 +37,9 @@ export default function LanguageModal({
   const { colors } = useTheme();
 
   const [tempSelected, setTempSelected] = useState<string[]>(selectedLanguages);
-  const [maxSelectable, setMaxSelectable] = useState<number>(3);
-  const [isPaidUser, setIsPaidUser] = useState<boolean>(false);
+  const maxSelectable = 14; // 전체 14개 - 소스 1개
   const cancelButtonScale = useRef(new Animated.Value(1)).current;
   const confirmButtonScale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    const loadMaxLanguages = async () => {
-      const maxLangs = await SubscriptionService.getMaxLanguages();
-      const isPremium = await SubscriptionService.isPremiumUser();
-
-      setMaxSelectable(maxLangs);
-      setIsPaidUser(isPremium);
-    };
-
-    if (visible) {
-      loadMaxLanguages();
-    }
-  }, [visible]);
 
   const toggleLanguage = (languageCode: string) => {
     if (tempSelected.includes(languageCode)) {
@@ -69,7 +54,7 @@ export default function LanguageModal({
       .map((code) => SUPPORTED_LANGUAGES.find((lang) => lang.code === code)!)
       .filter(Boolean);
     const unselectedLanguages = SUPPORTED_LANGUAGES.filter(
-      (lang) => !tempSelected.includes(lang.code)
+      (lang) => !tempSelected.includes(lang.code),
     );
 
     return [...selectedLanguages, ...unselectedLanguages];
@@ -107,13 +92,13 @@ export default function LanguageModal({
             backgroundColor: isSelected
               ? colors.primaryContainer
               : isDisabled
-              ? colors.borderLight
-              : colors.surface,
+                ? colors.borderLight
+                : colors.surface,
             borderColor: isSelected
               ? colors.primary
               : isDisabled
-              ? colors.border
-              : colors.surface,
+                ? colors.border
+                : colors.surface,
           }}
           onPress={() => toggleLanguage(item.code)}
           onLongPress={isSelected ? drag : undefined}
@@ -198,11 +183,7 @@ export default function LanguageModal({
                   : t('languageModal.selectPrompt')}
               </Text>
               <Text className="text-xs" style={{ color: colors.textTertiary }}>
-                {isPaidUser
-                  ? t('languageModal.selectUpToPremium', {
-                      count: maxSelectable,
-                    })
-                  : t('languageModal.selectUpToFree', { count: maxSelectable })}
+                {t('languageModal.selectUpTo', { count: maxSelectable })}
               </Text>
             </View>
             <DraggableFlatList

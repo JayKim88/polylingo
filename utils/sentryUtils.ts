@@ -87,27 +87,15 @@ export const captureTranslationError = (
 export const initializeUserContext = async () => {
   try {
     const { UserService } = await import('./userService');
-    const { SubscriptionService } = await import('./subscriptionService');
 
-    const [transactionId, subscription] = await Promise.all([
-      UserService.getCurrentTransactionId(),
-      SubscriptionService.getCurrentSubscription(),
-    ]);
+    const transactionId = await UserService.getCurrentTransactionId();
 
     if (transactionId) {
-      setUserContext({
-        id: transactionId,
-      });
-
-      // 추가 컨텍스트 설정 (Transaction ID 기반)
+      setUserContext({ id: transactionId });
       Sentry.setContext('user_details', {
         transaction_id: transactionId,
         identification_method: 'transaction_based',
       });
-    }
-
-    if (subscription) {
-      await updateSubscriptionContext(subscription);
     }
   } catch (error) {
     console.warn('Failed to initialize user context for Sentry:', error);

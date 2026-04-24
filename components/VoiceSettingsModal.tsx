@@ -74,15 +74,6 @@ export default function VoiceSettingsModal({
 
     try {
       setIsTesting(true);
-      console.log('🧪 Testing with settings:', settings);
-
-      // Show platform-specific info about volume
-      if (RNPlatform.OS === 'ios') {
-        console.log(
-          '📱 iOS: Volume may be controlled by system volume settings'
-        );
-      }
-
       await SpeechService.speak(t('voice.testText'), i18n.language, settings);
     } catch (error) {
       console.error('🔊 TTS Test Error:', error);

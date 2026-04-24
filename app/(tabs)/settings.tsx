@@ -32,7 +32,7 @@ import { hideTabBar, showTabBar } from './_layout';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 
 import AppLanguageModal from '../../components/AppLanguageModal';
-import SubscriptionModal, {
+import {
   APPLE_EULA_LINK,
   PRIVACY_POLICY_LINK,
 } from '../../components/SubscriptionModal';
@@ -60,7 +60,7 @@ export default function SettingsTab() {
   const { theme, colors, toggleTheme } = useTheme();
 
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
   const [showAd, setShowAd] = useState(false);
@@ -562,14 +562,6 @@ export default function SettingsTab() {
               iconColor={theme === 'dark' ? '#F59E0B' : '#6366F1'}
               backgroundColor={theme === 'dark' ? '#FEF3C7' : '#E0E7FF'}
             />
-            <SettingItem
-              icon={<Settings size={20} color="#8B5CF6" />}
-              title={t('subscription.title')}
-              subtitle={t('subscription.manage')}
-              onPress={() => setShowSubscriptionModal(true)}
-              iconColor="#8B5CF6"
-              backgroundColor="#F3E8FF"
-            />
             {/* {__DEV__ && (
               <SettingItem
                 icon={<Settings size={20} color="#EF4444" />}
@@ -715,14 +707,6 @@ export default function SettingsTab() {
       <AppLanguageModal
         visible={showLanguageModal}
         onClose={() => setShowLanguageModal(false)}
-      />
-      <SubscriptionModal
-        visible={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-        onSubscriptionChange={async () => {
-          const newSub = await SubscriptionService.getCurrentSubscription();
-          setShowAd(newSub?.planId === 'free');
-        }}
       />
     </Animated.View>
   );

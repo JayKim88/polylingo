@@ -110,8 +110,8 @@
     "aboutTitle": "About PolyLingo",
     "aboutVersion": "Version 1.0.0",
     "aboutSubtitle": "Your AI-powered multilingual translator",
-    "aboutFeatures": "Features:\n• Up to 5 languages simultaneously\n• Voice input and text-to-speech\n• Favorite translations for quick access\n• Translation history with date filtering\n• Dark/Light theme support\n• Beautiful, intuitive interface",
-    "aboutBuiltWith": "Built with React Native & Claude AI",
+    "aboutFeatures": "Features:\n• Up to 13 languages simultaneously\n• Voice input and text-to-speech\n• Favorite translations for quick access\n• Translation history with date filtering\n• Dark/Light theme support\n• Beautiful, intuitive interface",
+    "aboutBuiltWith": "Built with React Native",
     "aboutCopyright": "© 2025 PolyLingo Team",
     "aboutButton": "Got it"
   },
@@ -138,8 +138,7 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "selectPrompt": "Select languages to translate (min 2)",
-    "selectUpToPremium": "Select up to {{count}} languages (Premium)",
-    "selectUpToFree": "Select up to {{count}} languages (Free)"
+    "selectUpTo": "Select up to {{count}} languages"
   },
   "voice": {
     "title": "Voice Settings",

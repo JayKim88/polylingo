@@ -33,7 +33,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     currency: 'USD',
     period: 'monthly',
     dailyTranslations: 100,
-    maxLanguages: 2,
+    maxLanguages: 4,
     hasAds: true,
     features: [
       'subscription.features.translation',

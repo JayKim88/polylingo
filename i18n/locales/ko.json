@@ -67,8 +67,8 @@
     "aboutSubtitle": "AI 기반 다국어 번역기",
     "aboutTitle": "PolyLingo 정보",
     "aboutVersion": "버전 1.0.0",
-    "aboutFeatures": "기능:\n• 최대 5개 언어 동시 번역\n• 음성 입력 및 텍스트 음성 변환\n• 빠른 액세스를 위한 즐겨찾기 번역\n• 날짜 필터링이 있는 번역 기록\n• 다크/라이트 테마 지원\n• 아름답고 직관적인 인터페이스",
-    "aboutBuiltWith": "React Native 및 Claude AI로 제작",
+    "aboutFeatures": "기능:\n• 최대 13개 언어 동시 번역\n• 음성 입력 및 텍스트 음성 변환\n• 빠른 액세스를 위한 즐겨찾기 번역\n• 날짜 필터링이 있는 번역 기록\n• 다크/라이트 테마 지원\n• 아름답고 직관적인 인터페이스",
+    "aboutBuiltWith": "React Native로 제작",
     "aboutCopyright": "© 2025 PolyLingo 팀",
     "aboutButton": "확인",
     "features": "주요 기능",
@@ -138,8 +138,7 @@
     "cancel": "취소",
     "confirm": "확인",
     "selectPrompt": "번역할 언어를 선택하세요 (최소 2개)",
-    "selectUpToPremium": "최대 {{count}}개 언어 선택 (프리미엄)",
-    "selectUpToFree": "최대 {{count}}개 언어 선택 (무료)"
+    "selectUpTo": "최대 {{count}}개 언어 선택 가능"
   },
   "voice": {
     "title": "음성 설정",
