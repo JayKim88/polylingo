@@ -17,7 +17,6 @@ import { X, Check, GripVertical } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
-import { SubscriptionService } from '../utils/subscriptionService';
 
 type LanguageModalProps = {
   visible: boolean;

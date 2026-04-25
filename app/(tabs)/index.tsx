@@ -227,24 +227,6 @@ export default function SearchTab() {
       (lang) => lang !== sourceLanguage
     );
 
-    // 일일 사용량 확인 (번역하기 전에 사용 가능한지만 체크)
-    const canUse = await SubscriptionService.canUseTranslation(
-      targetLanguages.length
-    );
-    if (!canUse) {
-      const usage = await SubscriptionService.getDailyUsage();
-      Alert.alert(
-        t('subscription.usageExceeded'),
-        t('subscription.upgradeRequired') +
-          `\n\n${t('subscription.dailyUsage', {
-            used: usage.used,
-            limit: usage.limit,
-          })}`
-      );
-      setIsLoading(false);
-      return;
-    }
-
     isVoiceActive && (await stopVoiceRecording());
 
     // Initialize results array with null placeholders for skeleton loading
@@ -307,13 +289,6 @@ export default function SearchTab() {
         );
 
       if (successfulTranslations.length > 0) {
-        // 성공한 번역이 있을 때만 사용량 증가
-        await SubscriptionService.incrementDailyUsage(
-          successfulTranslations.length
-        );
-
-        // Trigger usage refresh after successful translations
-
         // Show banner ad after successful search with new ad (if ads should be shown)
         if (shouldShowAds) {
           setShowBannerAd(true);
@@ -460,9 +435,6 @@ export default function SearchTab() {
     );
 
     if (result) {
-      // 재시도 성공 시 사용량 증가 (1개 언어)
-      await SubscriptionService.incrementDailyUsage(1);
-
       // Update results array
       const targetLanguages = selectedLanguages.filter(
         (lang) => lang !== sourceLanguage
