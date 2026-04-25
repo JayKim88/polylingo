@@ -26,22 +26,18 @@ Built with full iOS ecosystem integration and native platform features.
 - **React Native** with Expo 53 for cross-platform mobile development
 - **TypeScript** with strict mode for type safety and enhanced developer experience
 - **Expo Router** for file-based navigation and deep linking
-- **Zustand** for lightweight, performant state management
 - **NativeWind** for utility-first styling with responsive design
-- **React Native Reanimated** for smooth animations and gestures
 
 **Backend & Infrastructure**
 
 - **Google Translate API** for primary translation with phonetic transliteration
 - **MyMemory API** as fallback translation provider
-- **Wiktionary REST API** for English word definitions and part-of-speech lookup
 - **Dictionary API** (`dictionaryapi.dev`) for English IPA pronunciation
 - **Supabase PostgreSQL** for user data management
 - **Sentry** for real-time error tracking and performance monitoring
 
 **Platform Integrations**
 
-- **Apple Authentication** for secure user sign-in
 - **React Native Voice** for speech recognition and voice input
 - **Expo Speech** for text-to-speech pronunciation
 
@@ -200,6 +196,8 @@ static async translate(
 
 #### Concurrent Request Deduplication (`utils/subscriptionService.ts`)
 
+Prevents duplicate in-flight async requests by sharing a single Promise reference across concurrent callers.
+
 ```typescript
 export class SubscriptionService {
   private static isUpdating = false;
@@ -233,46 +231,51 @@ export class SubscriptionService {
 ```typescript
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { getLocales } from 'react-native-localize';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Language resources with type safety
 import en from './locales/en.json';
 import ko from './locales/ko.json';
 import zh from './locales/zh.json';
 
-const LANGUAGE_KEY = 'user_language';
+const LANGUAGE_STORAGE_KEY = 'app_language';
 
-// Detect user's preferred language with fallback
-const detectLanguage = (): string => {
-  try {
-    const locales = getLocales();
-    if (locales && locales.length > 0) {
-      const preferredLanguage = locales[0].languageCode;
-      // Map to supported languages
-      return ['en', 'ko', 'zh'].includes(preferredLanguage)
-        ? preferredLanguage
-        : 'en';
+// Async language detector — reads persisted preference, falls back to device locale
+const languageDetector = {
+  type: 'languageDetector' as const,
+  async: true,
+  detect: async (callback: (lng: string) => void) => {
+    try {
+      const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (savedLanguage) return callback(savedLanguage);
+
+      const RNLocalize = require('react-native-localize');
+      const deviceLanguage = RNLocalize.getLocales()[0]?.languageCode;
+      const supported = ['ko', 'en', 'zh'];
+      callback(supported.includes(deviceLanguage) ? deviceLanguage : 'en');
+    } catch {
+      callback('en');
     }
-  } catch (error) {
-    console.log('Language detection error:', error);
-  }
-  return 'en'; // Safe fallback
+  },
+  init: () => {},
+  cacheUserLanguage: async (lng: string) => {
+    await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, lng);
+  },
 };
 
-i18n.use(initReactI18next).init({
-  compatibilityJSON: 'v3',
-  resources: {
-    en: { translation: en },
-    ko: { translation: ko },
-    zh: { translation: zh },
-  },
-  lng: detectLanguage(),
-  fallbackLng: 'en',
-  interpolation: {
-    escapeValue: false,
-  },
-});
+i18n
+  .use(languageDetector)
+  .use(initReactI18next)
+  .init({
+    resources: {
+      en: { translation: en },
+      ko: { translation: ko },
+      zh: { translation: zh },
+    },
+    fallbackLng: 'en',
+    supportedLngs: ['en', 'ko', 'zh'],
+    interpolation: { escapeValue: false },
+    react: { useSuspense: false },
+  });
 
 export default i18n;
 ```
@@ -315,16 +318,33 @@ describe('Translation Flow Integration Tests', () => {
         sourceLanguage,
         targetLanguage,
         translatedText: result.translation,
+        searchedData: [{ lng: targetLanguage, text: result.translation }],
       });
 
       // Step 3: Trigger TTS
       await SpeechService.speak(result.translation, targetLanguage);
 
       expect(mockStorageService.addToHistory).toHaveBeenCalledTimes(1);
-      expect(mockSpeechService.speak).toHaveBeenCalledWith(
-        '안녕하세요',
-        'ko'
+      expect(mockSpeechService.speak).toHaveBeenCalledWith('안녕하세요', 'ko');
+    });
+  });
+
+  describe('Multi-Language Translation Flow', () => {
+    test('should translate to multiple languages concurrently', async () => {
+      mockTranslationAPI.translateToMultipleLanguages.mockResolvedValue([
+        { sourceLanguage: 'en', targetLanguage: 'ko', sourceText: 'hello',
+          translatedText: '안녕하세요', confidence: 0.9, timestamp: Date.now() },
+        { sourceLanguage: 'en', targetLanguage: 'ja', sourceText: 'hello',
+          translatedText: 'こんにちは', confidence: 0.9, timestamp: Date.now() },
+      ]);
+
+      const results = await TranslationAPI.translateToMultipleLanguages(
+        'hello', 'en', ['ko', 'ja']
       );
+
+      expect(results).toHaveLength(2);
+      expect(results[0].translatedText).toBe('안녕하세요');
+      expect(results[1].translatedText).toBe('こんにちは');
     });
   });
 });
@@ -352,6 +372,7 @@ components/                     # Reusable UI components
 ├── DatePickerModal.tsx        # Date range picker for history
 ├── ErrorBoundary.tsx          # Error boundary wrapper
 ├── FavoritesList.tsx          # Saved translations list
+├── GoogleIcon.tsx             # Google icon asset
 ├── HistoryList.tsx            # Translation history list
 ├── LanguageSelector.tsx       # Language picker with flags
 ├── LanguageModal.tsx          # Full-screen language picker modal
@@ -368,10 +389,11 @@ components/                     # Reusable UI components
 
 utils/                         # Business logic services
 ├── translationAPI.ts          # Multi-provider translation with caching
-├── subscriptionService.ts     # User state management
+├── subscriptionService.ts     # Ad display and user state management
 ├── userService.ts             # User data and sync
+├── iapService.ts              # In-app purchase utilities
 ├── premiumService.ts          # Feature flag management
-├── deviceUsageService.ts      # Anonymous device tracking
+├── deviceUsageService.ts      # Device-based usage tracking
 ├── speechService.ts           # Voice recognition & TTS
 ├── pronunciationService.ts    # Phonetic guide generation
 ├── storage.ts                 # AsyncStorage abstraction layer
@@ -382,25 +404,21 @@ utils/                         # Business logic services
 
 types/                        # TypeScript definitions
 ├── dictionary.ts             # Translation and language types
-├── subscription.ts           # User state type definitions
-└── index.ts                  # Shared type exports
+└── subscription.ts           # User state type definitions
 
 stores/                       # Zustand state management
 └── subscriptionStore.ts      # User state store
 
 hooks/                        # Custom React hooks
 ├── useTabSlideAnimation.ts   # Navigation animations
-├── useFrameworkReady.ts      # Expo framework readiness
-└── index.ts                  # Hook exports
+└── useFrameworkReady.ts      # Expo framework readiness
 
 contexts/                     # React contexts
-├── ThemeContext.tsx          # Dark/light mode management
-└── index.ts                  # Context providers
+└── ThemeContext.tsx          # Dark/light mode management
 
 constants/                    # App configuration
 ├── bannerAds.ts             # Ad unit configuration
-├── legalDocuments.ts        # Terms and privacy links
-└── index.ts                 # Constant exports
+└── legalDocuments.ts        # Terms and privacy links
 
 i18n/                        # Internationalization
 ├── locales/                 # Translation files
@@ -412,15 +430,11 @@ i18n/                        # Internationalization
 
 __tests__/                   # Test suites
 ├── components/             # Component unit tests
-├── utils/                  # Service integration tests
-├── integration/           # Feature end-to-end tests
-├── __mocks__/            # Test mocks and fixtures
-└── setupTests.ts         # Jest configuration
+├── utils/                  # Service unit & integration tests
+└── integration/           # Feature end-to-end tests
 
 assets/                     # Static resources
-├── images/               # App icons and graphics
-├── fonts/               # Custom typography
-└── sounds/              # Audio feedback files
+└── images/               # App icons and graphics
 ```
 
 <br/>
