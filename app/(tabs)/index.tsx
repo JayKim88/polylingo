@@ -131,8 +131,6 @@ export default function SearchTab() {
 
   const handleFocus = useCallback(async () => {
     loadFavorites();
-    // 탭 포커스 시 언어 설정을 다시 로드하여 구독 변경 사항 반영
-    await loadSelectedLanguages();
     checkVoiceAvailability();
     showTabBar();
 
@@ -151,7 +149,7 @@ export default function SearchTab() {
     }
 
     setIsHeaderVisible(true);
-  }, [loadFavorites, loadSelectedLanguages, checkVoiceAvailability]);
+  }, [loadFavorites, checkVoiceAvailability]);
 
   const handleScrollDirectionChange = useCallback(
     (scrollingUp: boolean, scrollY: number) => {
@@ -201,8 +199,9 @@ export default function SearchTab() {
   });
 
   useEffect(() => {
+    loadSelectedLanguages();
     checkVoiceAvailability();
-  }, [checkVoiceAvailability]);
+  }, []);
 
   const handleSearch = async () => {
     if (!searchText.trim()) return;
