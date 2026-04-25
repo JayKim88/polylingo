@@ -1,9 +1,9 @@
 <div style="display: flex; gap: 16px; overflow-x: auto;">  
-  <img src="https://github.com/user-attachments/assets/6f433dc2-e6fb-420e-a9b8-5211640e325b"
+  <img src="https://github.com/user-attachments/assets/d3e0d611-ae78-439d-ac2d-620b58ebc209"
        style="width: 240px; height: auto;" />
-  <img src="https://github.com/user-attachments/assets/03a6d96b-5c30-47fc-b286-4751101abcc5"
+  <img src="https://github.com/user-attachments/assets/691d7ab9-40c4-4d80-beab-002c7fbbedac"
        style="width: 240px; height: auto;" />
-  <img src="https://github.com/user-attachments/assets/65635f39-dfb1-40fb-8c8b-52f7c0f52d77"
+  <img src="https://github.com/user-attachments/assets/f11a25a5-36c8-48b0-801c-19069ab2f3cf"
        style="width: 240px; height: auto;" />  
 </div>
 
@@ -482,14 +482,17 @@ assets/                     # Static resources
 ## 📱 UI & UX Screenshots
 
 <div style="display:flex;gap:8px;white-space:nowrap;">
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 16 26 23" src="https://github.com/user-attachments/assets/69f1a699-d7d4-4c0e-bcf7-a80685e703af" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 16 26 52" src="https://github.com/user-attachments/assets/ea53a950-4d15-46ac-9d76-0b4b61d367f2" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 30 45" src="https://github.com/user-attachments/assets/c3de7323-f8d6-45f6-9d53-e828bae2da26" />      
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 00" src="https://github.com/user-attachments/assets/1d32757e-65b3-4995-a0eb-cd53e0e84346" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 09" src="https://github.com/user-attachments/assets/a81b2dc9-01d8-4fa9-a22c-2dc386f29892" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 18" src="https://github.com/user-attachments/assets/82344002-e48f-4a44-a9e9-2790d76cc074" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 45" src="https://github.com/user-attachments/assets/aef6ed6a-4b85-4742-82af-b30a64e2f82d" />
-      <img width="240" alt="Simulator Screenshot - iPhone 14 Pro Max - 2025-07-18 at 18 53 58" src="https://github.com/user-attachments/assets/8cef6317-7b2d-41e2-85a2-f62290bed623" />
+<img width="240" alt="intro" src="https://github.com/user-attachments/assets/50fa8c9a-a882-47f8-8b4e-72b7b84188ac" />
+<img width="240" alt="translate" src="https://github.com/user-attachments/assets/143649c4-622c-4568-8c5e-b13e5d899486" />
+<img width="240" alt="language selection" src="https://github.com/user-attachments/assets/f61c15e3-6198-4b7c-afe0-cf807f3606a8" />
+<img width="240" alt="voice settings" src="https://github.com/user-attachments/assets/22dd552a-ddf5-4ffb-9471-797b92694b2e" />
+<img width="240" alt="history" src="https://github.com/user-attachments/assets/5fd117c8-da61-4c23-b80b-52e6fbf21e32" />
+<img width="240" alt="favorite" src="https://github.com/user-attachments/assets/14764ebb-ece7-4d2d-a87b-fc49baf22db3" />
+<img width="240" alt="settings" src="https://github.com/user-attachments/assets/2f358014-4e77-4609-bb0e-742506249051" />
+<img width="240" alt="app language" src="https://github.com/user-attachments/assets/9640f4f7-160c-464c-9184-4e4cffe0e9a1" />
+<img width="240" alt="supported language" src="https://github.com/user-attachments/assets/67aa299a-13b8-4f04-9bf3-7a8234cc99a0" />
+<img width="240" alt="export data" src="https://github.com/user-attachments/assets/6fa4cd7c-d915-485e-b038-4747ad0c2d82" />
+<img width="240" alt="dark mode" src="https://github.com/user-attachments/assets/7c4d354e-26f9-44dd-b020-07f3748b7932" />
 </div>
 
 ---
