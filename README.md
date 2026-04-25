@@ -59,6 +59,7 @@ Built with full iOS ecosystem integration and native platform features.
 - **Parallel Processing Optimization**: Asynchronous translation per language to minimize user wait time
 - **Smart Caching System**: 24-hour memory caching with offline access support
 - **Translation Error Recovery**: Auto-retry logic, API fallback, and individual language state management
+- **Architecture Migration**: Transitioned from a subscription-based model with a self-hosted server API to a free app using Google Translate direct integration — maintaining full feature parity while reducing infrastructure cost to zero
 
 **Audio & Voice Features**
 
