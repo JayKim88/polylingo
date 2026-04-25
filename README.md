@@ -85,6 +85,45 @@ Built with full iOS ecosystem integration and native platform features.
 - **Multi-Layer Caching**: Translation results (24h memory) and user session state
 - **Race Condition Prevention**: Concurrent request deduplication via shared Promise reference
 
+<br/>
+
+## 📦 Version History & Architecture Evolution
+
+### v1.0.4 — Subscription-Based Full Stack (Original)
+
+The initial release was a full-stack paid app with a 3-tier subscription model (Free / Pro / Premium).
+
+**Translation Pipeline**
+
+- **Claude API** (via self-hosted Next.js server) as the primary translation provider with AI-powered phonetic transcription
+- **Wiktionary REST API** for word definitions and part-of-speech classification
+- **MyMemory API** as fallback — automatic failover across 3 providers
+
+**Monetisation & Auth**
+
+- 3-tier subscription model (Free / Pro Monthly / Premium Yearly) with **Apple IAP** (`react-native-iap`)
+- Real-time subscription renewal detection via Apple IAP receipt validation
+- Daily translation limits enforced per plan (100 / 200 / 500)
+- **Supabase PostgreSQL** for user subscription state and daily usage sync across devices
+
+**Backend**
+
+- Dedicated Next.js API server (`polylingo-server`) handling translation requests and subscription verification
+- Transaction-ID-based user identity (zero-registration) synced to Supabase
+
+---
+
+### v1.0.5 — Free App (Current)
+
+Migrated from subscription-based model to a fully free app, restructuring the translation pipeline to reduce infrastructure cost to zero while maintaining feature parity.
+
+**What changed**
+
+- Removed self-hosted server API → **Google Translate API** direct integration (client-side)
+- Removed IAP and subscription enforcement
+- Removed daily usage limits
+- Supabase sync retained in codebase; not active in primary flow
+
 </br>
 
 ## 💡 Code Quality & Architecture Highlights
