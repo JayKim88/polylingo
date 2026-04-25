@@ -11,11 +11,11 @@
 
 A real-time multi-language translation mobile application built with React Native and Expo.
 
-Integrating Claude AI's translation capabilities with Wiktionary's dictionary data, this app provides detailed word definitions, pronunciations, and contextual meanings alongside accurate translations.
+Using Google Translate API as the primary translation engine with MyMemory as fallback, the app provides accurate translations with pronunciation guides for non-Latin scripts.
 
-Supporting 14 languages with parallel translation to multiple targets simultaneously (3 for free users, 5 for premium), the app includes advanced features like speech recognition, offline caching, and real-time state synchronization.
+Supporting 14 languages with parallel translation to up to 13 target languages simultaneously, the app includes advanced features like speech recognition, offline caching, and real-time state synchronization.
 
-Built as a commercial-ready application with subscription monetization, Apple In-App Purchases, and full iOS ecosystem integration.
+Built with full iOS ecosystem integration and native platform features.
 
 <br/>
 
@@ -32,16 +32,15 @@ Built as a commercial-ready application with subscription monetization, Apple In
 
 **Backend & Infrastructure**
 
-- **Claude API** for AI-powered translation with phonetic transcription
-- **Wiktionary REST API** for real-time word definitions, part-of-speech classification, and contextual meanings lookup
-- **MyMemory API** as intelligent fallback translation provider
-- **Supabase PostgreSQL** for user data and subscription management
+- **Google Translate API** for primary translation with phonetic transliteration
+- **MyMemory API** as fallback translation provider
+- **Wiktionary REST API** for English word definitions and part-of-speech lookup
+- **Dictionary API** (`dictionaryapi.dev`) for English IPA pronunciation
+- **Supabase PostgreSQL** for user data management
 - **Sentry** for real-time error tracking and performance monitoring
 
 **Platform Integrations**
 
-- **Apple In-App Purchases** with iOS StoreKit integration
-- **Google Mobile Ads** for banner advertising (AdMob)
 - **Apple Authentication** for secure user sign-in
 - **React Native Voice** for speech recognition and voice input
 - **Expo Speech** for text-to-speech pronunciation
@@ -60,7 +59,7 @@ Built as a commercial-ready application with subscription monetization, Apple In
 
 **Core Translation Features**
 
-- **Multi-Language Parallel Translation**: Support for 14 languages with simultaneous translation to up to 5 languages (premium) or 3 languages (free)
+- **Multi-Language Parallel Translation**: Support for 14 languages with simultaneous translation to up to 13 target languages
 - **Parallel Processing Optimization**: Asynchronous translation per language to minimize user wait time
 - **Smart Caching System**: 24-hour memory caching with offline access support
 - **Translation Error Recovery**: Auto-retry logic, API fallback, and individual language state management
@@ -68,20 +67,13 @@ Built as a commercial-ready application with subscription monetization, Apple In
 **Audio & Voice Features**
 
 - **Speech Recognition & TTS**: Real-time voice input with phonetic transcription
-- **Pronunciation Guides**: Claude AI-powered phonetic transcription with audio output
+- **Pronunciation Guides**: Google Translate transliteration for non-Latin scripts, IPA via Dictionary API for English
 - **Multi-Language Voice Support**: Speech recognition across all 14 supported languages
-
-**Business Model & Monetization**
-
-- **Subscription-Based Monetization**: Usage limits and ad management through free/premium tiers
-- **Apple Ecosystem Integration**: Native Apple Sign-In and iOS In-App Purchase support
-- **Privacy-First Design**: Minimal data collection with local-first storage approach
 
 **Advanced User Experience**
 
 - **Favorites & History Management**: Date-based translation records with intelligent search
 - **User Customization**: Drag-and-drop language priority settings
-- **Usage Analytics**: Daily translation limit visualization with subscription status monitoring
 - **Dark/Light Theme Support**: User preference-based theme switching with system integration
 
 <br/>
@@ -93,52 +85,8 @@ Built as a commercial-ready application with subscription monetization, Apple In
 **Local-First with Cloud Sync**
 
 - **AsyncStorage Primary**: Offline-first experience with Supabase synchronization
-- **Multi-Layer Caching**: Translation results (24h memory), user sessions, and subscription state
-- **Race Condition Prevention**: Subscription update locks and concurrent request handling
-
-**Transaction-Only Database Design (Abstract schema example below)**
-
-```sql
--- Production-Ready PostgreSQL Schema
--- Pure transaction-based architecture eliminating user accounts
-
- -- Subscription Management
-  CREATE TABLE tbl_sub (
-    k1 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    plan_ref TEXT NOT NULL,                               -- Plan reference identifier
-    flag_active BOOLEAN DEFAULT true,                     -- Active status flag
-    ext_tx_id TEXT UNIQUE NOT NULL,                       -- External transaction identifier (primary key)
-    ts_start TIMESTAMP WITH TIME ZONE NOT NULL,           -- Period start timestamp
-    ts_end TIMESTAMP WITH TIME ZONE,                      -- Period end timestamp (NULL for indefinite)
-    ts_created TIMESTAMP WITH TIME ZONE DEFAULT NOW(),    -- Record creation timestamp
-    ts_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()     -- Last update timestamp
-  );
-
-  -- Daily Usage Tracking (Transaction + Date + Period composite key)
-  CREATE TABLE tbl_usage (
-    k2 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    ext_tx_id TEXT NOT NULL,                              -- External transaction reference
-    day_key DATE NOT NULL,                                -- Usage day identifier
-    metric_val DECIMAL NOT NULL DEFAULT 0,                -- Usage metric value
-    period_start TIMESTAMP WITH TIME ZONE NOT NULL,       -- Validation period start
-    period_end TIMESTAMP WITH TIME ZONE,                  -- Validation period end
-    ts_created TIMESTAMP WITH TIME ZONE DEFAULT NOW(),    -- Record creation timestamp
-    ts_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),    -- Last update timestamp
-    UNIQUE(ext_tx_id, period_start, period_end)           -- Composite uniqueness constraint
-  );
-
-  -- Performance Indexes
-  CREATE INDEX idx_sub_tx_lookup ON tbl_sub(ext_tx_id);
-  CREATE INDEX idx_sub_active_filter ON tbl_sub(flag_active, ext_tx_id);
-  CREATE INDEX idx_usage_tx_day ON tbl_usage(ext_tx_id, day_key);
-  CREATE INDEX idx_usage_period_lookup ON tbl_usage(ext_tx_id, period_start, period_end);
-```
-
-**Apple Date Synchronization Strategy**
-
-- **Three-Piece Validation**: `originalTransactionIdentifierIOS` + `startDate` + `endDate`
-- **Server-Side Validation**: Apple receipt verification with fraud detection
-- **Conflict Resolution**: Composite key upsert operations ensuring data consistency
+- **Multi-Layer Caching**: Translation results (24h memory) and user session state
+- **Race Condition Prevention**: Concurrent request deduplication via shared Promise reference
 
 </br>
 
@@ -146,56 +94,48 @@ Built as a commercial-ready application with subscription monetization, Apple In
 
 ### 1. TypeScript Implementation - Precise Type Safety
 
-#### Comprehensive Domain Models (`types/subscription.ts`)
+#### Comprehensive Domain Models (`types/dictionary.ts`)
 
 ```typescript
-export interface SubscriptionPlan {
+export interface TranslationMeaning {
+  translation: string;
+  type: string;
+  pronunciation?: string;
+}
+
+export interface TranslationResult {
+  sourceLanguage: string;
+  targetLanguage: string;
+  sourceText: string;
+  translatedText: string;
+  meanings?: TranslationMeaning[];
+  pronunciation?: string;
+  confidence: number;
+  timestamp: number;
+}
+
+export interface FavoriteItem {
   id: string;
-  name: string;
-  price: string;
-  priceValue: number;
-  currency: string;
-  period: 'monthly' | 'yearly';
-  dailyTranslations: number;
-  maxLanguages: number;
-  hasAds: boolean;
-  features: string[];
+  sourceLanguage: string;
+  targetLanguage: string;
+  sourceText: string;
+  translatedText: string;
+  meanings?: TranslationMeaning[];
+  createdAt: number;
 }
 
-export interface UserSubscription {
-  planId: string;
-  isActive: boolean;
-  startDate: number;
-  endDate: number;
-  dailyUsage: {
-    date: string;
-    count: number;
-  };
-  isTrialUsed: boolean;
-  originalTransactionIdentifierIOS?: string;
+export interface HistoryItem {
+  id: string;
+  sourceLanguage: string;
+  targetLanguage: string;
+  sourceText: string;
+  translatedText: string;
+  searchedAt: number;
+  searchedData: {
+    lng: string;
+    text: string;
+  }[];
 }
-
-// Strongly-typed IAP product identifiers
-export const IAP_PRODUCT_IDS = {
-  PRO_MONTHLY: 'com.polylingo.pro.monthly',
-  PRO_MAX_MONTHLY: 'com.polylingo.promax.monthly',
-  PREMIUM_YEARLY: 'com.polylingo.premium.yearly',
-} as const;
-```
-
-#### Type-Safe State Management (`stores/subscriptionStore.ts`)
-
-```typescript
-interface SubscriptionState {
-  isCheckingSubscription: boolean;
-  setIsCheckingSubscription: (isChecking: boolean) => void;
-}
-
-export const useSubscriptionStore = create<SubscriptionState>((set) => ({
-  isCheckingSubscription: false,
-  setIsCheckingSubscription: (isChecking: boolean) =>
-    set({ isCheckingSubscription: isChecking }),
-}));
 ```
 
 ### 2. Performance Optimization
@@ -229,7 +169,7 @@ static async translate(
     text: string,
     sourceLanguage: string,
     targetLanguage: string,
-    options?: { provider?: 'claude' | 'default' }
+    _options?: Record<string, unknown>
   ): Promise<{
     translation: string;
     meanings?: TranslationMeaning[];
@@ -258,7 +198,7 @@ static async translate(
 ...
 ```
 
-#### Subscription State Synchronization (`utils/subscriptionService.ts`)
+#### Concurrent Request Deduplication (`utils/subscriptionService.ts`)
 
 ```typescript
 export class SubscriptionService {
@@ -269,7 +209,7 @@ export class SubscriptionService {
   static async getCurrentSubscription(
     isSearching?: boolean
   ): Promise<UserSubscription | null> {
-    // Prevent concurrent subscription fetches
+    // Prevent concurrent fetches — return the same in-flight Promise
     if (this.subscriptionPromise) {
       return await this.subscriptionPromise;
     }
@@ -283,90 +223,10 @@ export class SubscriptionService {
       this.subscriptionPromise = null;
     }
   }
-
-  private static async fetchSubscription(
-    isSearching?: boolean
-  ): Promise<UserSubscription | null> {
-    try {
-      // Try to get subscription by transaction ID first (if available from purchases)
-      const serverSubscription =
-        await this.getServerSubscriptionByTransaction();
-      if (serverSubscription) {
-        return await this.processServerSubscription(
-          serverSubscription,
-          isSearching
-        );
-      }
-
-      return await this.getLocalSubscriptionOrDefault();
-    } catch (error) {
-      return await this.handleSubscriptionError(error);
-    }
-  }
 }
 ```
 
-### 3. Subscription Lifecycle Management - Zero-Registration Architecture
-
-#### Transaction-Based User Management (`utils/userService.ts`)
-
-```typescript
-export class UserService {
-  private static currentTransactionId: string | null = null;
-  private static syncLocks = new Map<string, Promise<boolean>>();
-
-  // Transaction ID as primary identifier (no user accounts)
-  static async saveTransactionId(transactionId: string): Promise<void> {
-    try {
-      await AsyncStorage.setItem(
-        'original_transaction_identifier_ios',
-        transactionId
-      );
-      this.currentTransactionId = transactionId;
-    } catch (error) {
-      console.error('Failed to save transaction ID:', error);
-    }
-  }
-
-  // Three-piece validation: Transaction ID + Apple start/end dates
-  private static async performSyncSubscription(
-    planId: string,
-    isActive: boolean,
-    startDate: number,
-    endDate: number,
-    originalTransactionIdentifierIOS: string
-  ): Promise<boolean> {
-    try {
-      const startDateISO = new Date(startDate).toISOString();
-      const endDateISO = endDate > 0 ? new Date(endDate).toISOString() : null;
-
-      // Composite key upsert with conflict resolution
-      const { error } = await supabase!.from('user_subscriptions').upsert(
-        [
-          {
-            plan_id: planId,
-            is_active: isActive,
-            original_transaction_identifier_ios:
-              originalTransactionIdentifierIOS,
-            start_date: startDateISO,
-            end_date: endDateISO,
-          },
-        ],
-        {
-          onConflict: 'original_transaction_identifier_ios,start_date,end_date',
-          ignoreDuplicates: false,
-        }
-      );
-
-      if (error) return false;
-
-      return true;
-    }
-  }
-}
-```
-
-### 4. Internationalization - Global Accessibility
+### 3. Internationalization - Global Accessibility
 
 #### Dynamic Language Support (`i18n/index.ts`)
 
@@ -417,58 +277,54 @@ i18n.use(initReactI18next).init({
 export default i18n;
 ```
 
-### 5. Testing Strategy - Reliability Assurance
+### 4. Testing Strategy - Reliability Assurance
 
-#### Comprehensive Service Testing (`__tests__/utils/subscriptionService.test.ts`)
+#### End-to-End Translation Flow (`__tests__/integration/translation-flow.test.ts`)
 
 ```typescript
-describe('SubscriptionService', () => {
+describe('Translation Flow Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset singleton state
-    SubscriptionService['subscriptionPromise'] = null;
-    SubscriptionService['isUpdating'] = false;
+
+    mockTranslationAPI.translate.mockResolvedValue({
+      translation: '안녕하세요',
+      pronunciation: 'annyeonghaseyo',
+    });
+    mockSpeechService.speak.mockResolvedValue();
+    mockStorageService.addToHistory.mockResolvedValue();
+    mockStorageService.addFavorite.mockResolvedValue();
   });
 
-  describe('Usage Validation', () => {
-    it('should correctly calculate multi-language usage limits', async () => {
-      const mockSubscription: UserSubscription = {
-        planId: 'pro_monthly',
-        isActive: true,
-        dailyUsage: { date: '2024-01-15', count: 150 },
-        // ... other properties
-      };
+  describe('Basic Translation Flow', () => {
+    test('should complete full translation workflow', async () => {
+      const sourceText = 'hello';
+      const sourceLanguage = 'en';
+      const targetLanguage = 'ko';
 
-      jest
-        .spyOn(SubscriptionService, 'getCurrentSubscription')
-        .mockResolvedValue(mockSubscription);
+      // Step 1: Perform translation
+      const result = await TranslationAPI.translate(
+        sourceText,
+        sourceLanguage,
+        targetLanguage
+      );
+      expect(result.translation).toBe('안녕하세요');
 
-      // Pro plan: 200 daily translations, 5 max languages
-      const canTranslate3Languages = await SubscriptionService.canTranslate(3);
-      const canTranslate5Languages = await SubscriptionService.canTranslate(5);
+      // Step 2: Save to history
+      await StorageService.addToHistory({
+        sourceText,
+        sourceLanguage,
+        targetLanguage,
+        translatedText: result.translation,
+      });
 
-      expect(canTranslate3Languages).toBe(true); // 150 + 3/5 = 150.6 < 200
-      expect(canTranslate5Languages).toBe(false); // 150 + 5/5 = 151 < 200, but edge case
-    });
+      // Step 3: Trigger TTS
+      await SpeechService.speak(result.translation, targetLanguage);
 
-    it('should handle concurrent subscription requests', async () => {
-      let resolveCount = 0;
-      jest
-        .spyOn(SubscriptionService, 'getCurrentSubscription')
-        .mockImplementation(() => {
-          resolveCount++;
-          return Promise.resolve(mockSubscription);
-        });
-
-      // Simulate concurrent requests
-      const promises = Array(5)
-        .fill(null)
-        .map(() => SubscriptionService.getCurrentSubscription());
-
-      await Promise.all(promises);
-
-      // Should only make one actual API call due to promise caching
-      expect(resolveCount).toBe(1);
+      expect(mockStorageService.addToHistory).toHaveBeenCalledTimes(1);
+      expect(mockSpeechService.speak).toHaveBeenCalledWith(
+        '안녕하세요',
+        'ko'
+      );
     });
   });
 });
@@ -490,33 +346,51 @@ app/
 └── +not-found.tsx             # 404 error page
 
 components/                     # Reusable UI components
+├── AnimatedLogo.tsx           # Animated splash logo
+├── AppLanguageModal.tsx       # App UI language picker
+├── CircularUsageButton.tsx    # Circular action button
+├── DatePickerModal.tsx        # Date range picker for history
+├── ErrorBoundary.tsx          # Error boundary wrapper
+├── FavoritesList.tsx          # Saved translations list
+├── HistoryList.tsx            # Translation history list
 ├── LanguageSelector.tsx       # Language picker with flags
+├── LanguageModal.tsx          # Full-screen language picker modal
+├── Loading.tsx                # Loading indicator
 ├── SearchInput.tsx            # Translation input with voice
+├── SkeletonLoader.tsx         # Skeleton loading placeholders
+├── SplashScreen.tsx           # Custom splash screen
+├── SplashErrorBoundary.tsx    # Splash-specific error boundary
+├── SubscriptionModal.tsx      # Subscription info interface
+├── TranslationCard.tsx        # Individual translation result card
 ├── TranslationList.tsx        # Results display with gestures
-├── SubscriptionModal.tsx      # Premium upgrade interface
-└── CircularUsageButton.tsx    # Real-time usage indicator
+├── UsageDetailModal.tsx       # Usage detail view
+└── VoiceSettingsModal.tsx     # Voice engine configuration
 
 utils/                         # Business logic services
-├── translationAPI.ts          # Multi-provider translation
-├── subscriptionService.ts     # Premium feature management
-├── iapService.ts             # Apple In-App Purchase integration
-├── userService.ts            # User data and sync
-├── deviceUsageService.ts     # Anonymous usage tracking
-├── speechService.ts          # Voice recognition & TTS
-├── pronunciationService.ts   # Phonetic guide generation
-└── supabase.ts               # Database client configuration
+├── translationAPI.ts          # Multi-provider translation with caching
+├── subscriptionService.ts     # User state management
+├── userService.ts             # User data and sync
+├── premiumService.ts          # Feature flag management
+├── deviceUsageService.ts      # Anonymous device tracking
+├── speechService.ts           # Voice recognition & TTS
+├── pronunciationService.ts    # Phonetic guide generation
+├── storage.ts                 # AsyncStorage abstraction layer
+├── networkUtils.ts            # Network connectivity helpers
+├── supabase.ts                # Database client configuration
+├── sentryUtils.ts             # Error reporting utilities
+└── version.ts                 # App version helpers
 
 types/                        # TypeScript definitions
 ├── dictionary.ts             # Translation and language types
-├── subscription.ts           # Premium plan definitions
+├── subscription.ts           # User state type definitions
 └── index.ts                  # Shared type exports
 
 stores/                       # Zustand state management
-├── subscriptionStore.ts      # Premium status state
-└── index.ts                  # Store composition
+└── subscriptionStore.ts      # User state store
 
 hooks/                        # Custom React hooks
 ├── useTabSlideAnimation.ts   # Navigation animations
+├── useFrameworkReady.ts      # Expo framework readiness
 └── index.ts                  # Hook exports
 
 contexts/                     # React contexts
@@ -524,7 +398,7 @@ contexts/                     # React contexts
 └── index.ts                  # Context providers
 
 constants/                    # App configuration
-├── bannerAds.ts             # AdMob integration config
+├── bannerAds.ts             # Ad unit configuration
 ├── legalDocuments.ts        # Terms and privacy links
 └── index.ts                 # Constant exports
 
@@ -566,6 +440,6 @@ assets/                     # Static resources
 
 ---
 
-**© 2025 PolyLingo. All rights reserved.**
+**© 2026 PolyLingo. All rights reserved.**
 
 Built with ❤️ using React Native, Expo, and TypeScript
