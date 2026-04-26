@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, Text } from 'react-native';
 import { Search, X } from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
@@ -22,6 +23,20 @@ export default function SearchInput({
   disabled = false,
 }: SearchInputProps) {
   const { colors } = useTheme();
+  const inputRef = useRef<TextInput>(null);
+
+  // Voice mode: focus to scroll to cursor without showing keyboard
+  useEffect(() => {
+    if (!disabled) return;
+    inputRef.current?.focus();
+  }, [value]);
+
+  // When voice ends, blur so next tap triggers keyboard normally
+  useEffect(() => {
+    if (!disabled) {
+      inputRef.current?.blur();
+    }
+  }, [disabled]);
 
   return (
     <View className="flex-row mb-5">
@@ -31,6 +46,7 @@ export default function SearchInput({
       >
         <Search size={20} color={colors.textTertiary} className="mr-3" />
         <TextInput
+          ref={inputRef}
           className="flex-1 text-lg leading-[18px] pl-2 pr-20"
           style={{
             color: disabled ? colors.textTertiary : colors.text,
@@ -49,6 +65,7 @@ export default function SearchInput({
           returnKeyType="search"
           textAlignVertical="center"
           maxLength={maxLength}
+          showSoftInputOnFocus={!disabled}
           selection={
             disabled ? { start: value.length, end: value.length } : undefined
           }
