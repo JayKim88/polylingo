@@ -69,6 +69,7 @@ export default function SearchTab() {
   const [searchAbortController, setSearchAbortController] =
     useState<AbortController | null>(null);
   const [showBannerAd, setShowBannerAd] = useState(false);
+  const [adContentLoaded, setAdContentLoaded] = useState(false);
   const [shouldShowAds, setShouldShowAds] = useState(true);
   const [adKey, setAdKey] = useState(0); // 새로운 광고를 위한 키
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -79,7 +80,7 @@ export default function SearchTab() {
   const voiceButtonScale = useRef(new Animated.Value(1)).current;
   const translateButtonScale = useRef(new Animated.Value(1)).current;
   const headerAnimValue = useRef(
-    new Animated.Value(isInitialFocus.current ? -1 : 0)
+    new Animated.Value(isInitialFocus.current ? -1 : 0),
   ).current;
 
   const isInputTooLong = searchText.length > MAX_LENGTH;
@@ -94,7 +95,7 @@ export default function SearchTab() {
   const loadFavorites = useCallback(async () => {
     const favs = await StorageService.getFavorites();
     const favIds = favs.map(
-      (f) => `${f.sourceText}-${f.sourceLanguage}-${f.targetLanguage}`
+      (f) => `${f.sourceText}-${f.sourceLanguage}-${f.targetLanguage}`,
     );
     setFavorites(favIds);
   }, []);
@@ -124,9 +125,9 @@ export default function SearchTab() {
   useFocusEffect(
     useCallback(() => {
       SubscriptionService.shouldShowAds().then((result) =>
-        setShouldShowAds(result)
+        setShouldShowAds(result),
       );
-    }, [])
+    }, []),
   );
 
   const handleFocus = useCallback(async () => {
@@ -171,7 +172,7 @@ export default function SearchTab() {
         ]).start();
       }
     },
-    [headerAnimValue, searchAnimValue, isHeaderVisible]
+    [headerAnimValue, searchAnimValue, isHeaderVisible],
   );
 
   const handlePullDown = useCallback(() => {
@@ -215,7 +216,7 @@ export default function SearchTab() {
     if (!netInfo.isConnected) {
       Alert.alert(
         t('alert.networkRequired'),
-        t('alert.networkRequiredMessage')
+        t('alert.networkRequiredMessage'),
       );
       return;
     }
@@ -224,7 +225,7 @@ export default function SearchTab() {
 
     // 선택된 언어들 중 소스 언어 제외
     const targetLanguages = selectedLanguages.filter(
-      (lang) => lang !== sourceLanguage
+      (lang) => lang !== sourceLanguage,
     );
 
     isVoiceActive && (await stopVoiceRecording());
@@ -249,7 +250,7 @@ export default function SearchTab() {
           targetLang,
           searchText,
           sourceLanguage,
-          0
+          0,
         );
 
         if (result && !abortController.signal.aborted) {
@@ -281,18 +282,19 @@ export default function SearchTab() {
       // 성공한 번역들만 필터링
       const successfulTranslations = translationResults
         .filter(
-          (result) => result.status === 'fulfilled' && result.value !== null
+          (result) => result.status === 'fulfilled' && result.value !== null,
         )
         .map(
           (result) =>
-            (result as PromiseFulfilledResult<TranslationResult>).value
+            (result as PromiseFulfilledResult<TranslationResult>).value,
         );
 
       if (successfulTranslations.length > 0) {
         // Show banner ad after successful search with new ad (if ads should be shown)
         if (shouldShowAds) {
+          setAdContentLoaded(false);
           setShowBannerAd(true);
-          setAdKey((prev) => prev + 1); // 새로운 광고 요청
+          setAdKey((prev) => prev + 1);
         }
 
         const searchedData = successfulTranslations.map((v) => ({
@@ -334,7 +336,7 @@ export default function SearchTab() {
     targetLang: string,
     searchText: string,
     sourceLanguage: string,
-    retryCount: number = 0
+    retryCount: number = 0,
   ) => {
     const stateKey = `${searchText}-${sourceLanguage}-${targetLang}`;
 
@@ -371,7 +373,7 @@ export default function SearchTab() {
         searchText.trim(),
         sourceLanguage,
         targetLang,
-        {}
+        {},
       );
 
       clearTimeout(timeoutId);
@@ -431,13 +433,13 @@ export default function SearchTab() {
       targetLang,
       searchText,
       sourceLanguage,
-      currentState.retryCount + 1
+      currentState.retryCount + 1,
     );
 
     if (result) {
       // Update results array
       const targetLanguages = selectedLanguages.filter(
-        (lang) => lang !== sourceLanguage
+        (lang) => lang !== sourceLanguage,
       );
       const languageIndex = targetLanguages.indexOf(targetLang);
 
@@ -464,7 +466,7 @@ export default function SearchTab() {
     }
 
     const targetLanguages = selectedLanguages.filter(
-      (lang) => lang !== sourceLanguage
+      (lang) => lang !== sourceLanguage,
     );
     const languageIndex = targetLanguages.indexOf(targetLang);
 
@@ -511,7 +513,8 @@ export default function SearchTab() {
     setResults([]);
     setTranslationStates(new Map()); // Clear translation states
     setIsLoading(false);
-    setShowBannerAd(false); // Hide banner when clearing
+    setShowBannerAd(false);
+    setAdContentLoaded(false);
 
     if (isVoiceActive) {
       await stopVoiceRecording();
@@ -547,7 +550,7 @@ export default function SearchTab() {
         () => {
           setIsVoiceActive(false);
           setSpeechRecognition(null);
-        }
+        },
       );
 
       recognition && setSpeechRecognition(recognition);
@@ -681,8 +684,8 @@ export default function SearchTab() {
               (!searchText.trim() || isInputTooLong) && !showCancelButton
                 ? colors.background
                 : showCancelButton
-                ? '#FF6B6B'
-                : colors.text,
+                  ? '#FF6B6B'
+                  : colors.text,
             borderWidth:
               (!searchText.trim() || isInputTooLong) && !showCancelButton
                 ? 1
@@ -719,8 +722,8 @@ export default function SearchTab() {
                   (!searchText.trim() || isInputTooLong) && !showCancelButton
                     ? colors.textSecondary
                     : showCancelButton
-                    ? '#fff'
-                    : colors.background,
+                      ? '#fff'
+                      : colors.background,
               }}
             >
               {showCancelButton ? t('search.cancel') : t('search.translate')}
@@ -875,6 +878,7 @@ export default function SearchTab() {
         <Animated.View
           className="px-6 my-2 flex justify-center items-center h-[50px]"
           style={{
+            opacity: adContentLoaded ? 1 : 0,
             transform: [
               {
                 translateY: searchAnimValue.interpolate({
@@ -886,7 +890,7 @@ export default function SearchTab() {
           }}
         >
           <BannerAd
-            key={adKey} // 매 검색마다 새로운 광고 컴포넌트 생성
+            key={adKey}
             unitId={unitIds.search}
             size={BannerAdSize.BANNER}
             requestOptions={{
@@ -896,8 +900,9 @@ export default function SearchTab() {
               console.log(`Banner ad failed to load (key: ${adKey}):`, error);
             }}
             onAdLoaded={() => {
+              setAdContentLoaded(true);
               console.log(
-                `🎯 NEW Banner ad loaded successfully (key: ${adKey})`
+                `🎯 NEW Banner ad loaded successfully (key: ${adKey})`,
               );
             }}
           />
@@ -921,7 +926,7 @@ export default function SearchTab() {
           isHeaderVisible={isHeaderVisible}
           translationStates={translationStates}
           targetLanguages={selectedLanguages.filter(
-            (lang) => lang !== sourceLanguage
+            (lang) => lang !== sourceLanguage,
           )}
           searchText={searchText}
           sourceLanguage={sourceLanguage}

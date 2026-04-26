@@ -32,6 +32,7 @@ export default function HistoryTab() {
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
   const [showAd, setShowAd] = useState(false);
+  const [adContentLoaded, setAdContentLoaded] = useState(false);
 
   const headerAnimValue = useRef(new Animated.Value(1)).current;
   const contentAnimValue = useRef(new Animated.Value(0)).current;
@@ -70,7 +71,7 @@ export default function HistoryTab() {
       // Generate new ad only if 30 seconds have passed
       const now = Date.now();
       if (now - lastAdRefresh > NEW_AD_TERM) {
-        // 30 seconds interval
+        setAdContentLoaded(false);
         setAdKey((prev) => prev + 1);
         setLastAdRefresh(now);
       }
@@ -190,6 +191,7 @@ export default function HistoryTab() {
         <Animated.View
           className="my-2 flex justify-center items-center h-[50px]"
           style={{
+            opacity: adContentLoaded ? 1 : 0,
             transform: [
               {
                 translateY: contentAnimValue.interpolate({
@@ -214,6 +216,7 @@ export default function HistoryTab() {
               );
             }}
             onAdLoaded={() => {
+              setAdContentLoaded(true);
               console.log(
                 `🎯 NEW History banner ad loaded successfully (key: ${adKey})`
               );

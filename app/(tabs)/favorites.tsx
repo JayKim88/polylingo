@@ -38,6 +38,7 @@ export default function FavoritesTab() {
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
   const [showAd, setShowAd] = useState(false);
+  const [adContentLoaded, setAdContentLoaded] = useState(false);
 
   const contentAnimValue = useRef(new Animated.Value(0)).current;
   const headerAnimValue = useRef(new Animated.Value(1)).current;
@@ -130,6 +131,7 @@ export default function FavoritesTab() {
 
       const now = Date.now();
       if (now - lastAdRefresh > NEW_AD_TERM) {
+        setAdContentLoaded(false);
         setAdKey((prev) => prev + 1);
         setLastAdRefresh(now);
       }
@@ -188,6 +190,7 @@ export default function FavoritesTab() {
         <Animated.View
           className="my-2 flex justify-center items-center h-[50px]"
           style={{
+            opacity: adContentLoaded ? 1 : 0,
             transform: [
               {
                 translateY: contentAnimValue.interpolate({
@@ -212,6 +215,7 @@ export default function FavoritesTab() {
               );
             }}
             onAdLoaded={() => {
+              setAdContentLoaded(true);
               console.log(
                 `🎯 NEW Favorites banner ad loaded successfully (key: ${adKey})`
               );

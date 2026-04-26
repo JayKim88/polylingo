@@ -64,6 +64,7 @@ export default function SettingsTab() {
   const [adKey, setAdKey] = useState(0);
   const [lastAdRefresh, setLastAdRefresh] = useState(0);
   const [showAd, setShowAd] = useState(false);
+  const [adContentLoaded, setAdContentLoaded] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
   const headerAnimValue = useRef(new Animated.Value(1)).current;
@@ -423,6 +424,7 @@ export default function SettingsTab() {
     useCallback(() => {
       const now = Date.now();
       if (now - lastAdRefresh > NEW_AD_TERM) {
+        setAdContentLoaded(false);
         setAdKey((prev) => prev + 1);
         setLastAdRefresh(now);
       }
@@ -472,6 +474,7 @@ export default function SettingsTab() {
         <Animated.View
           className="my-2 flex justify-center items-center h-[50px]"
           style={{
+            opacity: adContentLoaded ? 1 : 0,
             transform: [
               {
                 translateY: contentAnimValue.interpolate({
@@ -496,6 +499,7 @@ export default function SettingsTab() {
               );
             }}
             onAdLoaded={() => {
+              setAdContentLoaded(true);
               console.log(
                 `🎯 NEW Settings banner ad loaded successfully (key: ${adKey})`
               );
